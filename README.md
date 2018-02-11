@@ -8,7 +8,7 @@ Repository: https://github.com/neilmunday/slurm-mail
 Introduction
 ------------
 
-E-mail notifications from Slurm are rather brief and all the information is contained in the subject of the e-mail - the body is empty.
+E-mail notifications from [Slurm](https://slurm.schedmd.com/) are rather brief and all the information is contained in the subject of the e-mail - the body is empty.
 
 Slurm-Mail aims to address this by providing a drop in replacement for Slurm's e-mails to give users much more information about their jobs.
 
