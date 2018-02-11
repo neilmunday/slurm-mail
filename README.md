@@ -1,7 +1,7 @@
 Slurm-Mail
 ==========
 
-Author: Neil Munday
+Author: Neil Munday (neil at mundayweb.com)
 
 Repository: https://github.com/neilmunday/slurm-mail
 
@@ -51,7 +51,7 @@ Example cron job, e.g.`/etc/cron.d/slurm-mail.cron`:
 Customising E-mails
 -------------------
 
-Slurm-Mail uses Python's [string.Template](https://docs.python.org/2/library/string.html#template-strings) to create the e-mails it sends. Under Slurm-Mail's `conf.d` directory you will find the following files that you can edit to customise e-mails to your needs.
+Slurm-Mail uses Python's [string.Template](https://docs.python.org/2/library/string.html#template-strings) class to create the e-mails it sends. Under Slurm-Mail's `conf.d` directory you will find the following files that you can edit to customise e-mails to your needs.
 
 | Filename      | Purpose                                                |
 | --------------| ------------------------------------------------------ |
