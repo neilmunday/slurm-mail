@@ -10,7 +10,19 @@ Introduction
 
 E-mail notifications from [Slurm](https://slurm.schedmd.com/) are rather brief and all the information is contained in the subject of the e-mail - the body is empty.
 
-Slurm-Mail aims to address this by providing a drop in replacement for Slurm's e-mails to give users much more information about their jobs.
+Slurm-Mail aims to address this by providing a drop in replacement for Slurm's e-mails to give users much more information about their jobs via HTML e-mails which contain the following information:
+
+* Start/End
+* Job name
+* Partition
+* Work dir
+* Elasped time
+* Exit code
+* Std out file path
+* Std err file path
+* No. of nodes used
+
+E-mails can be easily customised to your needs using the provided templates (see below).
 
 Installation
 ------------
