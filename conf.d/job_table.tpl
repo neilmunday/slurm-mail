@@ -16,6 +16,14 @@
 		<td>$NODES</td>
 	</tr>
 	<tr>
+		<td>Std out:</td>
+		<td>$STDOUT</td>
+	</tr>
+	<tr>
+		<td>Std err:</td>
+		<td>$STDERR</td>
+	</tr>
+	<tr>
 		<td>Work dir:</td>
 		<td>$WORKDIR</td>
 	</tr>

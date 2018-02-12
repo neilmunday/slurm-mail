@@ -129,6 +129,7 @@ if __name__ == "__main__":
 		emailFromUserAddress = config.get(section, 'emailFromUserAddress')
 		emailFromName = config.get(section, 'emailFromName')
 		sacctExe = config.get(section, 'sacctExe')
+		scontrolExe = config.get(section, 'scontrolExe')
 	except Exception as e:
 		die('Error: %s' % e)
 
@@ -167,6 +168,8 @@ if __name__ == "__main__":
 						elapsed = 'N/A'
 						start = ''
 						end = 'N/A'
+						stdoutFile = ''
+						stderrFile = ''
 
 						logging.debug(stdout)
 						for line in stdout.split("\n"):
@@ -186,8 +189,20 @@ if __name__ == "__main__":
 									jobState = data[5]
 									if jobState == 'TIMEOUT':
 										jobState = 'WALLCLOCK EXCEEDED'
-							elif data[0] == "%s.batch":
-								pass
+						cmd = '%s -o show job=%d' % (scontrolExe, jobId)
+						rtnCode, stdout, stderr = runCommand(cmd)
+						if rtnCode == 0:
+							jobDic = {}
+							for i in stdout.split(' '):
+								x = i.split('=', 1)
+								if len(x) == 2:
+									jobDic[x[0]] = x[1]
+							stdoutFile = jobDic['StdOut']
+							stderrFile = jobDic['StdErr']
+						else:
+							logging.error('failed to run: %s' % cmd)
+							logging.error(stdout)
+							logging.error(stderr)
 
 						tpl = Template(getFileContents(jobTableTpl))
 						jobTable = tpl.substitute(
@@ -201,7 +216,9 @@ if __name__ == "__main__":
 							EXIT_CODE=exitCode,
 							EXIT_STATE=jobState,
 							COMMENT=comment,
-							NODES=nodes
+							NODES=nodes,
+							STDOUT=stdoutFile,
+							STDERR=stderrFile
 						)
 
 						if state == 'Began':
