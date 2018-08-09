@@ -30,7 +30,7 @@ Installation
 Download the latest release of Slurm-Mail and unpack it to a directory of your choosing on the server(s) running the Slurm controller daemon `slurmctld`, e.g. `/opt/slurm-mail`
 
 ```bash
-tar xfz slurm-mail-1.0.tar.gz
+tar xfz slurm-mail-1.2.tar.gz
 ```
 
 Create the spool and log directories for Slurm-Mail on your Slurm controller(s):
