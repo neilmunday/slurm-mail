@@ -89,10 +89,10 @@ if __name__ == "__main__":
 		jobIdRe = re.compile('Job_id=([0-9]+)')
 		match = jobIdRe.match(jobIdStr)
 		if match:
-			path = os.path.join(spoolDir, '%s.%s.%s.mail' % (match.group(1), action, user))
+			path = os.path.join(spoolDir, '%s.%s.mail' % (match.group(1), action))
 			logging.debug('job ID match, writing file %s' % path)
 			with open(path, 'w') as f:
-				f.write('')
+				f.write(user)
 		else:
 			die('Could not determine job ID')
 	except Exception as e:

@@ -133,31 +133,40 @@ if __name__ == "__main__":
 	except Exception as e:
 		die('Error: %s' % e)
 
-	logging.basicConfig(format='%(asctime)s:%(levelname)s: %(message)s', datefmt='%Y/%m/%d %H:%M:%S', level=logLevel, filename=logFile)
+	if logFile:
+		logging.basicConfig(format='%(asctime)s:%(levelname)s: %(message)s', datefmt='%Y/%m/%d %H:%M:%S', level=logLevel, filename=logFile)
+	else:
+		logging.basicConfig(format='%(asctime)s:%(levelname)s: %(message)s', datefmt='%Y/%m/%d %H:%M:%S', level=logLevel)
 
 	checkFile(sacctExe)
-
 	css = getFileContents(stylesheet)
+
+	if not os.access(spoolDir, os.R_OK | os.W_OK):
+		die("Cannot access %s, check file permissions and that the directory exists " % spoolDir)
 
 	# look for any new mail notifications in the spool dir
 	files = glob.glob(spoolDir + os.sep + "*.mail")
 	for f in files:
 		filename = os.path.basename(f)
 		fields = filename.split('.')
-		if len(fields) == 4:
+		if len(fields) == 3:
 			logging.info("processing: " + f)
 			try:
+				userEmail = None
 				jobId = int(fields[0])
 				state = fields[1]
-				user = fields[2]
+				# e-mail address stored in the file
+				with open(f, 'r') as spoolFile:
+					userEmail = spoolFile.read()
 
 				if state in ['Began', 'Ended', 'Failed']:
 					# get job info from sacct
-					cmd = '%s -j %d -p -n --fields=JobId,Partition,JobName,Start,End,State,nnodes,WorkDir,Elapsed,ExitCode,Comment,Cluster' % (sacctExe, jobId)
+					cmd = '%s -j %d -p -n --fields=JobId,Partition,JobName,Start,End,State,nnodes,WorkDir,Elapsed,ExitCode,Comment,Cluster,User' % (sacctExe, jobId)
 					rtnCode, stdout, stderr = runCommand(cmd)
 					if rtnCode == 0:
 						body = ''
 						jobName = ''
+						user = ''
 						partition = ''
 						cluster = ''
 						nodes = 0
@@ -168,8 +177,8 @@ if __name__ == "__main__":
 						elapsed = 'N/A'
 						start = ''
 						end = 'N/A'
-						stdoutFile = ''
-						stderrFile = ''
+						stdoutFile = '?'
+						stderrFile = '?'
 
 						logging.debug(stdout)
 						for line in stdout.split("\n"):
@@ -182,6 +191,7 @@ if __name__ == "__main__":
 								start = data[3].replace('T', ' ')
 								comment = data[10]
 								nodes = data[6]
+								user = data[12]
 								if state != 'Began':
 									end = data[4].replace('T', ' ')
 									elapsed = data[8]
@@ -257,8 +267,8 @@ if __name__ == "__main__":
 						body = MIMEText(body, 'html')
 						msg.attach(body)
 						s = smtplib.SMTP('localhost')
-						logging.info('sending e-mail to: %s for job %d (%s)' % (user, jobId, state))
-						s.sendmail(emailFromUserAddress, user, msg.as_string())
+						logging.info('sending e-mail to: %s using %s for job %d (%s)' % (user, userEmail, jobId, state))
+						s.sendmail(emailFromUserAddress, userEmail, msg.as_string())
 						logging.info('deleting: %s' % f)
 						os.remove(f)
 				else:
