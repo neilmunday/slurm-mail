@@ -1,8 +1,15 @@
 Change Log
 ==========
 
-Version 1.1 (in progress)
--------------------------
+Version 1.2
+-----------
+
+Date: 2018-08-09
+
+* Bug fix for issue #1. E-mail addresses are now stored in the spool files instead of the file name to handle full e-mail addresses. Thanks to @bryank-cs for reporting the issue
+
+Version 1.1
+-----------
 
 Date: 2018-02-12
 
