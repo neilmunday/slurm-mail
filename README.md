@@ -16,7 +16,7 @@ Slurm-Mail aims to address this by providing a drop in replacement for Slurm's e
 * Job name
 * Partition
 * Work dir
-* Elasped time
+* Elapsed time
 * Exit code
 * Std out file path
 * Std err file path
