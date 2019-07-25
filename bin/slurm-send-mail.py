@@ -161,7 +161,7 @@ if __name__ == "__main__":
 
 				if state in ['Began', 'Ended', 'Failed']:
 					# get job info from sacct
-					cmd = '%s -j %d -p -n --fields=JobId,Partition,JobName,Start,End,State,nnodes,WorkDir,Elapsed,ExitCode,Comment,Cluster,User' % (sacctExe, jobId)
+					cmd = '%s -j %d -p -n --fields=JobId,Partition,JobName,Start,End,State,nnodes,WorkDir,Elapsed,ExitCode,Comment,Cluster,User,NodeList' % (sacctExe, jobId)
 					rtnCode, stdout, stderr = runCommand(cmd)
 					if rtnCode == 0:
 						body = ''
@@ -192,6 +192,7 @@ if __name__ == "__main__":
 								comment = data[10]
 								nodes = data[6]
 								user = data[12]
+								nodelist=data[13]
 								if state != 'Began':
 									end = data[4].replace('T', ' ')
 									elapsed = data[8]
@@ -227,6 +228,7 @@ if __name__ == "__main__":
 							EXIT_STATE=jobState,
 							COMMENT=comment,
 							NODES=nodes,
+							NODE_LIST=nodelist,
 							STDOUT=stdoutFile,
 							STDERR=stderrFile
 						)
