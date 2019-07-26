@@ -44,6 +44,10 @@
 		<td>$ELAPSED</td>
 	</tr>
 	<tr class="jobEnd">
+		<td>Node List:</td>
+		<td>$NODE_LIST</td>
+	</tr>
+	<tr class="jobEnd">
 		<td>Exit Code:</td>
 		<td>$EXIT_CODE</td>
 	</tr>
