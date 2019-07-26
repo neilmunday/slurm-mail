@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 1.3
+-----------
+
+Date: 2019-07-26
+
+* Added node list to job completion e-mails. Thanks to @drhey for adding this functionality.
+
 Version 1.2
 -----------
 
