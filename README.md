@@ -21,6 +21,7 @@ Slurm-Mail aims to address this by providing a drop in replacement for Slurm's e
 * Std out file path
 * Std err file path
 * No. of nodes used
+* Node list
 
 E-mails can be easily customised to your needs using the provided templates (see below).
 
@@ -71,3 +72,9 @@ Slurm-Mail uses Python's [string.Template](https://docs.python.org/2/library/str
 | job_table.tpl | Template used to create the job info table in e-mails. |
 | started.tpl   | Template used for jobs that have started.              |
 | style.css     | Cascading style sheet (CSS) used by the e-mails.       |
+
+Contributors
+------------
+
+* drhey: https://www.github.com/drhey
+
