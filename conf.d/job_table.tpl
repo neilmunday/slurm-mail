@@ -16,6 +16,10 @@
 		<td>$NODES</td>
 	</tr>
 	<tr>
+		<td>Wallclock:</td>
+		<td>$WALLCLOCK</td>
+	</tr>
+	<tr>
 		<td>Std out:</td>
 		<td>$STDOUT</td>
 	</tr>
@@ -42,6 +46,10 @@
 	<tr class="jobEnd">
 		<td>Elapsed:</td>
 		<td>$ELAPSED</td>
+	</tr>
+	<tr class="jobEnd">
+		<td>Wallclock Accuracy:</td>
+		<td>$WALLCLOCK_ACCURACY</td>
 	</tr>
 	<tr class="jobEnd">
 		<td>Node List:</td>

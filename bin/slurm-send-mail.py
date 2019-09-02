@@ -144,6 +144,8 @@ if __name__ == "__main__":
 	if not os.access(spoolDir, os.R_OK | os.W_OK):
 		die("Cannot access %s, check file permissions and that the directory exists " % spoolDir)
 
+	elapsedRe = re.compile("([\d]+)-([\d]+):([\d]+):([\d]+)")
+
 	# look for any new mail notifications in the spool dir
 	files = glob.glob(spoolDir + os.sep + "*.mail")
 	for f in files:
@@ -161,7 +163,7 @@ if __name__ == "__main__":
 
 				if state in ['Began', 'Ended', 'Failed']:
 					# get job info from sacct
-					cmd = '%s -j %d -p -n --fields=JobId,Partition,JobName,Start,End,State,nnodes,WorkDir,Elapsed,ExitCode,Comment,Cluster,User,NodeList' % (sacctExe, jobId)
+					cmd = '%s -j %d -p -n --fields=JobId,Partition,JobName,Start,End,State,nnodes,WorkDir,Elapsed,ExitCode,Comment,Cluster,User,NodeList,TimeLimit,TimelimitRaw' % (sacctExe, jobId)
 					rtnCode, stdout, stderr = runCommand(cmd)
 					if rtnCode == 0:
 						body = ''
@@ -175,6 +177,8 @@ if __name__ == "__main__":
 						jobState = ''
 						exitCode = 'N/A'
 						elapsed = 'N/A'
+						wallclock = ''
+						wallclockAccuracy = ''
 						start = ''
 						end = 'N/A'
 						stdoutFile = '?'
@@ -192,14 +196,27 @@ if __name__ == "__main__":
 								comment = data[10]
 								nodes = data[6]
 								user = data[12]
-								nodelist=data[13]
+								nodelist = data[13]
+								wallclock = data[14].replace('T', ' ')
+								wallclockSeconds = int(data[15]) * 60
 								if state != 'Began':
 									end = data[4].replace('T', ' ')
-									elapsed = data[8]
+									elapsed = data[8] # [days-]hours:minutes:seconds
+									# convert elapsed to seconds
+									# do we have days?
+									match = elapsedRe.match(elapsed)
+									if match:
+										days, hours, mins, secs = match.groups()
+									else:
+										hours, mins, secs = elapsed.split(':')
+										days = 0
+									elapsedSeconds = (int(days) * 86400) + (int(hours) * 3600) + (int(mins) * 60) + int(secs)
+									wallclockAccuracy = '%.2f%%' % ((float(elapsedSeconds) / float(wallclockSeconds)) * 100.0)
 									exitCode = data[9]
 									jobState = data[5]
 									if jobState == 'TIMEOUT':
 										jobState = 'WALLCLOCK EXCEEDED'
+										wallclockAccuracy = '0%'
 						cmd = '%s -o show job=%d' % (scontrolExe, jobId)
 						rtnCode, stdout, stderr = runCommand(cmd)
 						if rtnCode == 0:
@@ -230,7 +247,9 @@ if __name__ == "__main__":
 							NODES=nodes,
 							NODE_LIST=nodelist,
 							STDOUT=stdoutFile,
-							STDERR=stderrFile
+							STDERR=stderrFile,
+							WALLCLOCK=wallclock,
+							WALLCLOCK_ACCURACY=wallclockAccuracy
 						)
 
 						if state == 'Began':
