@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 1.4
+-----------
+
+Date: 2019-09-02
+
+* Added requested wallclock and wallclock accuracy to e-mails (issue #3). Thanks to @robduckyworth for suggesting this feature.
+
 Version 1.3
 -----------
 
