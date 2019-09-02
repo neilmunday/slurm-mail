@@ -22,6 +22,8 @@ Slurm-Mail aims to address this by providing a drop in replacement for Slurm's e
 * Std err file path
 * No. of nodes used
 * Node list
+* Wallclock
+* Wallclock accuracy
 
 E-mails can be easily customised to your needs using the provided templates (see below).
 
@@ -77,4 +79,3 @@ Contributors
 ------------
 
 * drhey: https://www.github.com/drhey
-
