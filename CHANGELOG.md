@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+Version 1.5
+-----------
+
+Date: 2019-11-04
+
+* Switched to using timestamps for start and end times for sacct (issue #4).
+* Added datetimeFormat config option to allow the user to set the date/time format for date/time strings in e-mails.
+* Added support for jobs with unlimited wallclocks.
+
 Version 1.4
 -----------
 
