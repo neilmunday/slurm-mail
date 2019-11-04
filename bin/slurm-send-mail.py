@@ -53,6 +53,7 @@ import subprocess
 import sys
 import time
 import smtplib
+from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from string import Template
@@ -100,6 +101,8 @@ if __name__ == "__main__":
 	if args.verbose:
 		logLevel = logging.DEBUG
 
+	os.environ['SLURM_TIME_FORMAT'] = '%s'
+
 	baseDir = os.path.abspath('%s%s../' % (os.path.dirname(os.path.realpath(__file__)), os.sep))
 	confDir = os.path.join(baseDir, 'conf.d')
 	confFile = os.path.join(confDir, 'slurm-mail.conf')
@@ -130,6 +133,7 @@ if __name__ == "__main__":
 		emailFromName = config.get(section, 'emailFromName')
 		sacctExe = config.get(section, 'sacctExe')
 		scontrolExe = config.get(section, 'scontrolExe')
+		datetimeFormat = config.get(section, 'datetimeFormat')
 	except Exception as e:
 		die('Error: %s' % e)
 
@@ -139,6 +143,7 @@ if __name__ == "__main__":
 		logging.basicConfig(format='%(asctime)s:%(levelname)s: %(message)s', datefmt='%Y/%m/%d %H:%M:%S', level=logLevel)
 
 	checkFile(sacctExe)
+	checkFile(scontrolExe)
 	css = getFileContents(stylesheet)
 
 	if not os.access(spoolDir, os.R_OK | os.W_OK):
@@ -192,7 +197,8 @@ if __name__ == "__main__":
 								jobName = data[2]
 								cluster = data[11]
 								workDir = data[7]
-								start = data[3].replace('T', ' ')
+								startTS = int(data[3])
+								start = datetime.fromtimestamp(startTS).strftime(datetimeFormat)
 								comment = data[10]
 								nodes = data[6]
 								user = data[12]
@@ -200,7 +206,8 @@ if __name__ == "__main__":
 								wallclock = data[14].replace('T', ' ')
 								wallclockSeconds = int(data[15]) * 60
 								if state != 'Began':
-									end = data[4].replace('T', ' ')
+									endTS = int(data[4])
+									end = datetime.fromtimestamp(endTS).strftime(datetimeFormat)
 									elapsed = data[8] # [days-]hours:minutes:seconds
 									# convert elapsed to seconds
 									# do we have days?
@@ -299,4 +306,4 @@ if __name__ == "__main__":
 
 			except Exception as e:
 				logging.error("failed to process: %s" % f)
-				logging.error(e)
+				logging.error(e, exc_info=True)
