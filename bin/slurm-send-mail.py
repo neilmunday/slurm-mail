@@ -203,8 +203,12 @@ if __name__ == "__main__":
 								nodes = data[6]
 								user = data[12]
 								nodelist = data[13]
-								wallclock = data[14].replace('T', ' ')
-								wallclockSeconds = int(data[15]) * 60
+								if data[14] == 'UNLIMITED':
+									wallclock = 'UNLIMITED'
+									wallclockSeconds = 0
+								else:
+									wallclock = data[14].replace('T', ' ')
+									wallclockSeconds = int(data[15]) * 60
 								if state != 'Began':
 									endTS = int(data[4])
 									end = datetime.fromtimestamp(endTS).strftime(datetimeFormat)
@@ -218,7 +222,10 @@ if __name__ == "__main__":
 										hours, mins, secs = elapsed.split(':')
 										days = 0
 									elapsedSeconds = (int(days) * 86400) + (int(hours) * 3600) + (int(mins) * 60) + int(secs)
-									wallclockAccuracy = '%.2f%%' % ((float(elapsedSeconds) / float(wallclockSeconds)) * 100.0)
+									if wallclockSeconds > 0:
+										wallclockAccuracy = '%.2f%%' % ((float(elapsedSeconds) / float(wallclockSeconds)) * 100.0)
+									else:
+										wallclockAccuracy = 'N/A'
 									exitCode = data[9]
 									jobState = data[5]
 									if jobState == 'TIMEOUT':
