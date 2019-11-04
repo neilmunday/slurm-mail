@@ -75,7 +75,7 @@ Slurm-Mail uses Python's [string.Template](https://docs.python.org/2/library/str
 | started.tpl   | Template used for jobs that have started.              |
 | style.css     | Cascading style sheet (CSS) used by the e-mails.       |
 
-To change the date/time format used for job start and end times in the e-mails, change the `datetimeFormat` configuration option in `conf.d/slurm-mail.conf`. The format string used is the same as Python's `datetime.strftime function <https://docs.python.org/2/library/datetime.html#strftime-strptime-behavior>`_.
+To change the date/time format used for job start and end times in the e-mails, change the `datetimeFormat` configuration option in `conf.d/slurm-mail.conf`. The format string used is the same as Python's [datetime.strftime function](https://docs.python.org/2/library/datetime.html#strftime-strptime-behavior).
 
 Contributors
 ------------
