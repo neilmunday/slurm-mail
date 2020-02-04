@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 1.6
+-----------
+
+Date: 2020-02-04
+
+* Added support for Python 3
+
 Version 1.5
 -----------
 

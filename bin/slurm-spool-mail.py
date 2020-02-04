@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 #
 #   This file is part of Slurm-Mail.
@@ -43,14 +43,20 @@ conf.d/style.css		-> customise e-mail style
 README.md				-> Set-up info
 '''
 
-import ConfigParser
 import re
 import logging
 import os
 import sys
 
+IS_PYTHON_3 = sys.version_info.major == 3
+
+if IS_PYTHON_3:
+	import configparser as ConfigParser
+else:
+	import ConfigParser
+
 def die(msg):
-	print msg
+	print(msg)
 	logging.error(msg)
 	sys.exit(1)
 
@@ -68,7 +74,7 @@ if __name__ == "__main__":
 	section = 'slurm-spool-mail'
 
 	try:
-		config = ConfigParser.ConfigParser()
+		config = ConfigParser.RawConfigParser()
 		config.read(confFile)
 		if not config.has_section(section):
 			die('could not find config section for slurm-maild in %s' % confFile)

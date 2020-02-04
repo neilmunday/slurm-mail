@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 #
 #   This file is part of Slurm-Mail.
@@ -42,7 +42,6 @@ README.md				-> Set-up info
 '''
 
 import argparse
-import ConfigParser
 import glob
 import logging
 import pwd
@@ -58,6 +57,13 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from string import Template
 
+IS_PYTHON_3 = sys.version_info.major == 3
+
+if IS_PYTHON_3:
+	import configparser as ConfigParser
+else:
+	import ConfigParser
+
 def checkFile(f):
 	'''
 	Check if the given file exists, exit if it does not.
@@ -69,7 +75,7 @@ def die(msg):
 	'''
 	Exit the program with the given error message.
 	'''
-	print msg
+	print(msg)
 	sys.exit(1)
 
 def getFileContents(path):
@@ -122,7 +128,7 @@ if __name__ == "__main__":
 
 	# parse config file
 	try:
-		config = ConfigParser.ConfigParser()
+		config = ConfigParser.RawConfigParser()
 		config.read(confFile)
 		if not config.has_section(section):
 			die('could not find config section for slurm-maild in %s' % confFile)
@@ -190,6 +196,8 @@ if __name__ == "__main__":
 						stderrFile = '?'
 
 						logging.debug(stdout)
+						if IS_PYTHON_3:
+							stdout = stdout.decode()
 						for line in stdout.split("\n"):
 							data = line.split('|')
 							if data[0] == "%s" % jobId:
@@ -235,6 +243,8 @@ if __name__ == "__main__":
 						rtnCode, stdout, stderr = runCommand(cmd)
 						if rtnCode == 0:
 							jobDic = {}
+							if IS_PYTHON_3:
+								stdout = stdout.decode()
 							for i in stdout.split(' '):
 								x = i.split('=', 1)
 								if len(x) == 2:
