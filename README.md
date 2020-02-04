@@ -30,7 +30,7 @@ E-mails can be easily customised to your needs using the provided templates (see
 Installation
 ------------
 
-As of version *1.6* of Slurm-Mail both Python 3 and Python 2 are supported.
+As of version 1.6 of Slurm-Mail both Python 3 and Python 2 are supported.
 
 Download the latest release of Slurm-Mail and unpack it to a directory of your choosing on the server(s) running the Slurm controller daemon `slurmctld`, e.g. `/opt/slurm-mail`
 
