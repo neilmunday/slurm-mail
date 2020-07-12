@@ -27,7 +27,6 @@
 slurm-spool-mail.py
 
 Author: Neil Munday
-Modified by: Mehran Khodabandeh
 
 A drop in replacement for MailProg in Slurm's slurm.conf file.
 Instead of sending an e-mail the details about the requested e-mail
