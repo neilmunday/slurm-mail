@@ -27,6 +27,7 @@
 slurm-spool-mail.py
 
 Author: Neil Munday
+Modified by: Mehran Khodabandeh
 
 A drop in replacement for MailProg in Slurm's slurm.conf file.
 Instead of sending an e-mail the details about the requested e-mail
@@ -81,18 +82,24 @@ if __name__ == "__main__":
 		spoolDir = config.get('common', 'spoolDir')
 		logFile = config.get(section, 'logFile')
 	except Exception as e:
-		die('Error: %s' % e)
+                logging.exception('exception happened')
+                die('Error: %s' % e)
 
-	logging.basicConfig(format='%(asctime)s:%(levelname)s: %(message)s', datefmt='%Y/%m/%d %H:%M:%S', level=logging.DEBUG, filename=logFile)
+	logging.basicConfig(format='[%(asctime)s] (p%(process)s %(pathname)s:%(lineno)d) %(levelname)s: %(message)s', datefmt='%Y/%m/%d %H:%M:%S', level=logging.DEBUG, filename=logFile)
 	logging.debug('called with: %s' % str(sys.argv))
 	try:
 		info = sys.argv[2].split(',')[0]
 		logging.debug('info str: %s' % info)
-		slurm, jobIdStr, jcfStr, action = info.split(' ')
+                if 'Array' in info:
+                    # Sample info: 'Slurm Array Summary Job_id=6935_* (6935) Name=Sample_Job Began'
+                    _, _, _, jobIdStr, mainJobId, jcfStr, action = info.split(' ') 
+                else:
+                    # Sample info: 'Slurm Job_id=6937 Name=Sample_Job Ended'
+                    slurm, jobIdStr, jcfStr, action = info.split(' ')
 		logging.debug('action: %s' % action)
 		user = sys.argv[3]
 		logging.debug('user: %s' % user)
-		jobIdRe = re.compile('Job_id=([0-9]+)')
+		jobIdRe = re.compile('Job_id=([0-9]+_+[0-9]+|[0-9]+)')
 		match = jobIdRe.match(jobIdStr)
 		if match:
 			path = os.path.join(spoolDir, '%s.%s.mail' % (match.group(1), action))
@@ -102,4 +109,4 @@ if __name__ == "__main__":
 		else:
 			die('Could not determine job ID')
 	except Exception as e:
-		logging.error(e)
+                logging.exception('exception happened')
