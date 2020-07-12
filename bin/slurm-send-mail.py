@@ -22,6 +22,7 @@
 #   You should have received a copy of the GNU General Public License
 #   along with Slurm-Mail.  If not, see <http://www.gnu.org/licenses/>.
 #
+#   Modified by Mehran Khodabandeh (mehran.kh.68@gmail.com)
 
 '''
 slurm-send-mail.py
@@ -110,7 +111,9 @@ if __name__ == "__main__":
 	os.environ['SLURM_TIME_FORMAT'] = '%s'
 
 	baseDir = os.path.abspath('%s%s../' % (os.path.dirname(os.path.realpath(__file__)), os.sep))
+        print('BaseDir:', baseDir)
 	confDir = os.path.join(baseDir, 'conf.d')
+        print('confDir:', confDir)
 	confFile = os.path.join(confDir, 'slurm-mail.conf')
 	startedTpl = os.path.join(confDir, 'started.tpl')
 	endedTpl = os.path.join(confDir, 'ended.tpl')
@@ -144,9 +147,11 @@ if __name__ == "__main__":
 		die('Error: %s' % e)
 
 	if logFile:
-		logging.basicConfig(format='%(asctime)s:%(levelname)s: %(message)s', datefmt='%Y/%m/%d %H:%M:%S', level=logLevel, filename=logFile)
+		logging.basicConfig(format='[%(asctime)s] (p%(process)s %(pathname)s:%(lineno)d) %(levelname)s: %(message)s', 
+                        datefmt='%Y/%m/%d %H:%M:%S', level=logLevel, filename=logFile)
 	else:
-		logging.basicConfig(format='%(asctime)s:%(levelname)s: %(message)s', datefmt='%Y/%m/%d %H:%M:%S', level=logLevel)
+		logging.basicConfig(format='[%(asctime)s] (p%(process)s %(pathname)s:%(lineno)d) %(levelname)s: %(message)s', 
+                        datefmt='%Y/%m/%d %H:%M:%S', level=logLevel)
 
 	checkFile(sacctExe)
 	checkFile(scontrolExe)
@@ -166,7 +171,12 @@ if __name__ == "__main__":
 			logging.info("processing: " + f)
 			try:
 				userEmail = None
-				jobId = int(fields[0])
+                                logging.info('Job ID is: {}'.format(fields[0]))
+                                if '_' in fields[0]:
+                                    jobId, jobTask = map(int, fields[0].split('_'))
+                                else:
+                                    jobId, jobTask = int(fields[0]), None
+                                logging.info('jobId: {}, jobTask: {}'.format(jobId, jobTask)) 
 				state = fields[1]
 				# e-mail address stored in the file
 				with open(f, 'r') as spoolFile:
@@ -175,7 +185,12 @@ if __name__ == "__main__":
 				if state in ['Began', 'Ended', 'Failed']:
 					# get job info from sacct
 					cmd = '%s -j %d -p -n --fields=JobId,Partition,JobName,Start,End,State,nnodes,WorkDir,Elapsed,ExitCode,Comment,Cluster,User,NodeList,TimeLimit,TimelimitRaw' % (sacctExe, jobId)
+                                        logging.info('Running command: {}'.format(cmd))
 					rtnCode, stdout, stderr = runCommand(cmd)
+                                        logging.info('return code: {}'.format(rtnCode))
+                                        logging.info('stdout: {}'.format(stdout))
+                                        logging.info('stderr: {}'.format(stderr))
+
 					if rtnCode == 0:
 						body = ''
 						jobName = ''
@@ -192,15 +207,26 @@ if __name__ == "__main__":
 						wallclockAccuracy = ''
 						start = ''
 						end = 'N/A'
-						stdoutFile = '?'
-						stderrFile = '?'
+						stdoutFiles = ''
+						stderrFiles = ''
+                                                stdout_last_100 = ''
+                                                stderr_content = ''
 
 						logging.debug(stdout)
 						if IS_PYTHON_3:
 							stdout = stdout.decode()
+                                                job_count = 0
+                                                job_name = '{}_{}'.format(jobId, jobTask) if jobTask is not None else str(jobId)
+                                                logging.info('Looking for {}'.format(job_name))
 						for line in stdout.split("\n"):
+                                                        logging.info('Line: {}'.format(line))
 							data = line.split('|')
-							if data[0] == "%s" % jobId:
+                                                        if job_name == data[0]:
+                                                            logging.info("Found it: {}".format(line))
+                                                        else:
+                                                            logging.info("Skipping: {}".format(line))
+							if "%s" % job_name in data[0] and 'batch' not in data[0]:
+                                                                job_count += 1
 								parition = data[1]
 								jobName = data[2]
 								cluster = data[11]
@@ -239,26 +265,53 @@ if __name__ == "__main__":
 									if jobState == 'TIMEOUT':
 										jobState = 'WALLCLOCK EXCEEDED'
 										wallclockAccuracy = '0%'
-						cmd = '%s -o show job=%d' % (scontrolExe, jobId)
-						rtnCode, stdout, stderr = runCommand(cmd)
-						if rtnCode == 0:
-							jobDic = {}
-							if IS_PYTHON_3:
-								stdout = stdout.decode()
-							for i in stdout.split(' '):
-								x = i.split('=', 1)
-								if len(x) == 2:
-									jobDic[x[0]] = x[1]
-							stdoutFile = jobDic['StdOut']
-							stderrFile = jobDic['StdErr']
-						else:
-							logging.error('failed to run: %s' % cmd)
-							logging.error(stdout)
-							logging.error(stderr)
+                                                                cmd = '%s -o show job=%d' % (scontrolExe, jobId)
+                                                                rtnCode, stdout, stderr = runCommand(cmd)
+                                                                try:
+                                                                    if '\n' in stdout:
+                                                                        stdout = stdout.split('\n')[job_count-1]
+                                                                except:
+                                                                    stdout_last_100 += '\n\n Error in parsing this file \n \n'
+                                                                    rtnCode = 1
+                                                                if rtnCode == 0:
+                                                                        jobDic = {}
+                                                                        if IS_PYTHON_3:
+                                                                                stdout = stdout.decode()
+                                                                        for i in stdout.split(' '):
+                                                                                x = i.split('=', 1)
+                                                                                if len(x) == 2:
+                                                                                        jobDic[x[0]] = x[1]
+                                                                        stdoutFile = jobDic['StdOut']
+                                                                        stdoutFiles += stdoutFile
+                                                                        logging.info('stdoutFile: {}'.format(stdoutFile))
+                                                                        stderrFile = jobDic['StdErr']
+                                                                        stderrFile = '' if stderrFile == stdoutFile else stderrFile
+                                                                        stderrFiles += stderrFile
+                                                                        try:
+                                                                            with open(stdoutFile, 'r') as fread:
+                                                                                stdout_last_100 += stdoutFile+':\n'
+                                                                                for i, line in enumerate(fread):
+                                                                                    stdout_last_100 += line
+                                                                                    if i == 100:
+                                                                                        break
+                                                                            stdout_last_100 += '\n\n'
+                                                                        except:
+                                                                            logging.exception("couldn't read the stdout file")
+                                                                        if stderrFile != '':
+                                                                            try:
+                                                                                with open(stderrFile, 'r') as fread:
+                                                                                    stderr_content += stderrFile+':\n'
+                                                                                    stderr_content += fread.read()+'\n\n'
+                                                                            except:
+                                                                                logging.exception("couldn't read the stderr file")
+                                                                else:
+                                                                        logging.error('failed to run: %s' % cmd)
+                                                                        logging.error(stdout)
+                                                                        logging.error(stderr)
 
 						tpl = Template(getFileContents(jobTableTpl))
 						jobTable = tpl.substitute(
-							JOB_ID=jobId,
+							JOB_ID=job_name,
 							JOB_NAME=jobName,
 							PARTITION=parition,
 							START=start,
@@ -273,14 +326,16 @@ if __name__ == "__main__":
 							STDOUT=stdoutFile,
 							STDERR=stderrFile,
 							WALLCLOCK=wallclock,
-							WALLCLOCK_ACCURACY=wallclockAccuracy
+							WALLCLOCK_ACCURACY=wallclockAccuracy,
+                                                        STDOUT_LAST_100=stdout_last_100,
+                                                        STDERR_CONTENT=stderr_content
 						)
 
 						if state == 'Began':
 							tpl = Template(getFileContents(startedTpl))
 							body = tpl.substitute(
 								CSS=css,
-								JOB_ID=jobId,
+								JOB_ID=job_name,
 								USER=pwd.getpwnam(user).pw_gecos,
 								JOB_TABLE=jobTable,
 								CLUSTER=cluster,
@@ -292,11 +347,11 @@ if __name__ == "__main__":
 								endTxt = 'failed'
 							else:
 								endTxt = 'ended'
-
+                                                        logging.info('user: {}'.format(user))
 							body = tpl.substitute(
 								CSS=css,
 								END_TXT=endTxt,
-								JOB_ID=jobId,
+								JOB_ID=job_name,
 								USER=pwd.getpwnam(user).pw_gecos,
 								JOB_TABLE=jobTable,
 								CLUSTER=cluster,
@@ -305,13 +360,20 @@ if __name__ == "__main__":
 
 						# create HTML e-mail
 						msg = MIMEMultipart('alternative')
-						msg['subject'] = 'Job %s.%d: %s' % (cluster, jobId, state)
+						msg['subject'] = 'Job %s.%s: %s' % (cluster, job_name, state)
 						msg['To'] = user
 						msg['From'] = emailFromUserAddress
 
 						body = MIMEText(body, 'html')
 						msg.attach(body)
-						s = smtplib.SMTP('localhost')
+                                                # if this server is an SMTP server:
+                                                s = smtplib.SMTP('localhost')
+                                                # Otherwise use a secondary server for example gmail:
+                                                # s = smtplib.SMTP('smtp.gmail.com', 587, timeout=60)
+                                                # s.ehlo()
+                                                # s.starttls()
+                                                # s.ehlo()
+                                                # s.login(USERNAME, APP_PASSWORD)
 						logging.info('sending e-mail to: %s using %s for job %d (%s)' % (user, userEmail, jobId, state))
 						s.sendmail(emailFromUserAddress, userEmail, msg.as_string())
 						logging.info('deleting: %s' % f)
