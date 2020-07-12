@@ -22,12 +22,12 @@
 #   You should have received a copy of the GNU General Public License
 #   along with Slurm-Mail.  If not, see <http://www.gnu.org/licenses/>.
 #
-#   Modified by Mehran Khodabandeh (mehran.kh.68@gmail.com)
 
 '''
 slurm-send-mail.py
 
-Author: Neil Munday
+Main Author: Neil Munday
+Modified by: Mehran Khodabandeh
 
 Examines the Slurm-Mail spool directory as defined in slurm-mail.conf for any new e-mail notifications
 that have been created by slurm-spool-mail.py. If any notifications are found a HTML e-mail is sent
