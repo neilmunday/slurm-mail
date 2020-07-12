@@ -27,7 +27,6 @@
 slurm-send-mail.py
 
 Main Author: Neil Munday
-Modified by: Mehran Khodabandeh
 
 Examines the Slurm-Mail spool directory as defined in slurm-mail.conf for any new e-mail notifications
 that have been created by slurm-spool-mail.py. If any notifications are found a HTML e-mail is sent
