@@ -137,6 +137,7 @@ if __name__ == "__main__":
 			logFile = config.get(section, 'logFile')
 		emailFromUserAddress = config.get(section, 'emailFromUserAddress')
 		emailFromName = config.get(section, 'emailFromName')
+		emailSubject = config.get(section, 'emailSubject')
 		sacctExe = config.get(section, 'sacctExe')
 		scontrolExe = config.get(section, 'scontrolExe')
 		datetimeFormat = config.get(section, 'datetimeFormat')
@@ -305,7 +306,7 @@ if __name__ == "__main__":
 
 						# create HTML e-mail
 						msg = MIMEMultipart('alternative')
-						msg['subject'] = 'Job %s.%d: %s' % (cluster, jobId, state)
+						msg['subject'] = Template(emailSubject).substitute(CLUSTER=cluster, JOB_ID=jobId, STATE=state)
 						msg['To'] = user
 						msg['From'] = emailFromUserAddress
 
