@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+Version 1.7
+-----------
+
+Date: 2020-09-14
+
+* Added support for customisable e-mail subjects (issue #9)
+* Added support for customisable e-mail server settings (issue #8)
+
 Version 1.6
 -----------
 
