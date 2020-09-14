@@ -141,6 +141,11 @@ if __name__ == "__main__":
 		sacctExe = config.get(section, 'sacctExe')
 		scontrolExe = config.get(section, 'scontrolExe')
 		datetimeFormat = config.get(section, 'datetimeFormat')
+		smtpServer = config.get(section, 'smtpServer')
+		smtpPort = config.getint(section, 'smtpPort')
+		smtpUseTls = config.getboolean(section, 'smtpUseTls')
+		smtpUserName = config.get(section, 'smtpUserName')
+		smtpPassword = config.get(section, 'smtpPassword')
 	except Exception as e:
 		die('Error: %s' % e)
 
@@ -312,8 +317,12 @@ if __name__ == "__main__":
 
 						body = MIMEText(body, 'html')
 						msg.attach(body)
-						s = smtplib.SMTP('localhost')
-						logging.info('sending e-mail to: %s using %s for job %d (%s)' % (user, userEmail, jobId, state))
+						logging.info('sending e-mail to: %s using %s for job %d (%s) via SMTP server %s:%d' % (user, userEmail, jobId, state, smtpServer, smtpPort))
+						s = smtplib.SMTP(host=smtpServer, port=smtpPort, timeout=60)
+						if smtpUseTls:
+							s.starttls()
+						if smtpUserName != '' and smtpPassword != '':
+							s.login(smtpUserName, smtpPassword)
 						s.sendmail(emailFromUserAddress, userEmail, msg.as_string())
 						logging.info('deleting: %s' % f)
 						os.remove(f)
