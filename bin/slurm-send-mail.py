@@ -52,7 +52,7 @@ import subprocess
 import sys
 import time
 import smtplib
-from datetime import datetime
+from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from string import Template
@@ -63,6 +63,163 @@ if IS_PYTHON_3:
 	import configparser as ConfigParser
 else:
 	import ConfigParser
+
+class Job:
+	'''
+	Helper object to store job data
+	'''
+
+	def __init__(self, id, arrayId=None):
+		self.__arrayId = arrayId
+		self.__cluster = None
+		self.__comment = None
+		self.__elapsed = 0
+		self.__endTs = None
+		self.__exitCode = None
+		self.__id = id
+		self.__name = None
+		self.__nodelist = None
+		self.__nodes = None
+		self.__partition = None
+		self.__state = None
+		self.__startTs = None
+		self.__stderr = '?'
+		self.__stdout = '?'
+		self._timeLimitExceeded = False
+		self.__user = None
+		self.__wallclock = None
+		self.__wallclockAccuracy = None
+		self.__workdir = None
+
+	def __repr__(self):
+		return "<Job object> ID: %d" % self.__id
+
+	def getArrayId(self):
+		return self.__arrayId
+
+	def getCluster(self):
+		return self.__cluster
+
+	def getComment(self):
+		return self.__comment
+
+	def getElapsed(self):
+		return self.__elapsed
+
+	def getElapsedStr(self):
+		return str(timedelta(seconds=self.__elapsed))
+
+	def getEnd(self):
+		if self.__endTs == None:
+			return 'N/A'
+		return datetime.fromtimestamp(self.__endTs).strftime(datetimeFormat)
+
+	def getExitCode(self):
+		return self.__exitCode
+
+	def getId(self):
+		return self.__id
+
+	def getName(self):
+		return self.__name
+
+	def getNodeList(self):
+		return self.__nodelist
+
+	def getNodes(self):
+		return self.__nodes
+
+	def getPartition(self):
+		return self.__partition
+
+	def getStart(self):
+		return datetime.fromtimestamp(self.__startTs).strftime(datetimeFormat)
+
+	def getState(self):
+		return self.__state
+
+	def getStderr(self):
+		return self.__stderr
+
+	def getStdout(self):
+		return self.__stdout
+
+	def getUser(self):
+		return self.__user
+
+	def getWallclock(self):
+		return self.__wallclock
+
+	def getWallclockStr(self):
+		if self.__wallclock == 0:
+			return 'Unlimited'
+		return str(timedelta(seconds=self.__wallclock))
+
+	def getWallclockAccuracy(self):
+		if self.__wallclock == 0 or self.__wallclockAccuracy == None:
+			return 'N/A'
+		return '%.2f%%' % self.__wallclockAccuracy
+
+	def getWorkdir(self):
+		return self.__workdir
+
+	def isArray(self):
+		return self.__arrayId != None
+
+	def setCluster(self, cluster):
+		self.__cluster = cluster
+
+	def setCommment(self, comment):
+		self.__comment = comment
+
+	def setEndTs(self, ts, state):
+		self.setState(state)
+		self.__endTs = int(ts)
+		self.__elapsed = self.__endTs - self.__startTs
+		if self.__wallclock == None:
+			raise Exception('A job\'s wallclock must be set before calling setEndTs')
+		if self.__wallclock > 0:
+			self.__wallclockAccuracy = (float(self.__elapsed) / float(self.__wallclock)) * 100.0
+
+	def setExitCode(self, exitCode):
+		self.__exitCode = exitCode
+
+	def setName(self, name):
+		self.__name = name
+
+	def setNodeList(self, nodeList):
+		self.__nodelist = nodeList
+
+	def setNodes(self, nodes):
+		self.__nodes = nodes
+
+	def setPartition(self, partition):
+		self.__partition = partition
+
+	def setState(self, state):
+		if state == 'TIMEOUT':
+			self.__state = 'WALLCLOCK EXCEEDED'
+			self._timeLimitExceeded = True
+		else:
+			self.__state = state
+
+	def setStartTs(self, ts):
+		self.__startTs = int(ts)
+
+	def setStderr(self, stderr):
+		self.__stderr = stderr
+
+	def setStdout(self, stdout):
+		self.__stdout = stdout
+
+	def setUser(self, user):
+		self.__user = user
+
+	def setWallclock(self, wallclock):
+		self.__wallclock = int(wallclock)
+
+	def setWorkdir(self, workdir):
+		self.__workdir = workdir
 
 def checkFile(f):
 	'''
@@ -113,7 +270,9 @@ if __name__ == "__main__":
 	confDir = os.path.join(baseDir, 'conf.d')
 	confFile = os.path.join(confDir, 'slurm-mail.conf')
 	startedTpl = os.path.join(confDir, 'started.tpl')
+	arrayStartedTpl  = os.path.join(confDir, 'started-array.tpl')
 	endedTpl = os.path.join(confDir, 'ended.tpl')
+	arrayEndedTpl = os.path.join(confDir, 'ended-array.tpl')
 	jobTableTpl = os.path.join(confDir, 'job_table.tpl')
 	stylesheet = os.path.join(confDir, 'style.css')
 
@@ -162,6 +321,7 @@ if __name__ == "__main__":
 		die("Cannot access %s, check file permissions and that the directory exists " % spoolDir)
 
 	elapsedRe = re.compile("([\d]+)-([\d]+):([\d]+):([\d]+)")
+	jobIdRe = re.compile("^([0-9]+|[0-9]+_[0-9]+)$")
 
 	# look for any new mail notifications in the spool dir
 	files = glob.glob(spoolDir + os.sep + "*.mail")
@@ -172,17 +332,22 @@ if __name__ == "__main__":
 			logging.info("processing: " + f)
 			try:
 				userEmail = None
-				jobId = int(fields[0])
+				firstJobId = int(fields[0])
 				state = fields[1]
+				jobs = [] # store job object for each job in this array
 				# e-mail address stored in the file
 				with open(f, 'r') as spoolFile:
 					userEmail = spoolFile.read()
 
 				if state in ['Began', 'Ended', 'Failed']:
 					# get job info from sacct
-					cmd = '%s -j %d -p -n --fields=JobId,Partition,JobName,Start,End,State,nnodes,WorkDir,Elapsed,ExitCode,Comment,Cluster,User,NodeList,TimeLimit,TimelimitRaw' % (sacctExe, jobId)
+					cmd = '%s -j %d -p -n --fields=JobId,Partition,JobName,Start,End,State,nnodes,WorkDir,Elapsed,ExitCode,Comment,Cluster,User,NodeList,TimeLimit,TimelimitRaw,JobIdRaw' % (sacctExe, firstJobId)
 					rtnCode, stdout, stderr = runCommand(cmd)
-					if rtnCode == 0:
+					if rtnCode != 0:
+						logging.error('failed to run %s' % cmd)
+						logging.error(stdout.decode())
+						logging.error(stderr.decode())
+					else:
 						body = ''
 						jobName = ''
 						user = ''
@@ -206,130 +371,144 @@ if __name__ == "__main__":
 							stdout = stdout.decode()
 						for line in stdout.split("\n"):
 							data = line.split('|')
-							if data[0] == "%s" % jobId:
-								parition = data[1]
-								jobName = data[2]
-								cluster = data[11]
-								workDir = data[7]
-								startTS = int(data[3])
-								start = datetime.fromtimestamp(startTS).strftime(datetimeFormat)
-								comment = data[10]
-								nodes = data[6]
-								user = data[12]
-								nodelist = data[13]
-								if data[14] == 'UNLIMITED':
-									wallclock = 'UNLIMITED'
-									wallclockSeconds = 0
-								else:
-									wallclock = data[14].replace('T', ' ')
-									wallclockSeconds = int(data[15]) * 60
-								if state != 'Began':
-									endTS = int(data[4])
-									end = datetime.fromtimestamp(endTS).strftime(datetimeFormat)
-									elapsed = data[8] # [days-]hours:minutes:seconds
-									# convert elapsed to seconds
-									# do we have days?
-									match = elapsedRe.match(elapsed)
-									if match:
-										days, hours, mins, secs = match.groups()
-									else:
-										hours, mins, secs = elapsed.split(':')
-										days = 0
-									elapsedSeconds = (int(days) * 86400) + (int(hours) * 3600) + (int(mins) * 60) + int(secs)
-									if wallclockSeconds > 0:
-										wallclockAccuracy = '%.2f%%' % ((float(elapsedSeconds) / float(wallclockSeconds)) * 100.0)
-									else:
-										wallclockAccuracy = 'N/A'
-									exitCode = data[9]
-									jobState = data[5]
-									if jobState == 'TIMEOUT':
-										jobState = 'WALLCLOCK EXCEEDED'
-										wallclockAccuracy = '0%'
-						cmd = '%s -o show job=%d' % (scontrolExe, jobId)
-						rtnCode, stdout, stderr = runCommand(cmd)
-						if rtnCode == 0:
-							jobDic = {}
-							if IS_PYTHON_3:
-								stdout = stdout.decode()
-							for i in stdout.split(' '):
-								x = i.split('=', 1)
-								if len(x) == 2:
-									jobDic[x[0]] = x[1]
-							stdoutFile = jobDic['StdOut']
-							stderrFile = jobDic['StdErr']
+							if len(data) == 18:
+								match = jobIdRe.match(data[0])
+								if match:
+									if "%s" % firstJobId in data[0]:
+										jobId = int(data[16])
+										if '_' in data[0]:
+											job = Job(jobId, data[0].split('_')[0])
+										else:
+											job = Job(jobId)
+										job.setPartition(data[1])
+										job.setName(data[2])
+										job.setCluster(data[11])
+										job.setWorkdir(data[7])
+										job.setStartTs(data[3])
+										job.setCommment(data[10])
+										job.setNodes(data[6])
+										job.setUser(data[12])
+										job.setNodeList(data[13])
+										if data[14] == 'UNLIMITED':
+											job.setWallclock(0)
+										else:
+											job.setWallclock(int(data[15]) * 60)
+										if state != 'Began':
+											job.setEndTs(data[4], data[5])
+											job.setExitCode(data[9])
+										# get additional info from scontrol
+										# note: this will fail if the job ended after
+										# a certain amount of time
+										cmd = '%s -o show job=%d' % (scontrolExe, jobId)
+										rtnCode, stdout, stderr = runCommand(cmd)
+										if rtnCode == 0:
+											jobDic = {}
+											if IS_PYTHON_3:
+												stdout = stdout.decode()
+											for i in stdout.split(' '):
+												x = i.split('=', 1)
+												if len(x) == 2:
+													jobDic[x[0]] = x[1]
+											job.setStdout(jobDic['StdOut'])
+											job.setStderr(jobDic['StdErr'])
+										else:
+											logging.error('failed to run: %s' % cmd)
+											logging.error(stdout.decode())
+											logging.error(stderr.decode())
+										jobs.append(job)
+						# end of sacct loop
+
+				for job in jobs:
+					# Will only be one job regardless of if it is an array in the "began" state.
+					# For jobs that have ended there can be mulitple jobs objects if it is an array.
+					logging.debug("creating template for job %d" % job.getId())
+					tpl = Template(getFileContents(jobTableTpl))
+					jobTable = tpl.substitute(
+						JOB_ID=job.getId(),
+						JOB_NAME=job.getName(),
+						PARTITION=job.getPartition(),
+						START=job.getStart(),
+						END=job.getEnd(),
+						ELAPSED=job.getElapsedStr(),
+						WORKDIR=job.getWorkdir(),
+						EXIT_CODE=job.getExitCode(),
+						EXIT_STATE=job.getState(),
+						COMMENT=job.getComment(),
+						NODES=job.getNodes(),
+						NODE_LIST=job.getNodeList(),
+						STDOUT=job.getStdout(),
+						STDERR=job.getStderr(),
+						WALLCLOCK=job.getWallclockStr(),
+						WALLCLOCK_ACCURACY=job.getWallclockAccuracy()
+					)
+					if state == 'Began':
+						if job.isArray():
+							tpl = Template(getFileContents(arrayStartedTpl))
+							body = tpl.substitute(
+								CSS=css,
+								ARRAY_JOB_ID=job.getArrayId(),
+								USER=pwd.getpwnam(job.getUser()).pw_gecos,
+								JOB_TABLE=jobTable,
+								CLUSTER=job.getCluster(),
+								EMAIL_FROM=emailFromName
+							)
 						else:
-							logging.error('failed to run: %s' % cmd)
-							logging.error(stdout)
-							logging.error(stderr)
-
-						tpl = Template(getFileContents(jobTableTpl))
-						jobTable = tpl.substitute(
-							JOB_ID=jobId,
-							JOB_NAME=jobName,
-							PARTITION=parition,
-							START=start,
-							END=end,
-							ELAPSED=elapsed,
-							WORKDIR=workDir,
-							EXIT_CODE=exitCode,
-							EXIT_STATE=jobState,
-							COMMENT=comment,
-							NODES=nodes,
-							NODE_LIST=nodelist,
-							STDOUT=stdoutFile,
-							STDERR=stderrFile,
-							WALLCLOCK=wallclock,
-							WALLCLOCK_ACCURACY=wallclockAccuracy
-						)
-
-						if state == 'Began':
 							tpl = Template(getFileContents(startedTpl))
 							body = tpl.substitute(
 								CSS=css,
-								JOB_ID=jobId,
-								USER=pwd.getpwnam(user).pw_gecos,
+								JOB_ID=job.getId(),
+								USER=pwd.getpwnam(job.getUser()).pw_gecos,
 								JOB_TABLE=jobTable,
-								CLUSTER=cluster,
+								CLUSTER=job.getCluster(),
 								EMAIL_FROM=emailFromName
 							)
-						elif state == 'Ended' or state == 'Failed':
-							tpl = Template(getFileContents(endedTpl))
-							if state == 'Failed':
-								endTxt = 'failed'
-							else:
-								endTxt = 'ended'
+					elif state == 'Ended' or state == 'Failed':
+						if state == 'Failed':
+							endTxt = 'failed'
+						else:
+							endTxt = 'ended'
 
+						if job.isArray():
+							tpl = Template(getFileContents(arrayEndedTpl))
 							body = tpl.substitute(
 								CSS=css,
 								END_TXT=endTxt,
-								JOB_ID=jobId,
-								USER=pwd.getpwnam(user).pw_gecos,
+								JOB_ID=job.getId(),
+								ARRAY_JOB_ID=job.getArrayId(),
+								USER=pwd.getpwnam(job.getUser()).pw_gecos,
 								JOB_TABLE=jobTable,
-								CLUSTER=cluster,
+								CLUSTER=job.getCluster(),
+								EMAIL_FROM=emailFromName
+							)
+						else:
+							tpl = Template(getFileContents(endedTpl))
+							body = tpl.substitute(
+								CSS=css,
+								END_TXT=endTxt,
+								JOB_ID=job.getId(),
+								USER=pwd.getpwnam(job.getUser()).pw_gecos,
+								JOB_TABLE=jobTable,
+								CLUSTER=job.getCluster(),
 								EMAIL_FROM=emailFromName
 							)
 
-						# create HTML e-mail
-						msg = MIMEMultipart('alternative')
-						msg['subject'] = Template(emailSubject).substitute(CLUSTER=cluster, JOB_ID=jobId, STATE=state)
-						msg['To'] = user
-						msg['From'] = emailFromUserAddress
+					msg = MIMEMultipart('alternative')
+					msg['subject'] = Template(emailSubject).substitute(CLUSTER=job.getCluster(), JOB_ID=job.getId(), STATE=state)
+					msg['To'] = job.getUser()
+					msg['From'] = emailFromUserAddress
 
-						body = MIMEText(body, 'html')
-						msg.attach(body)
-						logging.info('sending e-mail to: %s using %s for job %d (%s) via SMTP server %s:%d' % (user, userEmail, jobId, state, smtpServer, smtpPort))
-						s = smtplib.SMTP(host=smtpServer, port=smtpPort, timeout=60)
-						if smtpUseTls:
-							s.starttls()
-						if smtpUserName != '' and smtpPassword != '':
-							s.login(smtpUserName, smtpPassword)
-						s.sendmail(emailFromUserAddress, userEmail, msg.as_string())
-						logging.info('deleting: %s' % f)
-						os.remove(f)
-				else:
-					logging.error('failed to run %s' % cmd)
-					logging.error(stdout)
-					logging.error(stderr)
+					body = MIMEText(body, 'html')
+					msg.attach(body)
+					logging.info('sending e-mail to: %s using %s for job %d (%s) via SMTP server %s:%d' % (user, userEmail, jobId, state, smtpServer, smtpPort))
+					s = smtplib.SMTP(host=smtpServer, port=smtpPort, timeout=60)
+					if smtpUseTls:
+						s.starttls()
+					if smtpUserName != '' and smtpPassword != '':
+						s.login(smtpUserName, smtpPassword)
+					s.sendmail(emailFromUserAddress, userEmail, msg.as_string())
+				# remove spool file
+				logging.info('deleting: %s' % f)
+				os.remove(f)
 
 			except Exception as e:
 				logging.error("failed to process: %s" % f)

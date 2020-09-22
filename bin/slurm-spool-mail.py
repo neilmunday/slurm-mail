@@ -88,18 +88,19 @@ if __name__ == "__main__":
 	try:
 		info = sys.argv[2].split(',')[0]
 		logging.debug('info str: %s' % info)
-		slurm, jobIdStr, jcfStr, action = info.split(' ')
+		matchRe = re.compile('Job_id=([0-9]+).*?([\w]+)$')
+		match = matchRe.search(info)
+		if not match:
+			die('Failed to parse Slurm info')
+		jobId = match.group(1)
+		action = match.group(2)
+		logging.debug('job ID: %s' % jobId)
 		logging.debug('action: %s' % action)
 		user = sys.argv[3]
 		logging.debug('user: %s' % user)
-		jobIdRe = re.compile('Job_id=([0-9]+)')
-		match = jobIdRe.match(jobIdStr)
-		if match:
-			path = os.path.join(spoolDir, '%s.%s.mail' % (match.group(1), action))
-			logging.debug('job ID match, writing file %s' % path)
-			with open(path, 'w') as f:
-				f.write(user)
-		else:
-			die('Could not determine job ID')
+		path = os.path.join(spoolDir, '%s.%s.mail' % (match.group(1), action))
+		logging.debug('job ID match, writing file %s' % path)
+		with open(path, 'w') as f:
+			f.write(user)
 	except Exception as e:
 		logging.error(e)
