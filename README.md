@@ -35,7 +35,7 @@ As of version 1.6 of Slurm-Mail both Python 3 and Python 2 are supported.
 Download the latest release of Slurm-Mail and unpack it to a directory of your choosing on the server(s) running the Slurm controller daemon `slurmctld`, e.g. `/opt/slurm-mail`
 
 ```bash
-tar xfz slurm-mail-1.2.tar.gz
+tar xfz slurm-mail-1.7.tar.gz
 ```
 
 Create the spool and log directories for Slurm-Mail on your Slurm controller(s):
@@ -87,12 +87,14 @@ Customising E-mails
 
 Slurm-Mail uses Python's [string.Template](https://docs.python.org/2/library/string.html#template-strings) class to create the e-mails it sends. Under Slurm-Mail's `conf.d` directory you will find the following files that you can edit to customise e-mails to your needs.
 
-| Filename      | Purpose                                                |
-| --------------| ------------------------------------------------------ |
-| ended.tpl     | Template used for jobs that have finished.              |
-| job_table.tpl | Template used to create the job info table in e-mails. |
-| started.tpl   | Template used for jobs that have started.              |
-| style.css     | Cascading style sheet (CSS) used by the e-mails.       |
+| Filename          | Purpose                                                      |
+| ----------------- | ------------------------------------------------------------ |
+| ended.tpl         | Template used for jobs that have finished.                    |
+| ended-array.tpl   | Template used for jobs in an array that have finished.        |
+| job_table.tpl     | Template used to create the job info table in e-mails.       |
+| started.tpl       | Template used for jobs that have started.                    |
+| started-array.tpl | Template used for the first job in an array that has started. |
+| style.css         | Cascading style sheet (CSS) used by the e-mails.             |
 
 To change the date/time format used for job start and end times in the e-mails, change the `datetimeFormat` configuration option in `conf.d/slurm-mail.conf`. The format string used is the same as Python's [datetime.strftime function](https://docs.python.org/2/library/datetime.html#strftime-strptime-behavior).
 
@@ -108,3 +110,4 @@ Contributors
 ------------
 
 * drhey: https://www.github.com/drhey
+* mkhodabandeh: https://www.github/mkhodabandeh
