@@ -14,6 +14,8 @@
 
 $JOB_TABLE
 
+$JOB_OUTPUT
+
 <p>Regards,</p>
 
 <p>$EMAIL_FROM</p>

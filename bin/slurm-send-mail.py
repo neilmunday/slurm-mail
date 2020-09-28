@@ -166,6 +166,9 @@ class Job:
 	def isArray(self):
 		return self.__arrayId != None
 
+	def separateOutput(self):
+		return self.__stderr == self.__stdout
+
 	def setCluster(self, cluster):
 		self.__cluster = cluster
 
@@ -254,6 +257,21 @@ def runCommand(cmd):
 	stdout, stderr = process.communicate()
 	return (process.returncode, stdout, stderr)
 
+def tailFile(f):
+	'''
+	Returns the last N lines of the given file.
+	'''
+	if os.path.exists(f):
+		rtn, stdout, stderr = runCommand('%s -%d %s' % (tailExe, tailLines, f))
+		if rtn != 0:
+			errMsg = 'slurm-mail encounted an error trying to read the last %d lines of %s' % (tailLines, f)
+			logging.error(errMsg)
+			return errMsg
+		return stdout.decode()
+	errMsg = 'slurm-mail: file %s does not exist' % f
+	logging.error(errMsg)
+	return errMsg
+
 if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(description='Send pending Slurm e-mails to users', add_help=True)
@@ -274,6 +292,7 @@ if __name__ == "__main__":
 	endedTpl = os.path.join(confDir, 'ended.tpl')
 	arrayEndedTpl = os.path.join(confDir, 'ended-array.tpl')
 	jobTableTpl = os.path.join(confDir, 'job_table.tpl')
+	jobOutputTpl = os.path.join(confDir, 'job-output.tpl')
 	stylesheet = os.path.join(confDir, 'style.css')
 
 	if not os.path.isdir(confDir):
@@ -305,6 +324,8 @@ if __name__ == "__main__":
 		smtpUseTls = config.getboolean(section, 'smtpUseTls')
 		smtpUserName = config.get(section, 'smtpUserName')
 		smtpPassword = config.get(section, 'smtpPassword')
+		tailExe = config.get(section, 'tailExe')
+		tailLines = config.getint(section, 'includeOutputLines')
 	except Exception as e:
 		die('Error: %s' % e)
 
@@ -468,6 +489,22 @@ if __name__ == "__main__":
 						else:
 							endTxt = 'ended'
 
+						jobOutput = ''
+						if tailLines > 0:
+							tpl = Template(getFileContents(jobOutputTpl))
+							jobOutput = tpl.substitute(
+								OUTPUT_LINES=tailLines,
+								OUTPUT_FILE=job.getStdout(),
+								JOB_OUTPUT=tailFile(job.getStdout())
+							)
+							stdErr = None
+							if not job.separateOutput():
+								jobOutput += tpl.substitute(
+									OUTPUT_LINES=tailLines,
+									OUTPUT_FILE=job.getStderr(),
+									JOB_OUTPUT=tailFile(job.getStderr())
+								)
+
 						if job.isArray():
 							tpl = Template(getFileContents(arrayEndedTpl))
 							body = tpl.substitute(
@@ -477,6 +514,7 @@ if __name__ == "__main__":
 								ARRAY_JOB_ID=job.getArrayId(),
 								USER=pwd.getpwnam(job.getUser()).pw_gecos,
 								JOB_TABLE=jobTable,
+								JOB_OUTPUT=jobOutput,
 								CLUSTER=job.getCluster(),
 								EMAIL_FROM=emailFromName
 							)
@@ -488,6 +526,7 @@ if __name__ == "__main__":
 								JOB_ID=job.getId(),
 								USER=pwd.getpwnam(job.getUser()).pw_gecos,
 								JOB_TABLE=jobTable,
+								JOB_OUTPUT=jobOutput,
 								CLUSTER=job.getCluster(),
 								EMAIL_FROM=emailFromName
 							)

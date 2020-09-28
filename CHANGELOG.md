@@ -4,11 +4,12 @@ Change Log
 Version 1.7
 -----------
 
-Date: 2020-09-22
+Date: 2020-09-28
 
 * Added support for customisable e-mail subjects (issue #9)
 * Added support for customisable e-mail server settings (issue #8)
 * Added support for job arrays (issue #10)
+* Added support for including lines from job output in job completion e-mails (issue #12)
 
 Version 1.6
 -----------
