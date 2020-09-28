@@ -27,6 +27,8 @@ Slurm-Mail aims to address this by providing a drop in replacement for Slurm's e
 
 E-mails can be easily customised to your needs using the provided templates (see below).
 
+You can also opt to include a number of lines from the end of the job's output files in the job completion e-mails (see below).
+
 Installation
 ------------
 
@@ -105,6 +107,16 @@ To change the subject of the e-mails, change the `emailSubject` configuration op
 | $CLUSTER     | The name of the cluster |
 | $JOB_ID      | The Slurm ID of the job |
 | $STATE       | The state of the job    |
+
+Including Job Output in E-mails
+-------------------------------
+
+In `conf.d/slurm-mail.conf` you can set the `includeOutputLines` to the number of lines to include from the end of each job's standard out and standard error files.
+
+Notes:
+
+* if the user has decided to use the same file for both standard output and standard error then there will be only one section of job output in the job completion e-mails.
+* Job output can only be included if the process that is running `slurm-send-mail.py` is able to read the user's output files.
 
 Contributors
 ------------
