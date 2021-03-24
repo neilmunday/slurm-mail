@@ -43,15 +43,11 @@ conf.d/style.css       -> customise e-mail style
 README.md              -> Set-up info
 """
 
+import configparser
 import logging
 import pathlib
 import re
 import sys
-
-try:
-    import configparser
-except ImportError:
-    import ConfigParser as configparser
 
 
 def die(msg):
