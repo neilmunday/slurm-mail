@@ -50,7 +50,7 @@ import re
 import sys
 
 
-def die(msg):
+def die(msg: str):
     logging.error(msg)
     sys.stderr.write("{0}\n".format(msg))
     sys.exit(1)
