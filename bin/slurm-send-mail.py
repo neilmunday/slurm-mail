@@ -59,6 +59,7 @@ from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from string import Template
+from typing import Optional
 
 
 class Job:
@@ -66,7 +67,7 @@ class Job:
     Helper object to store job data
     """
 
-    def __init__(self, id, arrayId=None):
+    def __init__(self, id: int, arrayId: Optional[str] = None):
         self.__arrayId = arrayId
         self.__cluster = None
         self.__comment = None
@@ -88,91 +89,91 @@ class Job:
         self.__wallclockAccuracy = None
         self.__workdir = None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<Job object> ID: {0}".format(self.__id)
 
-    def getArrayId(self):
+    def getArrayId(self) -> str:
         return self.__arrayId
 
-    def getCluster(self):
+    def getCluster(self) -> str:
         return self.__cluster
 
-    def getComment(self):
+    def getComment(self) -> str:
         return self.__comment
 
-    def getElapsed(self):
+    def getElapsed(self) -> int:
         return self.__elapsed
 
-    def getElapsedStr(self):
+    def getElapsedStr(self) -> str:
         return str(timedelta(seconds=self.__elapsed))
 
-    def getEnd(self):
+    def getEnd(self) -> str:
         if self.__endTs is None:
             return "N/A"
         return datetime.fromtimestamp(self.__endTs).strftime(datetimeFormat)
 
-    def getExitCode(self):
+    def getExitCode(self) -> str:
         return self.__exitCode
 
-    def getId(self):
+    def getId(self) -> int:
         return self.__id
 
-    def getName(self):
+    def getName(self) -> str:
         return self.__name
 
-    def getNodeList(self):
+    def getNodeList(self) -> str:
         return self.__nodelist
 
-    def getNodes(self):
+    def getNodes(self) -> str:
         return self.__nodes
 
-    def getPartition(self):
+    def getPartition(self) -> str:
         return self.__partition
 
-    def getStart(self):
+    def getStart(self) -> str:
         return datetime.fromtimestamp(self.__startTs).strftime(datetimeFormat)
 
-    def getState(self):
+    def getState(self) -> str:
         return self.__state
 
-    def getStderr(self):
+    def getStderr(self) -> str:
         return self.__stderr
 
-    def getStdout(self):
+    def getStdout(self) -> str:
         return self.__stdout
 
-    def getUser(self):
+    def getUser(self) -> str:
         return self.__user
 
-    def getWallclock(self):
+    def getWallclock(self) -> int:
         return self.__wallclock
 
-    def getWallclockStr(self):
+    def getWallclockStr(self) -> str:
         if self.__wallclock == 0:
             return "Unlimited"
         return str(timedelta(seconds=self.__wallclock))
 
-    def getWallclockAccuracy(self):
+    def getWallclockAccuracy(self) -> str:
         if self.__wallclock == 0 or self.__wallclockAccuracy is None:
             return "N/A"
         return "{0:.2f}%".format(self.__wallclockAccuracy)
 
-    def getWorkdir(self):
+    def getWorkdir(self) -> str:
         return self.__workdir
 
-    def isArray(self):
+    def isArray(self) -> bool:
         return self.__arrayId is not None
 
-    def separateOutput(self):
+    def separateOutput(self) -> bool:
         return self.__stderr == self.__stdout
 
-    def setCluster(self, cluster):
+    def setCluster(self, cluster: str):
         self.__cluster = cluster
 
-    def setCommment(self, comment):
+    def setCommment(self, comment: str):
         self.__comment = comment
 
-    def setEndTs(self, ts, state):
+    def setEndTs(self, ts: int, state: str):
         self.setState(state)
         self.__endTs = int(ts)
         self.__elapsed = self.__endTs - self.__startTs
@@ -185,48 +186,48 @@ class Job:
                 (float(self.__elapsed) / float(self.__wallclock)) * 100.0
             )
 
-    def setExitCode(self, exitCode):
+    def setExitCode(self, exitCode: str):
         self.__exitCode = exitCode
 
-    def setName(self, name):
+    def setName(self, name: str):
         self.__name = name
 
-    def setNodeList(self, nodeList):
+    def setNodeList(self, nodeList: str):
         self.__nodelist = nodeList
 
-    def setNodes(self, nodes):
+    def setNodes(self, nodes: str):
         self.__nodes = nodes
 
-    def setPartition(self, partition):
+    def setPartition(self, partition: str):
         self.__partition = partition
 
-    def setState(self, state):
+    def setState(self, state: str):
         if state == "TIMEOUT":
             self.__state = "WALLCLOCK EXCEEDED"
             self._timeLimitExceeded = True
         else:
             self.__state = state
 
-    def setStartTs(self, ts):
+    def setStartTs(self, ts: int):
         self.__startTs = int(ts)
 
-    def setStderr(self, stderr):
+    def setStderr(self, stderr: str):
         self.__stderr = stderr
 
-    def setStdout(self, stdout):
+    def setStdout(self, stdout: str):
         self.__stdout = stdout
 
-    def setUser(self, user):
+    def setUser(self, user: str):
         self.__user = user
 
-    def setWallclock(self, wallclock):
+    def setWallclock(self, wallclock: int):
         self.__wallclock = int(wallclock)
 
-    def setWorkdir(self, workdir):
+    def setWorkdir(self, workdir: str):
         self.__workdir = workdir
 
 
-def check_file(f):
+def check_file(f: pathlib.Path):
     """
     Check if the given file exists, exit if it does not.
     """
@@ -234,7 +235,7 @@ def check_file(f):
         die("{0} does not exist".format(f))
 
 
-def die(msg):
+def die(msg: str):
     """
     Exit the program with the given error message.
     """
@@ -243,7 +244,7 @@ def die(msg):
     sys.exit(1)
 
 
-def get_file_contents(path):
+def get_file_contents(path: pathlib.Path) -> Optional[str]:
     """
     Helper function to read the contents of a file.
     """
@@ -253,7 +254,7 @@ def get_file_contents(path):
     return contents
 
 
-def run_command(cmd):
+def run_command(cmd: str) -> tuple:
     """
     Execute the given command and return a tuple that contains the
     return code, std out and std err output.
@@ -266,7 +267,7 @@ def run_command(cmd):
     return (process.returncode, stdout.decode("utf-8"), stderr.decode("utf-8"))
 
 
-def tail_file(f):
+def tail_file(f: str) -> str:
     """
     Returns the last N lines of the given file.
     """
