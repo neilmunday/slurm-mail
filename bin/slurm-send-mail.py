@@ -44,7 +44,6 @@ README.md              -> Set-up info
 
 import argparse
 import configparser
-import glob
 import logging
 import os
 import pathlib
@@ -227,11 +226,11 @@ class Job:
         self.__workdir = workdir
 
 
-def checkFile(f):
+def check_file(f):
     """
     Check if the given file exists, exit if it does not.
     """
-    if not os.path.isfile(f):
+    if not f.is_file():
         die("{0} does not exist".format(f))
 
 
@@ -244,7 +243,7 @@ def die(msg):
     sys.exit(1)
 
 
-def getFileContents(path):
+def get_file_contents(path):
     """
     Helper function to read the contents of a file.
     """
@@ -254,7 +253,7 @@ def getFileContents(path):
     return contents
 
 
-def runCommand(cmd):
+def run_command(cmd):
     """
     Execute the given command and return a tuple that contains the
     return code, std out and std err output.
@@ -276,7 +275,7 @@ def tailFile(f):
         logging.error(errMsg)
         return errMsg
 
-    rtn, stdout, stderr = runCommand(
+    rtn, stdout, stderr = run_command(
         "{0} -{1} {2}".format(tailExe, tailLines, f)
     )
     if rtn != 0:
@@ -301,46 +300,48 @@ if __name__ == "__main__":
     logLevel = logging.DEBUG if args.verbose else logging.INFO
     os.environ['SLURM_TIME_FORMAT'] = "%s"
 
-    baseDir = os.path.abspath(
-        "%s%s../" % (os.path.dirname(os.path.realpath(__file__)), os.sep)
-    )
-    confDir = os.path.join(baseDir, "conf.d")
-    confFile = os.path.join(confDir, "slurm-mail.conf")
-    startedTpl = os.path.join(confDir, "started.tpl")
-    arrayStartedTpl = os.path.join(confDir, "started-array.tpl")
-    endedTpl = os.path.join(confDir, "ended.tpl")
-    arrayEndedTpl = os.path.join(confDir, "ended-array.tpl")
-    jobTableTpl = os.path.join(confDir, "job_table.tpl")
-    jobOutputTpl = os.path.join(confDir, "job-output.tpl")
-    stylesheet = os.path.join(confDir, "style.css")
+    conf_dir = pathlib.Path(__file__).resolve().parents[1] / "conf.d"
+    if not conf_dir.is_dir():
+        die("{0} does not exist".format(conf_dir))
 
-    if not os.path.isdir(confDir):
-        die("{0} does not exist".format(confDir))
+    conf_file = conf_dir / "slurm-mail.conf"
+    check_file(conf_file)
 
-    for f in [confFile, startedTpl, endedTpl, jobTableTpl, stylesheet]:
-        checkFile(f)
+    templates = {}
+    templates['array_ended'] = conf_dir / "ended-array.tpl"
+    templates['array_started'] = conf_dir / "started-array.tpl"
+    templates['ended'] = conf_dir / "ended.tpl"
+    templates['job_output'] = conf_dir / "job-output.tpl"
+    templates['job_table'] = conf_dir / "job-table.tpl"
+    templates['started'] = conf_dir / "started.tpl"
+
+    for tpl, tpl_file in templates.items():
+        check_file(tpl_file)
+
+    stylesheet = conf_dir / "style.css"
+    check_file(stylesheet)
 
     section = "slurm-send-mail"
-    logFile = None
+    log_file = None
 
     # parse config file
     try:
         config = configparser.RawConfigParser()
-        config.read(confFile)
+        config.read(conf_file)
         if not config.has_section(section):
             die(
                 "Could not find config section for slurm-maild in {0}".format(
-                    confFile
+                    conf_file
                 )
             )
-        spoolDir = config.get("common", "spoolDir")
+        spool_dir = pathlib.Path(config.get("common", "spoolDir"))
         if config.has_option(section, "logFile"):
-            logFile = config.get(section, "logFile")
+            log_file = pathlib.Path(config.get(section, "logFile"))
         emailFromUserAddress = config.get(section, "emailFromUserAddress")
         emailFromName = config.get(section, "emailFromName")
         emailSubject = config.get(section, "emailSubject")
-        sacctExe = config.get(section, "sacctExe")
-        scontrolExe = config.get(section, "scontrolExe")
+        sacctExe = pathlib.Path(config.get(section, "sacctExe"))
+        scontrolExe = pathlib.Path(config.get(section, "scontrolExe"))
         datetimeFormat = config.get(section, "datetimeFormat")
         smtpServer = config.get(section, "smtpServer")
         smtpPort = config.getint(section, "smtpPort")
@@ -352,10 +353,10 @@ if __name__ == "__main__":
     except Exception as e:
         die("Error: {0}".format(e))
 
-    if logFile:
+    if log_file and log_file.is_file():
         logging.basicConfig(
             format="%(asctime)s:%(levelname)s: %(message)s",
-            datefmt="%Y/%m/%d %H:%M:%S", level=logLevel, filename=logFile
+            datefmt="%Y/%m/%d %H:%M:%S", level=logLevel, filename=log_file
         )
     else:
         logging.basicConfig(
@@ -363,24 +364,22 @@ if __name__ == "__main__":
             datefmt="%Y/%m/%d %H:%M:%S", level=logLevel
         )
 
-    checkFile(sacctExe)
-    checkFile(scontrolExe)
-    css = getFileContents(stylesheet)
+    check_file(sacctExe)
+    check_file(scontrolExe)
+    css = get_file_contents(stylesheet)
 
-    if not os.access(spoolDir, os.R_OK | os.W_OK):
+    if not os.access(spool_dir, os.R_OK | os.W_OK):
         die(
             "Cannot access {0}, check file permissions "
-            "and that the directory exists.".format(spoolDir)
+            "and that the directory exists.".format(spool_dir)
         )
 
     elapsedRe = re.compile(r"([\d]+)-([\d]+):([\d]+):([\d]+)")
     jobIdRe = re.compile(r"^([0-9]+|[0-9]+_[0-9]+)$")
 
     # look for any new mail notifications in the spool dir
-    files = glob.glob(spoolDir + os.sep + "*.mail")
-    for f in files:
-        filename = os.path.basename(f)
-        fields = filename.split('.')
+    for f in spool_dir.glob("*.mail"):
+        fields = f.name.split('.')
         if len(fields) != 3:
             continue
 
@@ -402,7 +401,7 @@ if __name__ == "__main__":
                     "Comment,Cluster,User,NodeList,TimeLimit,TimelimitRaw,"
                     "JobIdRaw".format(sacctExe, firstJobId)
                 )
-                rtnCode, stdout, stderr = runCommand(cmd)
+                rtnCode, stdout, stderr = run_command(cmd)
                 if rtnCode != 0:
                     logging.error("Failed to run {0}".format(cmd))
                     logging.error(stdout)
@@ -465,7 +464,7 @@ if __name__ == "__main__":
                                     cmd = "{0} -o show job={1}".format(
                                         scontrolExe, jobId
                                     )
-                                    rtnCode, stdout, stderr = runCommand(cmd)
+                                    rtnCode, stdout, stderr = run_command(cmd)
                                     if rtnCode == 0:
                                         jobDic = {}
                                         for i in stdout.split(" "):
@@ -492,7 +491,7 @@ if __name__ == "__main__":
                 logging.debug(
                     "Creating template for job {0}".format(job.getId())
                 )
-                tpl = Template(getFileContents(jobTableTpl))
+                tpl = Template(get_file_contents(templates['job_table']))
                 jobTable = tpl.substitute(
                     JOB_ID=job.getId(),
                     JOB_NAME=job.getName(),
@@ -513,7 +512,7 @@ if __name__ == "__main__":
                 )
                 if state == "Began":
                     if job.isArray():
-                        tpl = Template(getFileContents(arrayStartedTpl))
+                        tpl = Template(get_file_contents(templates['array_started']))
                         body = tpl.substitute(
                             CSS=css,
                             ARRAY_JOB_ID=job.getArrayId(),
@@ -523,7 +522,7 @@ if __name__ == "__main__":
                             EMAIL_FROM=emailFromName
                         )
                     else:
-                        tpl = Template(getFileContents(startedTpl))
+                        tpl = Template(get_file_contents(templates['started']))
                         body = tpl.substitute(
                             CSS=css,
                             JOB_ID=job.getId(),
@@ -540,7 +539,7 @@ if __name__ == "__main__":
 
                     jobOutput = ""
                     if tailLines > 0:
-                        tpl = Template(getFileContents(jobOutputTpl))
+                        tpl = Template(get_file_contents(templates['job_output']))
                         jobOutput = tpl.substitute(
                             OUTPUT_LINES=tailLines,
                             OUTPUT_FILE=job.getStdout(),
@@ -555,7 +554,7 @@ if __name__ == "__main__":
                             )
 
                     if job.isArray():
-                        tpl = Template(getFileContents(arrayEndedTpl))
+                        tpl = Template(get_file_contents(templates['array_ended']))
                         body = tpl.substitute(
                             CSS=css,
                             END_TXT=endTxt,
@@ -568,7 +567,7 @@ if __name__ == "__main__":
                             EMAIL_FROM=emailFromName
                         )
                     else:
-                        tpl = Template(getFileContents(endedTpl))
+                        tpl = Template(get_file_contents(templates['ended']))
                         body = tpl.substitute(
                             CSS=css,
                             END_TXT=endTxt,
