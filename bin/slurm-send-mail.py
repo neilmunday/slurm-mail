@@ -266,7 +266,7 @@ def run_command(cmd):
     return (process.returncode, stdout.decode("utf-8"), stderr.decode("utf-8"))
 
 
-def tailFile(f):
+def tail_file(f):
     """
     Returns the last N lines of the given file.
     """
@@ -330,8 +330,8 @@ if __name__ == "__main__":
         config.read(conf_file)
         if not config.has_section(section):
             die(
-                "Could not find config section for slurm-maild in {0}".format(
-                    conf_file
+                "Could not find config section '{0}' in {1}".format(
+                    section, conf_file
                 )
             )
         spool_dir = pathlib.Path(config.get("common", "spoolDir"))
@@ -428,60 +428,59 @@ if __name__ == "__main__":
                     logging.debug(stdout)
                     for line in stdout.split("\n"):
                         data = line.split('|')
-                        if len(data) == 18:
-                            match = jobIdRe.match(data[0])
-                            if match:
-                                if "{0}".format(firstJobId) in data[0]:
-                                    jobId = int(data[16])
-                                    if "_" in data[0]:
-                                        job = Job(
-                                            jobId, data[0].split("_")[0]
-                                        )
-                                    else:
-                                        job = Job(jobId)
-                                    job.setPartition(data[1])
-                                    job.setName(data[2])
-                                    job.setCluster(data[11])
-                                    job.setWorkdir(data[7])
-                                    job.setStartTs(data[3])
-                                    job.setCommment(data[10])
-                                    job.setNodes(data[6])
-                                    job.setUser(data[12])
-                                    job.setNodeList(data[13])
-                                    if data[14] == "UNLIMITED":
-                                        job.setWallclock(0)
-                                    else:
-                                        job.setWallclock(
-                                            int(data[15]) * 60
-                                        )
-                                    if state != "Began":
-                                        job.setEndTs(data[4], data[5])
-                                        job.setExitCode(data[9])
-                                    # get additional info from scontrol
-                                    # note: this will fail if the job
-                                    # ended after a certain amount of
-                                    # time
-                                    cmd = "{0} -o show job={1}".format(
-                                        scontrolExe, jobId
-                                    )
-                                    rtnCode, stdout, stderr = run_command(cmd)
-                                    if rtnCode == 0:
-                                        jobDic = {}
-                                        for i in stdout.split(" "):
-                                            x = i.split("=", 1)
-                                            if len(x) == 2:
-                                                jobDic[x[0]] = x[1]
-                                        job.setStdout(jobDic['StdOut'])
-                                        job.setStderr(jobDic['StdErr'])
-                                    else:
-                                        logging.error(
-                                            "Failed to run: {0}".format(
-                                                cmd
-                                            )
-                                        )
-                                        logging.error(stdout)
-                                        logging.error(stderr)
-                                    jobs.append(job)
+                        if len(data) != 18:
+                            continue
+
+                        match = jobIdRe.match(data[0])
+                        if not match:
+                            continue
+
+                        if "{0}".format(firstJobId) not in data[0]:
+                            continue
+
+                        jobId = int(data[16])
+                        if "_" in data[0]:
+                            job = Job(jobId, data[0].split("_")[0])
+                        else:
+                            job = Job(jobId)
+
+                        job.setPartition(data[1])
+                        job.setName(data[2])
+                        job.setCluster(data[11])
+                        job.setWorkdir(data[7])
+                        job.setStartTs(data[3])
+                        job.setCommment(data[10])
+                        job.setNodes(data[6])
+                        job.setUser(data[12])
+                        job.setNodeList(data[13])
+
+                        if data[14] == "UNLIMITED":
+                            job.setWallclock(0)
+                        else:
+                            job.setWallclock(int(data[15]) * 60)
+
+                        if state != "Began":
+                            job.setEndTs(data[4], data[5])
+                            job.setExitCode(data[9])
+
+                        # get additional info from scontrol
+                        # note: this will fail if the job ended after a
+                        # certain amount of time.
+                        cmd = "{0} -o show job={1}".format(scontrolExe, jobId)
+                        rtnCode, stdout, stderr = run_command(cmd)
+                        if rtnCode == 0:
+                            jobDic = {}
+                            for i in stdout.split(" "):
+                                x = i.split("=", 1)
+                                if len(x) == 2:
+                                    jobDic[x[0]] = x[1]
+                            job.setStdout(jobDic['StdOut'])
+                            job.setStderr(jobDic['StdErr'])
+                        else:
+                            logging.error("Failed to run: {0}".format(cmd))
+                            logging.error(stdout)
+                            logging.error(stderr)
+                        jobs.append(job)
                     # end of sacct loop
 
             for job in jobs:
@@ -512,7 +511,9 @@ if __name__ == "__main__":
                 )
                 if state == "Began":
                     if job.isArray():
-                        tpl = Template(get_file_contents(templates['array_started']))
+                        tpl = Template(
+                            get_file_contents(templates['array_started'])
+                        )
                         body = tpl.substitute(
                             CSS=css,
                             ARRAY_JOB_ID=job.getArrayId(),
@@ -539,22 +540,26 @@ if __name__ == "__main__":
 
                     jobOutput = ""
                     if tailLines > 0:
-                        tpl = Template(get_file_contents(templates['job_output']))
+                        tpl = Template(
+                            get_file_contents(templates['job_output'])
+                        )
                         jobOutput = tpl.substitute(
                             OUTPUT_LINES=tailLines,
                             OUTPUT_FILE=job.getStdout(),
-                            JOB_OUTPUT=tailFile(job.getStdout())
+                            JOB_OUTPUT=tail_file(job.getStdout())
                         )
                         stdErr = None
                         if not job.separateOutput():
                             jobOutput += tpl.substitute(
                                 OUTPUT_LINES=tailLines,
                                 OUTPUT_FILE=job.getStderr(),
-                                JOB_OUTPUT=tailFile(job.getStderr())
+                                JOB_OUTPUT=tail_file(job.getStderr())
                             )
 
                     if job.isArray():
-                        tpl = Template(get_file_contents(templates['array_ended']))
+                        tpl = Template(
+                            get_file_contents(templates['array_ended'])
+                        )
                         body = tpl.substitute(
                             CSS=css,
                             END_TXT=endTxt,
