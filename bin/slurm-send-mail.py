@@ -216,24 +216,6 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
             logging.error(stdout)
             logging.error(stderr)
         else:
-            body = ""
-            jobName = ""
-            user = ""
-            partition = ""
-            cluster = ""
-            nodes = 0
-            comment = ""
-            workDir = ""
-            jobState = ""
-            exitCode = "N/A"
-            elapsed = "N/A"
-            wallclock = ""
-            wallclockAccuracy = ""
-            start = ""
-            end = "N/A"
-            stdoutFile = "?"
-            stderrFile = "?"
-
             logging.debug(stdout)
             for line in stdout.split("\n"):
                 data = line.split('|')
@@ -291,7 +273,6 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
                     logging.error(stdout)
                     logging.error(stderr)
                 jobs.append(job)
-            # end of sacct loop
 
     for job in jobs:
         # Will only be one job regardless of if it is an array in the
@@ -317,6 +298,8 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
             WALLCLOCK=job.wc_string,
             WALLCLOCK_ACCURACY=job.wc_accuracy
         )
+
+        body = ""
         if state == "Began":
             if job.is_array():
                 tpl = Template(get_file_contents(templates['array_started']))
@@ -393,7 +376,7 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
         logging.info(
             "Sending e-mail to: {0} using {1} for job {2} ({3}) "
             "via SMTP server {4}:{5}".format(
-                user, user_email, job_id, state, smtp_server, smtp_port
+                job.user, user_email, job_id, state, smtp_server, smtp_port
             )
         )
         s = smtplib.SMTP(host=smtp_server, port=smtp_port, timeout=60)
