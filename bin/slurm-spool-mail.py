@@ -66,7 +66,7 @@ if __name__ == "__main__":
     try:
         section = "slurm-spool-mail"
         config = configparser.RawConfigParser()
-        config.read(conf_file)
+        config.read(str(conf_file))
         if not config.has_section(section):
             die(
                 "Could not find config section '{0}' in {1}".format(
@@ -101,7 +101,7 @@ if __name__ == "__main__":
             "{0}.{1}.mail".format(match.group("job_id"), match.group("action"))
         )
         logging.debug("Job ID match, writing file {0}".format(path))
-        with open(path, "w") as f:
+        with path.open(mode="w") as f:
             f.write(sys.argv[3])
     except Exception as e:
         logging.error(e)

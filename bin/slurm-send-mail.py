@@ -188,7 +188,7 @@ def get_file_contents(path: pathlib.Path) -> Optional[str]:
     Helper function to read the contents of a file.
     """
     contents = None
-    with open(path, "r") as f:
+    with path.open() as f:
         contents = f.read()
     return contents
 
@@ -196,7 +196,7 @@ def get_file_contents(path: pathlib.Path) -> Optional[str]:
 def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
     # Email address stored in the file
     user_email = None
-    with open(f, 'r') as spool_file:
+    with f.open() as spool_file:
         user_email = spool_file.read()
 
     jobs = []  # store job object for each job in this array
@@ -342,7 +342,6 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
         )
         msg['To'] = job.user
         msg['From'] = email_from_address
-
         msg.attach(MIMEText(body, "html"))
         logging.info(
             "Sending e-mail to: {0} using {1} for job {2} ({3}) "
@@ -359,7 +358,7 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
 
     # Remove spool file
     logging.info("Deleting: {0}".format(f))
-    os.remove(f)
+    f.unlink()
 
 
 def run_command(cmd: str) -> tuple:
@@ -432,7 +431,7 @@ if __name__ == "__main__":
     # Parse config file
     try:
         config = configparser.RawConfigParser()
-        config.read(conf_file)
+        config.read(str(conf_file))
         section = "slurm-send-mail"
 
         if not config.has_section(section):
@@ -484,7 +483,7 @@ if __name__ == "__main__":
     check_file(scontrol_exe)
     css = get_file_contents(stylesheet)
 
-    if not os.access(spool_dir, os.R_OK | os.W_OK):
+    if not os.access(str(spool_dir), os.R_OK | os.W_OK):
         die(
             "Cannot access {0}, check file permissions "
             "and that the directory exists.".format(spool_dir)
