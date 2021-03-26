@@ -67,164 +67,103 @@ class Job:
     Helper object to store job data
     """
 
-    def __init__(self, id: int, arrayId: Optional[str] = None):
-        self.__arrayId = arrayId
-        self.__cluster = None
-        self.__comment = None
-        self.__elapsed = 0
-        self.__endTs = None
-        self.__exitCode = None
-        self.__id = id
-        self.__name = None
-        self.__nodelist = None
-        self.__nodes = None
-        self.__partition = None
+    def __init__(self, id: int, array_id: Optional[str] = None):
+        self.__end_ts = None
+        self.__start_ts = None
         self.__state = None
-        self.__startTs = None
-        self.__stderr = "?"
-        self.__stdout = "?"
-        self._timeLimitExceeded = False
-        self.__user = None
         self.__wallclock = None
-        self.__wallclockAccuracy = None
-        self.__workdir = None
+        self.__wc_accuracy = None
+
+        self.array_id = array_id
+        self.cluster = None
+        self.comment = None
+        self.elapsed = 0
+        self.exit_code = None
+        self.id = id
+        self.name = None
+        self.nodelist = None
+        self.nodes = None
+        self.partition = None
+        self.stderr = "?"
+        self.stdout = "?"
+        self.user = None
+        self.workdir = None
 
     def __repr__(self) -> str:
-        return "<Job object> ID: {0}".format(self.__id)
+        return "<Job object> ID: {0}".format(self.id)
 
-    def getArrayId(self) -> str:
-        return self.__arrayId
-
-    def getCluster(self) -> str:
-        return self.__cluster
-
-    def getComment(self) -> str:
-        return self.__comment
-
-    def getElapsed(self) -> int:
-        return self.__elapsed
-
-    def getElapsedStr(self) -> str:
-        return str(timedelta(seconds=self.__elapsed))
-
-    def getEnd(self) -> str:
-        if self.__endTs is None:
+    @property
+    def end(self) -> str:
+        if self.end_ts is None:
             return "N/A"
-        return datetime.fromtimestamp(self.__endTs).strftime(datetimeFormat)
+        return datetime.fromtimestamp(self.end_ts).strftime(datetimeFormat)
 
-    def getExitCode(self) -> str:
-        return self.__exitCode
+    @property
+    def end_ts(self) -> int:
+        return self.__end_ts
 
-    def getId(self) -> int:
-        return self.__id
+    @end_ts.setter
+    def end_ts(self, ts: int):
+        if self.wallclock is None:
+            raise Exception(
+                "A job's wallclock must be set before setting end_ts"
+            )
 
-    def getName(self) -> str:
-        return self.__name
+        self.__end_ts = int(ts)
+        self.elapsed = (self.__end_ts - self.__start_ts)
+        if self.wallclock > 0:
+            self.__wc_accuracy = (
+                (float(self.elapsed) / float(self.wallclock)) * 100.0
+            )
 
-    def getNodeList(self) -> str:
-        return self.__nodelist
+    @property
+    def start(self) -> str:
+        return datetime.fromtimestamp(self.start_ts).strftime(datetimeFormat)
 
-    def getNodes(self) -> str:
-        return self.__nodes
+    @property
+    def start_ts(self) -> int:
+        return self.__start_ts
 
-    def getPartition(self) -> str:
-        return self.__partition
+    @start_ts.setter
+    def start_ts(self, ts: int):
+        self.__start_ts = int(ts)
 
-    def getStart(self) -> str:
-        return datetime.fromtimestamp(self.__startTs).strftime(datetimeFormat)
-
-    def getState(self) -> str:
+    @property
+    def state(self) -> str:
         return self.__state
 
-    def getStderr(self) -> str:
-        return self.__stderr
+    @state.setter
+    def state(self, s: str):
+        if s == "TIMEOUT":
+            self.__state = "WALLCLOCK EXCEEDED"
+        else:
+            self.__state = s
 
-    def getStdout(self) -> str:
-        return self.__stdout
-
-    def getUser(self) -> str:
-        return self.__user
-
-    def getWallclock(self) -> int:
+    @property
+    def wallclock(self) -> int:
         return self.__wallclock
 
-    def getWallclockStr(self) -> str:
-        if self.__wallclock == 0:
-            return "Unlimited"
-        return str(timedelta(seconds=self.__wallclock))
+    @wallclock.setter
+    def wallclock(self, w: int):
+        self.__wallclock = int(w)
 
-    def getWallclockAccuracy(self) -> str:
-        if self.__wallclock == 0 or self.__wallclockAccuracy is None:
+    @property
+    def wc_accuracy(self) -> str:
+        if self.wallclock == 0 or self.__wc_accuracy is None:
             return "N/A"
-        return "{0:.2f}%".format(self.__wallclockAccuracy)
+        return "{0:.2f}%".format(self.__wc_accuracy)
 
-    def getWorkdir(self) -> str:
-        return self.__workdir
+    @property
+    def wc_string(self) -> str:
+        if self.wallclock == 0:
+            return "Unlimited"
+        return str(timedelta(seconds=self.wallclock))
 
-    def isArray(self) -> bool:
-        return self.__arrayId is not None
+    def is_array(self) -> bool:
+        return self.array_id is not None
 
-    def separateOutput(self) -> bool:
-        return self.__stderr == self.__stdout
-
-    def setCluster(self, cluster: str):
-        self.__cluster = cluster
-
-    def setCommment(self, comment: str):
-        self.__comment = comment
-
-    def setEndTs(self, ts: int, state: str):
-        self.setState(state)
-        self.__endTs = int(ts)
-        self.__elapsed = self.__endTs - self.__startTs
-        if self.__wallclock is None:
-            raise Exception(
-                "A job's wallclock must be set before calling setEndTs"
-            )
-        if self.__wallclock > 0:
-            self.__wallclockAccuracy = (
-                (float(self.__elapsed) / float(self.__wallclock)) * 100.0
-            )
-
-    def setExitCode(self, exitCode: str):
-        self.__exitCode = exitCode
-
-    def setName(self, name: str):
-        self.__name = name
-
-    def setNodeList(self, nodeList: str):
-        self.__nodelist = nodeList
-
-    def setNodes(self, nodes: str):
-        self.__nodes = nodes
-
-    def setPartition(self, partition: str):
-        self.__partition = partition
-
-    def setState(self, state: str):
-        if state == "TIMEOUT":
-            self.__state = "WALLCLOCK EXCEEDED"
-            self._timeLimitExceeded = True
-        else:
-            self.__state = state
-
-    def setStartTs(self, ts: int):
-        self.__startTs = int(ts)
-
-    def setStderr(self, stderr: str):
-        self.__stderr = stderr
-
-    def setStdout(self, stdout: str):
-        self.__stdout = stdout
-
-    def setUser(self, user: str):
-        self.__user = user
-
-    def setWallclock(self, wallclock: int):
-        self.__wallclock = int(wallclock)
-
-    def setWorkdir(self, workdir: str):
-        self.__workdir = workdir
+    def separate_output(self) -> bool:
+        return self.stderr == self.stdout
 
 
 def check_file(f: pathlib.Path):
@@ -298,7 +237,6 @@ if __name__ == "__main__":
         action="store_true"
     )
     args = parser.parse_args()
-    logLevel = logging.DEBUG if args.verbose else logging.INFO
     os.environ['SLURM_TIME_FORMAT'] = "%s"
 
     conf_dir = pathlib.Path(__file__).resolve().parents[1] / "conf.d"
@@ -322,22 +260,24 @@ if __name__ == "__main__":
     stylesheet = conf_dir / "style.css"
     check_file(stylesheet)
 
-    section = "slurm-send-mail"
-    log_file = None
-
     # parse config file
     try:
         config = configparser.RawConfigParser()
         config.read(conf_file)
+        section = "slurm-send-mail"
+
         if not config.has_section(section):
             die(
                 "Could not find config section '{0}' in {1}".format(
                     section, conf_file
                 )
             )
+
         spool_dir = pathlib.Path(config.get("common", "spoolDir"))
         if config.has_option(section, "logFile"):
             log_file = pathlib.Path(config.get(section, "logFile"))
+        else:
+            log_file = None
         emailFromUserAddress = config.get(section, "emailFromUserAddress")
         emailFromName = config.get(section, "emailFromName")
         emailSubject = config.get(section, "emailSubject")
@@ -354,15 +294,21 @@ if __name__ == "__main__":
     except Exception as e:
         die("Error: {0}".format(e))
 
+    log_date = "%Y/%m/%d %H:%M:%S"
+    log_format = "%(asctime)s:%(levelname)s: %(message)s"
+    if args.verbose:
+        log_level = logging.DEBUG
+    else:
+        log_level = logging.INFO
+
     if log_file and log_file.is_file():
         logging.basicConfig(
-            format="%(asctime)s:%(levelname)s: %(message)s",
-            datefmt="%Y/%m/%d %H:%M:%S", level=logLevel, filename=log_file
+            format=log_format, datefmt=log_date,
+            level=log_level, filename=log_file
         )
     else:
         logging.basicConfig(
-            format="%(asctime)s:%(levelname)s: %(message)s",
-            datefmt="%Y/%m/%d %H:%M:%S", level=logLevel
+            format=log_format, datefmt=log_date, level=log_level
         )
 
     check_file(sacctExe)
@@ -445,24 +391,25 @@ if __name__ == "__main__":
                         else:
                             job = Job(jobId)
 
-                        job.setPartition(data[1])
-                        job.setName(data[2])
-                        job.setCluster(data[11])
-                        job.setWorkdir(data[7])
-                        job.setStartTs(data[3])
-                        job.setCommment(data[10])
-                        job.setNodes(data[6])
-                        job.setUser(data[12])
-                        job.setNodeList(data[13])
+                        job.cluster = data[11]
+                        job.comment = data[10]
+                        job.name = data[2]
+                        job.nodelist = data[13]
+                        job.nodes = data[6]
+                        job.partition = data[1]
+                        job.start_ts = data[3]
+                        job.user = data[12]
+                        job.workdir = data[7]
 
                         if data[14] == "UNLIMITED":
-                            job.setWallclock(0)
+                            job.wallclock = 0
                         else:
-                            job.setWallclock(int(data[15]) * 60)
+                            job.wallclock = int(data[15]) * 60
 
                         if state != "Began":
-                            job.setEndTs(data[4], data[5])
-                            job.setExitCode(data[9])
+                            job.state = data[5]
+                            job.end_ts = data[4]
+                            job.exit_code = data[9]
 
                         # get additional info from scontrol
                         # note: this will fail if the job ended after a
@@ -475,8 +422,8 @@ if __name__ == "__main__":
                                 x = i.split("=", 1)
                                 if len(x) == 2:
                                     jobDic[x[0]] = x[1]
-                            job.setStdout(jobDic['StdOut'])
-                            job.setStderr(jobDic['StdErr'])
+                            job.stderr = jobDic['StdErr']
+                            job.stdout = jobDic['StdOut']
                         else:
                             logging.error("Failed to run: {0}".format(cmd))
                             logging.error(stdout)
@@ -489,56 +436,52 @@ if __name__ == "__main__":
                 # in the "began" state. For jobs that have ended there
                 # can be mulitple jobs objects if it is an array.
                 logging.debug(
-                    "Creating template for job {0}".format(job.getId())
+                    "Creating template for job {0}".format(job.id)
                 )
                 tpl = Template(get_file_contents(templates['job_table']))
                 jobTable = tpl.substitute(
-                    JOB_ID=job.getId(),
-                    JOB_NAME=job.getName(),
-                    PARTITION=job.getPartition(),
-                    START=job.getStart(),
-                    END=job.getEnd(),
-                    ELAPSED=job.getElapsedStr(),
-                    WORKDIR=job.getWorkdir(),
-                    EXIT_CODE=job.getExitCode(),
-                    EXIT_STATE=job.getState(),
-                    COMMENT=job.getComment(),
-                    NODES=job.getNodes(),
-                    NODE_LIST=job.getNodeList(),
-                    STDOUT=job.getStdout(),
-                    STDERR=job.getStderr(),
-                    WALLCLOCK=job.getWallclockStr(),
-                    WALLCLOCK_ACCURACY=job.getWallclockAccuracy()
+                    JOB_ID=job.id,
+                    JOB_NAME=job.name,
+                    PARTITION=job.partition,
+                    START=job.start,
+                    END=job.end,
+                    ELAPSED=str(timedelta(seconds=job.elapsed)),
+                    WORKDIR=job.workdir,
+                    EXIT_CODE=job.exit_code,
+                    EXIT_STATE=job.state,
+                    COMMENT=job.comment,
+                    NODES=job.nodes,
+                    NODE_LIST=job.nodelist,
+                    STDOUT=job.stdout,
+                    STDERR=job.stderr,
+                    WALLCLOCK=job.wc_string,
+                    WALLCLOCK_ACCURACY=job.wc_accuracy
                 )
                 if state == "Began":
-                    if job.isArray():
+                    if job.is_array():
                         tpl = Template(
                             get_file_contents(templates['array_started'])
                         )
                         body = tpl.substitute(
                             CSS=css,
-                            ARRAY_JOB_ID=job.getArrayId(),
-                            USER=pwd.getpwnam(job.getUser()).pw_gecos,
+                            ARRAY_JOB_ID=job.array_id,
+                            USER=pwd.getpwnam(job.user).pw_gecos,
                             JOB_TABLE=jobTable,
-                            CLUSTER=job.getCluster(),
+                            CLUSTER=job.cluster,
                             EMAIL_FROM=emailFromName
                         )
                     else:
                         tpl = Template(get_file_contents(templates['started']))
                         body = tpl.substitute(
                             CSS=css,
-                            JOB_ID=job.getId(),
-                            USER=pwd.getpwnam(job.getUser()).pw_gecos,
+                            JOB_ID=job.id,
+                            USER=pwd.getpwnam(job.user).pw_gecos,
                             JOB_TABLE=jobTable,
-                            CLUSTER=job.getCluster(),
+                            CLUSTER=job.cluster,
                             EMAIL_FROM=emailFromName
                         )
                 elif state == "Ended" or state == "Failed":
-                    if state == "Failed":
-                        endTxt = "failed"
-                    else:
-                        endTxt = "ended"
-
+                    endTxt = state.lower()
                     jobOutput = ""
                     if tailLines > 0:
                         tpl = Template(
@@ -546,30 +489,30 @@ if __name__ == "__main__":
                         )
                         jobOutput = tpl.substitute(
                             OUTPUT_LINES=tailLines,
-                            OUTPUT_FILE=job.getStdout(),
-                            JOB_OUTPUT=tail_file(job.getStdout())
+                            OUTPUT_FILE=job.stdout,
+                            JOB_OUTPUT=tail_file(job.stdout)
                         )
                         stdErr = None
-                        if not job.separateOutput():
+                        if not job.separate_output():
                             jobOutput += tpl.substitute(
                                 OUTPUT_LINES=tailLines,
-                                OUTPUT_FILE=job.getStderr(),
-                                JOB_OUTPUT=tail_file(job.getStderr())
+                                OUTPUT_FILE=job.stderr,
+                                JOB_OUTPUT=tail_file(job.stderr)
                             )
 
-                    if job.isArray():
+                    if job.is_array():
                         tpl = Template(
                             get_file_contents(templates['array_ended'])
                         )
                         body = tpl.substitute(
                             CSS=css,
                             END_TXT=endTxt,
-                            JOB_ID=job.getId(),
-                            ARRAY_JOB_ID=job.getArrayId(),
-                            USER=pwd.getpwnam(job.getUser()).pw_gecos,
+                            JOB_ID=job.id,
+                            ARRAY_JOB_ID=job.array_id,
+                            USER=pwd.getpwnam(job.user).pw_gecos,
                             JOB_TABLE=jobTable,
                             JOB_OUTPUT=jobOutput,
-                            CLUSTER=job.getCluster(),
+                            CLUSTER=job.cluster,
                             EMAIL_FROM=emailFromName
                         )
                     else:
@@ -577,20 +520,20 @@ if __name__ == "__main__":
                         body = tpl.substitute(
                             CSS=css,
                             END_TXT=endTxt,
-                            JOB_ID=job.getId(),
-                            USER=pwd.getpwnam(job.getUser()).pw_gecos,
+                            JOB_ID=job.id,
+                            USER=pwd.getpwnam(job.user).pw_gecos,
                             JOB_TABLE=jobTable,
                             JOB_OUTPUT=jobOutput,
-                            CLUSTER=job.getCluster(),
+                            CLUSTER=job.cluster,
                             EMAIL_FROM=emailFromName
                         )
 
                 msg = MIMEMultipart("alternative")
                 msg['subject'] = Template(emailSubject).substitute(
-                    CLUSTER=job.getCluster(), JOB_ID=job.getId(),
+                    CLUSTER=job.cluster, JOB_ID=job.id,
                     STATE=state
                 )
-                msg['To'] = job.getUser()
+                msg['To'] = job.user
                 msg['From'] = emailFromUserAddress
 
                 body = MIMEText(body, "html")
