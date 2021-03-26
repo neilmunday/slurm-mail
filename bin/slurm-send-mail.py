@@ -281,22 +281,12 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
         logging.debug("Creating template for job {0}".format(job.id))
         tpl = Template(get_file_contents(templates['job_table']))
         job_table = tpl.substitute(
-            JOB_ID=job.id,
-            JOB_NAME=job.name,
-            PARTITION=job.partition,
-            START=job.start,
-            END=job.end,
-            ELAPSED=str(timedelta(seconds=job.elapsed)),
-            WORKDIR=job.workdir,
-            EXIT_CODE=job.exit_code,
-            EXIT_STATE=job.state,
-            COMMENT=job.comment,
-            NODES=job.nodes,
-            NODE_LIST=job.nodelist,
-            STDOUT=job.stdout,
-            STDERR=job.stderr,
-            WALLCLOCK=job.wc_string,
-            WALLCLOCK_ACCURACY=job.wc_accuracy
+            JOB_ID=job.id, JOB_NAME=job.name, PARTITION=job.partition,
+            START=job.start, END=job.end, WORKDIR=job.workdir,
+            ELAPSED=str(timedelta(seconds=job.elapsed)), EXIT_STATE=job.state,
+            EXIT_CODE=job.exit_code, COMMENT=job.comment, NODES=job.nodes,
+            NODE_LIST=job.nodelist, STDOUT=job.stdout, STDERR=job.stderr,
+            WALLCLOCK=job.wc_string, WALLCLOCK_ACCURACY=job.wc_accuracy
         )
 
         body = ""
@@ -304,22 +294,16 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
             if job.is_array():
                 tpl = Template(get_file_contents(templates['array_started']))
                 body = tpl.substitute(
-                    CSS=css,
-                    ARRAY_JOB_ID=job.array_id,
-                    USER=pwd.getpwnam(job.user).pw_gecos,
-                    JOB_TABLE=job_table,
-                    CLUSTER=job.cluster,
-                    EMAIL_FROM=email_from_name
+                    CSS=css, ARRAY_JOB_ID=job.array_id,
+                    USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
+                    CLUSTER=job.cluster, EMAIL_FROM=email_from_name
                 )
             else:
                 tpl = Template(get_file_contents(templates['started']))
                 body = tpl.substitute(
-                    CSS=css,
-                    JOB_ID=job.id,
-                    USER=pwd.getpwnam(job.user).pw_gecos,
-                    JOB_TABLE=job_table,
-                    CLUSTER=job.cluster,
-                    EMAIL_FROM=email_from_name
+                    CSS=css, JOB_ID=job.id, EMAIL_FROM=email_from_name,
+                    USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
+                    CLUSTER=job.cluster
                 )
         elif state == "Ended" or state == "Failed":
             end_txt = state.lower()
@@ -327,40 +311,29 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
             if tail_lines > 0:
                 tpl = Template(get_file_contents(templates['job_output']))
                 job_output = tpl.substitute(
-                    OUTPUT_LINES=tail_lines,
-                    OUTPUT_FILE=job.stdout,
+                    OUTPUT_LINES=tail_lines, OUTPUT_FILE=job.stdout,
                     JOB_OUTPUT=tail_file(job.stdout, tail_lines)
                 )
                 if not job.separate_output():
                     job_output += tpl.substitute(
-                        OUTPUT_LINES=tail_lines,
-                        OUTPUT_FILE=job.stderr,
+                        OUTPUT_LINES=tail_lines, OUTPUT_FILE=job.stderr,
                         JOB_OUTPUT=tail_file(job.stderr, tail_lines)
                     )
 
             if job.is_array():
                 tpl = Template(get_file_contents(templates['array_ended']))
                 body = tpl.substitute(
-                    CSS=css,
-                    END_TXT=end_txt,
-                    JOB_ID=job.id,
-                    ARRAY_JOB_ID=job.array_id,
-                    USER=pwd.getpwnam(job.user).pw_gecos,
-                    JOB_TABLE=job_table,
-                    JOB_OUTPUT=job_output,
-                    CLUSTER=job.cluster,
-                    EMAIL_FROM=email_from_name
+                    CSS=css, END_TXT=end_txt, JOB_ID=job.id,
+                    ARRAY_JOB_ID=job.array_id, EMAIL_FROM=email_from_name,
+                    USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
+                    JOB_OUTPUT=job_output, CLUSTER=job.cluster
                 )
             else:
                 tpl = Template(get_file_contents(templates['ended']))
                 body = tpl.substitute(
-                    CSS=css,
-                    END_TXT=end_txt,
-                    JOB_ID=job.id,
-                    USER=pwd.getpwnam(job.user).pw_gecos,
-                    JOB_TABLE=job_table,
-                    JOB_OUTPUT=job_output,
-                    CLUSTER=job.cluster,
+                    CSS=css, END_TXT=end_txt, JOB_ID=job.id,
+                    USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
+                    JOB_OUTPUT=job_output, CLUSTER=job.cluster,
                     EMAIL_FROM=email_from_name
                 )
 
@@ -501,8 +474,8 @@ if __name__ == "__main__":
 
     if log_file and log_file.is_file():
         logging.basicConfig(
-            format=log_format, datefmt=log_date,
-            level=log_level, filename=log_file
+            format=log_format, datefmt=log_date, level=log_level,
+            filename=log_file
         )
     else:
         logging.basicConfig(
