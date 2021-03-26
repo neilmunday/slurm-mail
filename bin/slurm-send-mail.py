@@ -206,25 +206,25 @@ def run_command(cmd: str) -> tuple:
     return (process.returncode, stdout.decode("utf-8"), stderr.decode("utf-8"))
 
 
-def tail_file(f: str) -> str:
+def tail_file(f: str, num_lines: int) -> str:
     """
     Returns the last N lines of the given file.
     """
     if not pathlib.Path(f).exists():
-        errMsg = "slurm-mail: file {0} does not exist".format(f)
-        logging.error(errMsg)
-        return errMsg
+        err_msg = "slurm-mail: file {0} does not exist".format(f)
+        logging.error(err_msg)
+        return err_msg
 
     rtn, stdout, stderr = run_command(
-        "{0} -{1} {2}".format(tailExe, tailLines, f)
+        "{0} -{1} {2}".format(tailExe, num_lines, f)
     )
     if rtn != 0:
-        errMsg = (
+        err_msg = (
             "slurm-mail encounted an error trying to read "
-            "the last {0} lines of {1}".format(tailLines, f)
+            "the last {0} lines of {1}".format(num_lines, f)
         )
-        logging.error(errMsg)
-        return errMsg
+        logging.error(err_msg)
+        return err_msg
     return stdout
 
 
@@ -330,15 +330,15 @@ if __name__ == "__main__":
         if len(fields) != 3:
             continue
 
-        logging.info("processing: " + f)
+        logging.info("processing: {0}".format(f))
         try:
-            userEmail = None
-            firstJobId = int(fields[0])
+            user_email = None
+            first_job_id = int(fields[0])
             state = fields[1]
             jobs = []  # store job object for each job in this array
             # e-mail address stored in the file
-            with open(f, 'r') as spoolFile:
-                userEmail = spoolFile.read()
+            with open(f, 'r') as spool_file:
+                user_email = spool_file.read()
 
             if state in ['Began', 'Ended', 'Failed']:
                 # get job info from sacct
@@ -346,7 +346,7 @@ if __name__ == "__main__":
                     "{0} -j {1} -p -n --fields=JobId,Partition,JobName,"
                     "Start,End,State,nnodes,WorkDir,Elapsed,ExitCode,"
                     "Comment,Cluster,User,NodeList,TimeLimit,TimelimitRaw,"
-                    "JobIdRaw".format(sacctExe, firstJobId)
+                    "JobIdRaw".format(sacctExe, first_job_id)
                 )
                 rtnCode, stdout, stderr = run_command(cmd)
                 if rtnCode != 0:
@@ -382,14 +382,14 @@ if __name__ == "__main__":
                         if not match:
                             continue
 
-                        if "{0}".format(firstJobId) not in data[0]:
+                        if "{0}".format(first_job_id) not in data[0]:
                             continue
 
-                        jobId = int(data[16])
+                        job_id = int(data[16])
                         if "_" in data[0]:
-                            job = Job(jobId, data[0].split("_")[0])
+                            job = Job(job_id, data[0].split("_")[0])
                         else:
-                            job = Job(jobId)
+                            job = Job(job_id)
 
                         job.cluster = data[11]
                         job.comment = data[10]
@@ -414,7 +414,7 @@ if __name__ == "__main__":
                         # get additional info from scontrol
                         # note: this will fail if the job ended after a
                         # certain amount of time.
-                        cmd = "{0} -o show job={1}".format(scontrolExe, jobId)
+                        cmd = "{0} -o show job={1}".format(scontrolExe, job_id)
                         rtnCode, stdout, stderr = run_command(cmd)
                         if rtnCode == 0:
                             jobDic = {}
@@ -490,14 +490,14 @@ if __name__ == "__main__":
                         jobOutput = tpl.substitute(
                             OUTPUT_LINES=tailLines,
                             OUTPUT_FILE=job.stdout,
-                            JOB_OUTPUT=tail_file(job.stdout)
+                            JOB_OUTPUT=tail_file(job.stdout, tailLines)
                         )
                         stdErr = None
                         if not job.separate_output():
                             jobOutput += tpl.substitute(
                                 OUTPUT_LINES=tailLines,
                                 OUTPUT_FILE=job.stderr,
-                                JOB_OUTPUT=tail_file(job.stderr)
+                                JOB_OUTPUT=tail_file(job.stderr, tailLines)
                             )
 
                     if job.is_array():
@@ -530,8 +530,7 @@ if __name__ == "__main__":
 
                 msg = MIMEMultipart("alternative")
                 msg['subject'] = Template(emailSubject).substitute(
-                    CLUSTER=job.cluster, JOB_ID=job.id,
-                    STATE=state
+                    CLUSTER=job.cluster, JOB_ID=job.id, STATE=state
                 )
                 msg['To'] = job.user
                 msg['From'] = emailFromUserAddress
@@ -541,7 +540,7 @@ if __name__ == "__main__":
                 logging.info(
                     "Sending e-mail to: {0} using {1} for job {2} ({3}) "
                     "via SMTP server {4}:{5}".format(
-                        user, userEmail, jobId, state, smtpServer, smtpPort
+                        user, user_email, job_id, state, smtpServer, smtpPort
                     )
                 )
                 s = smtplib.SMTP(host=smtpServer, port=smtpPort, timeout=60)
@@ -549,7 +548,7 @@ if __name__ == "__main__":
                     s.starttls()
                 if smtpUserName != "" and smtpPassword != "":
                     s.login(smtpUserName, smtpPassword)
-                s.sendmail(emailFromUserAddress, userEmail, msg.as_string())
+                s.sendmail(emailFromUserAddress, user_email, msg.as_string())
             # remove spool file
             logging.info("Deleting: {0}".format(f))
             os.remove(f)
