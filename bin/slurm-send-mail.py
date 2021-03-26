@@ -222,8 +222,7 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
                 if len(data) != 18:
                     continue
 
-                match = job_id_re.match(data[0])
-                if not match:
+                if not re.match(r"^([0-9]+|[0-9]+_[0-9]+)$", data[0]):
                     continue
 
                 if "{0}".format(first_job_id) not in data[0]:
@@ -344,8 +343,7 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
         msg['To'] = job.user
         msg['From'] = email_from_address
 
-        body = MIMEText(body, "html")
-        msg.attach(body)
+        msg.attach(MIMEText(body, "html"))
         logging.info(
             "Sending e-mail to: {0} using {1} for job {2} ({3}) "
             "via SMTP server {4}:{5}".format(
@@ -491,8 +489,6 @@ if __name__ == "__main__":
             "Cannot access {0}, check file permissions "
             "and that the directory exists.".format(spool_dir)
         )
-
-    job_id_re = re.compile(r"^([0-9]+|[0-9]+_[0-9]+)$")
 
     # Look for any new mail notifications in the spool dir
     for f in spool_dir.glob("*.mail"):
