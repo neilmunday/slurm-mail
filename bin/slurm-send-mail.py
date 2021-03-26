@@ -193,6 +193,221 @@ def get_file_contents(path: pathlib.Path) -> Optional[str]:
     return contents
 
 
+def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
+    # Email address stored in the file
+    user_email = None
+    with open(f, 'r') as spool_file:
+        user_email = spool_file.read()
+
+    jobs = []  # store job object for each job in this array
+
+    if state in ['Began', 'Ended', 'Failed']:
+        # Get job info from sacct
+        cmd = (
+            "{0} -j {1} -p -n --fields=JobId,Partition,JobName,Start,End,"
+            "State,nnodes,WorkDir,Elapsed,ExitCode,Comment,Cluster,User,"
+            "NodeList,TimeLimit,TimelimitRaw,JobIdRaw".format(
+                sacct_exe, first_job_id
+            )
+        )
+        rc, stdout, stderr = run_command(cmd)
+        if rc != 0:
+            logging.error("Failed to run {0}".format(cmd))
+            logging.error(stdout)
+            logging.error(stderr)
+        else:
+            body = ""
+            jobName = ""
+            user = ""
+            partition = ""
+            cluster = ""
+            nodes = 0
+            comment = ""
+            workDir = ""
+            jobState = ""
+            exitCode = "N/A"
+            elapsed = "N/A"
+            wallclock = ""
+            wallclockAccuracy = ""
+            start = ""
+            end = "N/A"
+            stdoutFile = "?"
+            stderrFile = "?"
+
+            logging.debug(stdout)
+            for line in stdout.split("\n"):
+                data = line.split('|')
+                if len(data) != 18:
+                    continue
+
+                match = job_id_re.match(data[0])
+                if not match:
+                    continue
+
+                if "{0}".format(first_job_id) not in data[0]:
+                    continue
+
+                job_id = int(data[16])
+                if "_" in data[0]:
+                    job = Job(job_id, data[0].split("_")[0])
+                else:
+                    job = Job(job_id)
+
+                job.cluster = data[11]
+                job.comment = data[10]
+                job.name = data[2]
+                job.nodelist = data[13]
+                job.nodes = data[6]
+                job.partition = data[1]
+                job.start_ts = data[3]
+                job.user = data[12]
+                job.workdir = data[7]
+
+                if data[14] == "UNLIMITED":
+                    job.wallclock = 0
+                else:
+                    job.wallclock = int(data[15]) * 60
+
+                if state != "Began":
+                    job.state = data[5]
+                    job.end_ts = data[4]
+                    job.exit_code = data[9]
+
+                # Get additional info from scontrol.
+                # NOTE: this will fail if the job ended after a certain
+                # amount of time.
+                cmd = "{0} -o show job={1}".format(scontrol_exe, job_id)
+                rc, stdout, stderr = run_command(cmd)
+                if rc == 0:
+                    job_dict = {}
+                    for i in stdout.split(" "):
+                        x = i.split("=", 1)
+                        if len(x) == 2:
+                            job_dict[x[0]] = x[1]
+                    job.stderr = job_dict['StdErr']
+                    job.stdout = job_dict['StdOut']
+                else:
+                    logging.error("Failed to run: {0}".format(cmd))
+                    logging.error(stdout)
+                    logging.error(stderr)
+                jobs.append(job)
+            # end of sacct loop
+
+    for job in jobs:
+        # Will only be one job regardless of if it is an array in the
+        # "began" state. For jobs that have ended there can be mulitple
+        # jobs objects if it is an array.
+        logging.debug("Creating template for job {0}".format(job.id))
+        tpl = Template(get_file_contents(templates['job_table']))
+        job_table = tpl.substitute(
+            JOB_ID=job.id,
+            JOB_NAME=job.name,
+            PARTITION=job.partition,
+            START=job.start,
+            END=job.end,
+            ELAPSED=str(timedelta(seconds=job.elapsed)),
+            WORKDIR=job.workdir,
+            EXIT_CODE=job.exit_code,
+            EXIT_STATE=job.state,
+            COMMENT=job.comment,
+            NODES=job.nodes,
+            NODE_LIST=job.nodelist,
+            STDOUT=job.stdout,
+            STDERR=job.stderr,
+            WALLCLOCK=job.wc_string,
+            WALLCLOCK_ACCURACY=job.wc_accuracy
+        )
+        if state == "Began":
+            if job.is_array():
+                tpl = Template(get_file_contents(templates['array_started']))
+                body = tpl.substitute(
+                    CSS=css,
+                    ARRAY_JOB_ID=job.array_id,
+                    USER=pwd.getpwnam(job.user).pw_gecos,
+                    JOB_TABLE=job_table,
+                    CLUSTER=job.cluster,
+                    EMAIL_FROM=email_from_name
+                )
+            else:
+                tpl = Template(get_file_contents(templates['started']))
+                body = tpl.substitute(
+                    CSS=css,
+                    JOB_ID=job.id,
+                    USER=pwd.getpwnam(job.user).pw_gecos,
+                    JOB_TABLE=job_table,
+                    CLUSTER=job.cluster,
+                    EMAIL_FROM=email_from_name
+                )
+        elif state == "Ended" or state == "Failed":
+            end_txt = state.lower()
+            job_output = ""
+            if tail_lines > 0:
+                tpl = Template(get_file_contents(templates['job_output']))
+                job_output = tpl.substitute(
+                    OUTPUT_LINES=tail_lines,
+                    OUTPUT_FILE=job.stdout,
+                    JOB_OUTPUT=tail_file(job.stdout, tail_lines)
+                )
+                if not job.separate_output():
+                    job_output += tpl.substitute(
+                        OUTPUT_LINES=tail_lines,
+                        OUTPUT_FILE=job.stderr,
+                        JOB_OUTPUT=tail_file(job.stderr, tail_lines)
+                    )
+
+            if job.is_array():
+                tpl = Template(get_file_contents(templates['array_ended']))
+                body = tpl.substitute(
+                    CSS=css,
+                    END_TXT=end_txt,
+                    JOB_ID=job.id,
+                    ARRAY_JOB_ID=job.array_id,
+                    USER=pwd.getpwnam(job.user).pw_gecos,
+                    JOB_TABLE=job_table,
+                    JOB_OUTPUT=job_output,
+                    CLUSTER=job.cluster,
+                    EMAIL_FROM=email_from_name
+                )
+            else:
+                tpl = Template(get_file_contents(templates['ended']))
+                body = tpl.substitute(
+                    CSS=css,
+                    END_TXT=end_txt,
+                    JOB_ID=job.id,
+                    USER=pwd.getpwnam(job.user).pw_gecos,
+                    JOB_TABLE=job_table,
+                    JOB_OUTPUT=job_output,
+                    CLUSTER=job.cluster,
+                    EMAIL_FROM=email_from_name
+                )
+
+        msg = MIMEMultipart("alternative")
+        msg['subject'] = Template(email_subject).substitute(
+            CLUSTER=job.cluster, JOB_ID=job.id, STATE=state
+        )
+        msg['To'] = job.user
+        msg['From'] = email_from_address
+
+        body = MIMEText(body, "html")
+        msg.attach(body)
+        logging.info(
+            "Sending e-mail to: {0} using {1} for job {2} ({3}) "
+            "via SMTP server {4}:{5}".format(
+                user, user_email, job_id, state, smtp_server, smtp_port
+            )
+        )
+        s = smtplib.SMTP(host=smtp_server, port=smtp_port, timeout=60)
+        if smtp_use_tls:
+            s.starttls()
+        if smtp_username != "" and smtp_password != "":
+            s.login(smtp_username, smtp_password)
+        s.sendmail(email_from_address, user_email, msg.as_string())
+
+    # Remove spool file
+    logging.info("Deleting: {0}".format(f))
+    os.remove(f)
+
+
 def run_command(cmd: str) -> tuple:
     """
     Execute the given command and return a tuple that contains the
@@ -260,7 +475,7 @@ if __name__ == "__main__":
     stylesheet = conf_dir / "style.css"
     check_file(stylesheet)
 
-    # parse config file
+    # Parse config file
     try:
         config = configparser.RawConfigParser()
         config.read(conf_file)
@@ -323,7 +538,7 @@ if __name__ == "__main__":
 
     job_id_re = re.compile(r"^([0-9]+|[0-9]+_[0-9]+)$")
 
-    # look for any new mail notifications in the spool dir
+    # Look for any new mail notifications in the spool dir
     for f in spool_dir.glob("*.mail"):
         fields = f.name.split('.')
         if len(fields) != 3:
@@ -331,228 +546,7 @@ if __name__ == "__main__":
 
         logging.info("processing: {0}".format(f))
         try:
-            user_email = None
-            first_job_id = int(fields[0])
-            state = fields[1]
-            jobs = []  # store job object for each job in this array
-            # e-mail address stored in the file
-            with open(f, 'r') as spool_file:
-                user_email = spool_file.read()
-
-            if state in ['Began', 'Ended', 'Failed']:
-                # get job info from sacct
-                cmd = (
-                    "{0} -j {1} -p -n --fields=JobId,Partition,JobName,"
-                    "Start,End,State,nnodes,WorkDir,Elapsed,ExitCode,"
-                    "Comment,Cluster,User,NodeList,TimeLimit,TimelimitRaw,"
-                    "JobIdRaw".format(sacct_exe, first_job_id)
-                )
-                rc, stdout, stderr = run_command(cmd)
-                if rc != 0:
-                    logging.error("Failed to run {0}".format(cmd))
-                    logging.error(stdout)
-                    logging.error(stderr)
-                else:
-                    body = ""
-                    jobName = ""
-                    user = ""
-                    partition = ""
-                    cluster = ""
-                    nodes = 0
-                    comment = ""
-                    workDir = ""
-                    jobState = ""
-                    exitCode = "N/A"
-                    elapsed = "N/A"
-                    wallclock = ""
-                    wallclockAccuracy = ""
-                    start = ""
-                    end = "N/A"
-                    stdoutFile = "?"
-                    stderrFile = "?"
-
-                    logging.debug(stdout)
-                    for line in stdout.split("\n"):
-                        data = line.split('|')
-                        if len(data) != 18:
-                            continue
-
-                        match = job_id_re.match(data[0])
-                        if not match:
-                            continue
-
-                        if "{0}".format(first_job_id) not in data[0]:
-                            continue
-
-                        job_id = int(data[16])
-                        if "_" in data[0]:
-                            job = Job(job_id, data[0].split("_")[0])
-                        else:
-                            job = Job(job_id)
-
-                        job.cluster = data[11]
-                        job.comment = data[10]
-                        job.name = data[2]
-                        job.nodelist = data[13]
-                        job.nodes = data[6]
-                        job.partition = data[1]
-                        job.start_ts = data[3]
-                        job.user = data[12]
-                        job.workdir = data[7]
-
-                        if data[14] == "UNLIMITED":
-                            job.wallclock = 0
-                        else:
-                            job.wallclock = int(data[15]) * 60
-
-                        if state != "Began":
-                            job.state = data[5]
-                            job.end_ts = data[4]
-                            job.exit_code = data[9]
-
-                        # get additional info from scontrol
-                        # note: this will fail if the job ended after a
-                        # certain amount of time.
-                        cmd = "{0} -o show job={1}".format(
-                            scontrol_exe, job_id
-                        )
-                        rc, stdout, stderr = run_command(cmd)
-                        if rc == 0:
-                            job_dict = {}
-                            for i in stdout.split(" "):
-                                x = i.split("=", 1)
-                                if len(x) == 2:
-                                    job_dict[x[0]] = x[1]
-                            job.stderr = job_dict['StdErr']
-                            job.stdout = job_dict['StdOut']
-                        else:
-                            logging.error("Failed to run: {0}".format(cmd))
-                            logging.error(stdout)
-                            logging.error(stderr)
-                        jobs.append(job)
-                    # end of sacct loop
-
-            for job in jobs:
-                # Will only be one job regardless of if it is an array
-                # in the "began" state. For jobs that have ended there
-                # can be mulitple jobs objects if it is an array.
-                logging.debug(
-                    "Creating template for job {0}".format(job.id)
-                )
-                tpl = Template(get_file_contents(templates['job_table']))
-                job_table = tpl.substitute(
-                    JOB_ID=job.id,
-                    JOB_NAME=job.name,
-                    PARTITION=job.partition,
-                    START=job.start,
-                    END=job.end,
-                    ELAPSED=str(timedelta(seconds=job.elapsed)),
-                    WORKDIR=job.workdir,
-                    EXIT_CODE=job.exit_code,
-                    EXIT_STATE=job.state,
-                    COMMENT=job.comment,
-                    NODES=job.nodes,
-                    NODE_LIST=job.nodelist,
-                    STDOUT=job.stdout,
-                    STDERR=job.stderr,
-                    WALLCLOCK=job.wc_string,
-                    WALLCLOCK_ACCURACY=job.wc_accuracy
-                )
-                if state == "Began":
-                    if job.is_array():
-                        tpl = Template(
-                            get_file_contents(templates['array_started'])
-                        )
-                        body = tpl.substitute(
-                            CSS=css,
-                            ARRAY_JOB_ID=job.array_id,
-                            USER=pwd.getpwnam(job.user).pw_gecos,
-                            JOB_TABLE=job_table,
-                            CLUSTER=job.cluster,
-                            EMAIL_FROM=email_from_name
-                        )
-                    else:
-                        tpl = Template(get_file_contents(templates['started']))
-                        body = tpl.substitute(
-                            CSS=css,
-                            JOB_ID=job.id,
-                            USER=pwd.getpwnam(job.user).pw_gecos,
-                            JOB_TABLE=job_table,
-                            CLUSTER=job.cluster,
-                            EMAIL_FROM=email_from_name
-                        )
-                elif state == "Ended" or state == "Failed":
-                    end_txt = state.lower()
-                    job_output = ""
-                    if tail_lines > 0:
-                        tpl = Template(
-                            get_file_contents(templates['job_output'])
-                        )
-                        job_output = tpl.substitute(
-                            OUTPUT_LINES=tail_lines,
-                            OUTPUT_FILE=job.stdout,
-                            JOB_OUTPUT=tail_file(job.stdout, tail_lines)
-                        )
-                        stdErr = None
-                        if not job.separate_output():
-                            job_output += tpl.substitute(
-                                OUTPUT_LINES=tail_lines,
-                                OUTPUT_FILE=job.stderr,
-                                JOB_OUTPUT=tail_file(job.stderr, tail_lines)
-                            )
-
-                    if job.is_array():
-                        tpl = Template(
-                            get_file_contents(templates['array_ended'])
-                        )
-                        body = tpl.substitute(
-                            CSS=css,
-                            END_TXT=end_txt,
-                            JOB_ID=job.id,
-                            ARRAY_JOB_ID=job.array_id,
-                            USER=pwd.getpwnam(job.user).pw_gecos,
-                            JOB_TABLE=job_table,
-                            JOB_OUTPUT=job_output,
-                            CLUSTER=job.cluster,
-                            EMAIL_FROM=email_from_name
-                        )
-                    else:
-                        tpl = Template(get_file_contents(templates['ended']))
-                        body = tpl.substitute(
-                            CSS=css,
-                            END_TXT=end_txt,
-                            JOB_ID=job.id,
-                            USER=pwd.getpwnam(job.user).pw_gecos,
-                            JOB_TABLE=job_table,
-                            JOB_OUTPUT=job_output,
-                            CLUSTER=job.cluster,
-                            EMAIL_FROM=email_from_name
-                        )
-
-                msg = MIMEMultipart("alternative")
-                msg['subject'] = Template(email_subject).substitute(
-                    CLUSTER=job.cluster, JOB_ID=job.id, STATE=state
-                )
-                msg['To'] = job.user
-                msg['From'] = email_from_address
-
-                body = MIMEText(body, "html")
-                msg.attach(body)
-                logging.info(
-                    "Sending e-mail to: {0} using {1} for job {2} ({3}) "
-                    "via SMTP server {4}:{5}".format(
-                        user, user_email, job_id, state, smtp_server, smtp_port
-                    )
-                )
-                s = smtplib.SMTP(host=smtp_server, port=smtp_port, timeout=60)
-                if smtp_use_tls:
-                    s.starttls()
-                if smtp_username != "" and smtp_password != "":
-                    s.login(smtp_username, smtp_password)
-                s.sendmail(email_from_address, user_email, msg.as_string())
-            # remove spool file
-            logging.info("Deleting: {0}".format(f))
-            os.remove(f)
+            process_spool_file(f, int(fields[0]), fields[1])
         except Exception as e:
             logging.error("Failed to process: {0}".format(f))
             logging.error(e, exc_info=True)
