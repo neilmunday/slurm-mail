@@ -96,7 +96,7 @@ class Job:
     def end(self) -> str:
         if self.end_ts is None:
             return "N/A"
-        return datetime.fromtimestamp(self.end_ts).strftime(datetimeFormat)
+        return datetime.fromtimestamp(self.end_ts).strftime(datetime_format)
 
     @property
     def end_ts(self) -> int:
@@ -118,7 +118,7 @@ class Job:
 
     @property
     def start(self) -> str:
-        return datetime.fromtimestamp(self.start_ts).strftime(datetimeFormat)
+        return datetime.fromtimestamp(self.start_ts).strftime(datetime_format)
 
     @property
     def start_ts(self) -> int:
@@ -216,7 +216,7 @@ def tail_file(f: str, num_lines: int) -> str:
         return err_msg
 
     rtn, stdout, stderr = run_command(
-        "{0} -{1} {2}".format(tailExe, num_lines, f)
+        "{0} -{1} {2}".format(tail_exe, num_lines, f)
     )
     if rtn != 0:
         err_msg = (
@@ -278,19 +278,19 @@ if __name__ == "__main__":
             log_file = pathlib.Path(config.get(section, "logFile"))
         else:
             log_file = None
-        emailFromUserAddress = config.get(section, "emailFromUserAddress")
-        emailFromName = config.get(section, "emailFromName")
-        emailSubject = config.get(section, "emailSubject")
-        sacctExe = pathlib.Path(config.get(section, "sacctExe"))
-        scontrolExe = pathlib.Path(config.get(section, "scontrolExe"))
-        datetimeFormat = config.get(section, "datetimeFormat")
-        smtpServer = config.get(section, "smtpServer")
-        smtpPort = config.getint(section, "smtpPort")
-        smtpUseTls = config.getboolean(section, "smtpUseTls")
-        smtpUserName = config.get(section, "smtpUserName")
-        smtpPassword = config.get(section, "smtpPassword")
-        tailExe = config.get(section, "tailExe")
-        tailLines = config.getint(section, "includeOutputLines")
+        email_from_address = config.get(section, "emailFromUserAddress")
+        email_from_name = config.get(section, "emailFromName")
+        email_subject = config.get(section, "emailSubject")
+        sacct_exe = pathlib.Path(config.get(section, "sacctExe"))
+        scontrol_exe = pathlib.Path(config.get(section, "scontrolExe"))
+        datetime_format = config.get(section, "datetimeFormat")
+        smtp_server = config.get(section, "smtpServer")
+        smtp_port = config.getint(section, "smtpPort")
+        smtp_use_tls = config.getboolean(section, "smtpUseTls")
+        smtp_username = config.get(section, "smtpUserName")
+        smtp_password = config.get(section, "smtpPassword")
+        tail_exe = config.get(section, "tailExe")
+        tail_lines = config.getint(section, "includeOutputLines")
     except Exception as e:
         die("Error: {0}".format(e))
 
@@ -311,8 +311,8 @@ if __name__ == "__main__":
             format=log_format, datefmt=log_date, level=log_level
         )
 
-    check_file(sacctExe)
-    check_file(scontrolExe)
+    check_file(sacct_exe)
+    check_file(scontrol_exe)
     css = get_file_contents(stylesheet)
 
     if not os.access(spool_dir, os.R_OK | os.W_OK):
@@ -321,8 +321,7 @@ if __name__ == "__main__":
             "and that the directory exists.".format(spool_dir)
         )
 
-    elapsedRe = re.compile(r"([\d]+)-([\d]+):([\d]+):([\d]+)")
-    jobIdRe = re.compile(r"^([0-9]+|[0-9]+_[0-9]+)$")
+    job_id_re = re.compile(r"^([0-9]+|[0-9]+_[0-9]+)$")
 
     # look for any new mail notifications in the spool dir
     for f in spool_dir.glob("*.mail"):
@@ -346,10 +345,10 @@ if __name__ == "__main__":
                     "{0} -j {1} -p -n --fields=JobId,Partition,JobName,"
                     "Start,End,State,nnodes,WorkDir,Elapsed,ExitCode,"
                     "Comment,Cluster,User,NodeList,TimeLimit,TimelimitRaw,"
-                    "JobIdRaw".format(sacctExe, first_job_id)
+                    "JobIdRaw".format(sacct_exe, first_job_id)
                 )
-                rtnCode, stdout, stderr = run_command(cmd)
-                if rtnCode != 0:
+                rc, stdout, stderr = run_command(cmd)
+                if rc != 0:
                     logging.error("Failed to run {0}".format(cmd))
                     logging.error(stdout)
                     logging.error(stderr)
@@ -378,7 +377,7 @@ if __name__ == "__main__":
                         if len(data) != 18:
                             continue
 
-                        match = jobIdRe.match(data[0])
+                        match = job_id_re.match(data[0])
                         if not match:
                             continue
 
@@ -414,16 +413,18 @@ if __name__ == "__main__":
                         # get additional info from scontrol
                         # note: this will fail if the job ended after a
                         # certain amount of time.
-                        cmd = "{0} -o show job={1}".format(scontrolExe, job_id)
-                        rtnCode, stdout, stderr = run_command(cmd)
-                        if rtnCode == 0:
-                            jobDic = {}
+                        cmd = "{0} -o show job={1}".format(
+                            scontrol_exe, job_id
+                        )
+                        rc, stdout, stderr = run_command(cmd)
+                        if rc == 0:
+                            job_dict = {}
                             for i in stdout.split(" "):
                                 x = i.split("=", 1)
                                 if len(x) == 2:
-                                    jobDic[x[0]] = x[1]
-                            job.stderr = jobDic['StdErr']
-                            job.stdout = jobDic['StdOut']
+                                    job_dict[x[0]] = x[1]
+                            job.stderr = job_dict['StdErr']
+                            job.stdout = job_dict['StdOut']
                         else:
                             logging.error("Failed to run: {0}".format(cmd))
                             logging.error(stdout)
@@ -439,7 +440,7 @@ if __name__ == "__main__":
                     "Creating template for job {0}".format(job.id)
                 )
                 tpl = Template(get_file_contents(templates['job_table']))
-                jobTable = tpl.substitute(
+                job_table = tpl.substitute(
                     JOB_ID=job.id,
                     JOB_NAME=job.name,
                     PARTITION=job.partition,
@@ -466,9 +467,9 @@ if __name__ == "__main__":
                             CSS=css,
                             ARRAY_JOB_ID=job.array_id,
                             USER=pwd.getpwnam(job.user).pw_gecos,
-                            JOB_TABLE=jobTable,
+                            JOB_TABLE=job_table,
                             CLUSTER=job.cluster,
-                            EMAIL_FROM=emailFromName
+                            EMAIL_FROM=email_from_name
                         )
                     else:
                         tpl = Template(get_file_contents(templates['started']))
@@ -476,28 +477,28 @@ if __name__ == "__main__":
                             CSS=css,
                             JOB_ID=job.id,
                             USER=pwd.getpwnam(job.user).pw_gecos,
-                            JOB_TABLE=jobTable,
+                            JOB_TABLE=job_table,
                             CLUSTER=job.cluster,
-                            EMAIL_FROM=emailFromName
+                            EMAIL_FROM=email_from_name
                         )
                 elif state == "Ended" or state == "Failed":
-                    endTxt = state.lower()
-                    jobOutput = ""
-                    if tailLines > 0:
+                    end_txt = state.lower()
+                    job_output = ""
+                    if tail_lines > 0:
                         tpl = Template(
                             get_file_contents(templates['job_output'])
                         )
-                        jobOutput = tpl.substitute(
-                            OUTPUT_LINES=tailLines,
+                        job_output = tpl.substitute(
+                            OUTPUT_LINES=tail_lines,
                             OUTPUT_FILE=job.stdout,
-                            JOB_OUTPUT=tail_file(job.stdout, tailLines)
+                            JOB_OUTPUT=tail_file(job.stdout, tail_lines)
                         )
                         stdErr = None
                         if not job.separate_output():
-                            jobOutput += tpl.substitute(
-                                OUTPUT_LINES=tailLines,
+                            job_output += tpl.substitute(
+                                OUTPUT_LINES=tail_lines,
                                 OUTPUT_FILE=job.stderr,
-                                JOB_OUTPUT=tail_file(job.stderr, tailLines)
+                                JOB_OUTPUT=tail_file(job.stderr, tail_lines)
                             )
 
                     if job.is_array():
@@ -506,49 +507,49 @@ if __name__ == "__main__":
                         )
                         body = tpl.substitute(
                             CSS=css,
-                            END_TXT=endTxt,
+                            END_TXT=end_txt,
                             JOB_ID=job.id,
                             ARRAY_JOB_ID=job.array_id,
                             USER=pwd.getpwnam(job.user).pw_gecos,
-                            JOB_TABLE=jobTable,
-                            JOB_OUTPUT=jobOutput,
+                            JOB_TABLE=job_table,
+                            JOB_OUTPUT=job_output,
                             CLUSTER=job.cluster,
-                            EMAIL_FROM=emailFromName
+                            EMAIL_FROM=email_from_name
                         )
                     else:
                         tpl = Template(get_file_contents(templates['ended']))
                         body = tpl.substitute(
                             CSS=css,
-                            END_TXT=endTxt,
+                            END_TXT=end_txt,
                             JOB_ID=job.id,
                             USER=pwd.getpwnam(job.user).pw_gecos,
-                            JOB_TABLE=jobTable,
-                            JOB_OUTPUT=jobOutput,
+                            JOB_TABLE=job_table,
+                            JOB_OUTPUT=job_output,
                             CLUSTER=job.cluster,
-                            EMAIL_FROM=emailFromName
+                            EMAIL_FROM=email_from_name
                         )
 
                 msg = MIMEMultipart("alternative")
-                msg['subject'] = Template(emailSubject).substitute(
+                msg['subject'] = Template(email_subject).substitute(
                     CLUSTER=job.cluster, JOB_ID=job.id, STATE=state
                 )
                 msg['To'] = job.user
-                msg['From'] = emailFromUserAddress
+                msg['From'] = email_from_address
 
                 body = MIMEText(body, "html")
                 msg.attach(body)
                 logging.info(
                     "Sending e-mail to: {0} using {1} for job {2} ({3}) "
                     "via SMTP server {4}:{5}".format(
-                        user, user_email, job_id, state, smtpServer, smtpPort
+                        user, user_email, job_id, state, smtp_server, smtp_port
                     )
                 )
-                s = smtplib.SMTP(host=smtpServer, port=smtpPort, timeout=60)
-                if smtpUseTls:
+                s = smtplib.SMTP(host=smtp_server, port=smtp_port, timeout=60)
+                if smtp_use_tls:
                     s.starttls()
-                if smtpUserName != "" and smtpPassword != "":
-                    s.login(smtpUserName, smtpPassword)
-                s.sendmail(emailFromUserAddress, user_email, msg.as_string())
+                if smtp_username != "" and smtp_password != "":
+                    s.login(smtp_username, smtp_password)
+                s.sendmail(email_from_address, user_email, msg.as_string())
             # remove spool file
             logging.info("Deleting: {0}".format(f))
             os.remove(f)
