@@ -32,12 +32,12 @@ You can also opt to include a number of lines from the end of the job's output f
 Installation
 ------------
 
-As of version 1.6 of Slurm-Mail both Python 3 and Python 2 are supported.
+> **_NOTE:_**  As of version 2.0 of Slurm-Mail the code is tested with Python 3 only and no assurance of backwards compatibility with Python 2 is given. The try/except clauses for common gotchas like `configparser` vs `ConfigParser` have now been removed.
 
 Download the latest release of Slurm-Mail and unpack it to a directory of your choosing on the server(s) running the Slurm controller daemon `slurmctld`, e.g. `/opt/slurm-mail`
 
 ```bash
-tar xfz slurm-mail-1.7.tar.gz
+tar xfz slurm-mail-2.0.tar.gz
 ```
 
 Create the spool and log directories for Slurm-Mail on your Slurm controller(s):
@@ -82,28 +82,28 @@ smtpUserName = your_email@gmail.com
 smtpPassword = your_gmail_password
 ```
 
-**Note**: As this file will contain your Gmail password make sure that it has the correct owner, group and file access permissions.
+> **_NOTE:_**  As this file will contain your Gmail password make sure that it has the correct owner, group and file access permissions.
 
 Customising E-mails
 -------------------
 
-Slurm-Mail uses Python's [string.Template](https://docs.python.org/2/library/string.html#template-strings) class to create the e-mails it sends. Under Slurm-Mail's `conf.d` directory you will find the following files that you can edit to customise e-mails to your needs.
+Slurm-Mail uses Python's [string.Template](https://docs.python.org/3/library/string.html#template-strings) class to create the e-mails it sends. Under Slurm-Mail's `conf.d` directory you will find the following files that you can edit to customise e-mails to your needs.
 
-| Filename          | Purpose                                                      |
-| ----------------- | ------------------------------------------------------------ |
+| Filename          | Purpose                                                       |
+| ----------------- | ------------------------------------------------------------- |
 | ended.tpl         | Template used for jobs that have finished.                    |
 | ended-array.tpl   | Template used for jobs in an array that have finished.        |
-| job_table.tpl     | Template used to create the job info table in e-mails.       |
-| started.tpl       | Template used for jobs that have started.                    |
+| job_table.tpl     | Template used to create the job info table in e-mails.        |
+| started.tpl       | Template used for jobs that have started.                     |
 | started-array.tpl | Template used for the first job in an array that has started. |
-| style.css         | Cascading style sheet (CSS) used by the e-mails.             |
+| style.css         | Cascading style sheet (CSS) used by the e-mails.              |
 
-To change the date/time format used for job start and end times in the e-mails, change the `datetimeFormat` configuration option in `conf.d/slurm-mail.conf`. The format string used is the same as Python's [datetime.strftime function](https://docs.python.org/2/library/datetime.html#strftime-strptime-behavior).
+To change the date/time format used for job start and end times in the e-mails, change the `datetimeFormat` configuration option in `conf.d/slurm-mail.conf`. The format string used is the same as Python's [datetime.strftime function](https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior).
 
 To change the subject of the e-mails, change the `emailSubject` configuration option in `conf.d/slurm-mail.conf`. You use the following place holders in the string:
 
 | Place holder | Value                   |
-| -------------|------------------------ |
+| ------------ | ----------------------- |
 | $CLUSTER     | The name of the cluster |
 | $JOB_ID      | The Slurm ID of the job |
 | $STATE       | The state of the job    |

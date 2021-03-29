@@ -1,106 +1,107 @@
 #!/usr/bin/env python3
 
 #
-#   This file is part of Slurm-Mail.
+#  This file is part of Slurm-Mail.
 #
-#   Slurm-Mail is a drop in replacement for Slurm's e-mails to give users
-#   much more information about their jobs compared to the standard Slurm
-#   e-mails.
+#  Slurm-Mail is a drop in replacement for Slurm's e-mails to give users
+#  much more information about their jobs compared to the standard Slurm
+#  e-mails.
 #
 #   Copyright (C) 2018-2021 Neil Munday (neil@mundayweb.com)
 #
-#   Slurm-Mail is free software: you can redistribute it and/or modify
-#   it under the terms of the GNU General Public License as published by
-#   the Free Software Foundation, either version 3 of the License, or
-#   (at your option) any later version.
+#  Slurm-Mail is free software: you can redistribute it and/or modify it
+#  under the terms of the GNU General Public License as published by the
+#  Free Software Foundation, either version 3 of the License, or (at
+#  your option) any later version.
 #
-#   Slurm-Mail is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU General Public License for more details.
+#  Slurm-Mail is distributed in the hope that it will be useful, but
+#  WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#  General Public License for more details.
 #
-#   You should have received a copy of the GNU General Public License
-#   along with Slurm-Mail.  If not, see <http://www.gnu.org/licenses/>.
+#  You should have received a copy of the GNU General Public License
+#  along with Slurm-Mail.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''
+"""
 slurm-spool-mail.py
 
 Author: Neil Munday
 
 A drop in replacement for MailProg in Slurm's slurm.conf file.
-Instead of sending an e-mail the details about the requested e-mail
-are written to a spool directory (e.g. /var/spool/slurm-mail).
-The when slurm-spool-mail.py is executed it will process these
-files and send HTML e-mails to users containing additional
-information about their jobs compared to the default Slurm e-mails.
+Instead of sending an e-mail the details about the requested e-mail are
+written to a spool directory (e.g. /var/spool/slurm-mail). Then when
+slurm-spool-mail.py is executed it will process these files and send
+HTML e-mails to users containing additional information about their jobs
+compared to the default Slurm e-mails.
 
 See also:
 
-conf.d/slurm-mail.conf	-> application settings
-conf.d/*.tpl			-> customise e-mail content and layout
-conf.d/style.css		-> customise e-mail style
-README.md				-> Set-up info
-'''
+conf.d/slurm-mail.conf -> application settings
+conf.d/*.tpl           -> customise e-mail content and layout
+conf.d/style.css       -> customise e-mail style
+README.md              -> Set-up info
+"""
 
-import re
+import configparser
 import logging
-import os
+import pathlib
+import re
 import sys
 
-IS_PYTHON_3 = sys.version_info.major == 3
 
-if IS_PYTHON_3:
-	import configparser as ConfigParser
-else:
-	import ConfigParser
+def die(msg: str):
+    logging.error(msg)
+    sys.stderr.write("{0}\n".format(msg))
+    sys.exit(1)
 
-def die(msg):
-	print(msg)
-	logging.error(msg)
-	sys.exit(1)
 
 if __name__ == "__main__":
-	baseDir = os.path.abspath('%s%s../' % (os.path.dirname(os.path.realpath(__file__)), os.sep))
-	confDir = os.path.join(baseDir, 'conf.d')
-	confFile = os.path.join(confDir, 'slurm-mail.conf')
+    conf_file = pathlib.Path(__file__).resolve().parents[1].joinpath(
+        "conf.d/slurm-mail.conf"
+    )
+    if not conf_file.is_file():
+        die("{0} does not exist".format(conf_file))
 
-	if not os.path.isdir(confDir):
-		die('%s does not exist' % confDir)
+    try:
+        section = "slurm-spool-mail"
+        config = configparser.RawConfigParser()
+        config.read(str(conf_file))
+        if not config.has_section(section):
+            die(
+                "Could not find config section '{0}' in {1}".format(
+                    section, conf_file
+                )
+            )
+        spool_dir = config.get("common", "spoolDir")
+        log_file = config.get(section, "logFile")
+    except Exception as e:
+        die("Error: {0}".format(e))
 
-	if not os.path.isfile(confFile):
-		die('%s does not exist' % confFile)
+    logging.basicConfig(
+        format="%(asctime)s:%(levelname)s: %(message)s",
+        datefmt="%Y/%m/%d %H:%M:%S", level=logging.DEBUG, filename=log_file
+    )
+    logging.debug("Called with: {0}".format(sys.argv))
 
-	section = 'slurm-spool-mail'
+    try:
+        info = sys.argv[2].split(',')[0]
+        logging.debug("info str: {0}".format(info))
+        match = re.search(
+            r"Job_id=(?P<job_id>[0-9]+).*?(?P<action>[\w]+)$", info
+        )
+        if not match:
+            die("Failed to parse Slurm info.")
 
-	try:
-		config = ConfigParser.RawConfigParser()
-		config.read(confFile)
-		if not config.has_section(section):
-			die('could not find config section for slurm-maild in %s' % confFile)
-		spoolDir = config.get('common', 'spoolDir')
-		logFile = config.get(section, 'logFile')
-	except Exception as e:
-		die('Error: %s' % e)
+        logging.debug("Job ID: {0}".format(match.group("job_id")))
+        logging.debug("Action: {0}".format(match.group("action")))
+        logging.debug("User: {0}".format(sys.argv[3]))
 
-	logging.basicConfig(format='%(asctime)s:%(levelname)s: %(message)s', datefmt='%Y/%m/%d %H:%M:%S', level=logging.DEBUG, filename=logFile)
-	logging.debug('called with: %s' % str(sys.argv))
-	try:
-		info = sys.argv[2].split(',')[0]
-		logging.debug('info str: %s' % info)
-		matchRe = re.compile('Job_id=([0-9]+).*?([\w]+)$')
-		match = matchRe.search(info)
-		if not match:
-			die('Failed to parse Slurm info')
-		jobId = match.group(1)
-		action = match.group(2)
-		logging.debug('job ID: %s' % jobId)
-		logging.debug('action: %s' % action)
-		user = sys.argv[3]
-		logging.debug('user: %s' % user)
-		path = os.path.join(spoolDir, '%s.%s.mail' % (match.group(1), action))
-		logging.debug('job ID match, writing file %s' % path)
-		with open(path, 'w') as f:
-			f.write(user)
-	except Exception as e:
-		logging.error(e)
+        path = pathlib.Path(spool_dir).joinpath(
+            "{0}.{1}.mail".format(match.group("job_id"), match.group("action"))
+        )
+        logging.debug("Job ID match, writing file {0}".format(path))
+        with path.open(mode="w") as f:
+            f.write(sys.argv[3])
+    except Exception as e:
+        logging.error(e)
