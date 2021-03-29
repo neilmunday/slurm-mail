@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+Version 2.0
+-----------
+
+Date: 2021-03-29
+
+* Incorporated pull request #17 from @dajamu which includes several code Python 3 improvements
+* Python 2 support removed following the end of life for this version of Python
+
 Version 1.7
 -----------
 
