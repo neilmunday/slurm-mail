@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 2.1
+-----------
+
+Date: 2021-04-15
+
+* Incorporated pull request #18 from @sdx23 to improve the "to" header in e-mails
+
 Version 2.0
 -----------
 
