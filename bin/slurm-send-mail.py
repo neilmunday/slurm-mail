@@ -340,7 +340,7 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
         msg['subject'] = Template(email_subject).substitute(
             CLUSTER=job.cluster, JOB_ID=job.id, STATE=state
         )
-        msg['To'] = job.user
+        msg['To'] = "{0} <{1}>".format(job.user, user_email)
         msg['From'] = email_from_address
         msg.attach(MIMEText(body, "html"))
         logging.info(
