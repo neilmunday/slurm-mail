@@ -124,5 +124,6 @@ Contributors
 Thank you to the following people who have contributed code improvements, features and aided the development of Slurm-Mail:
 
 * David Murray (@dajamu): https://www.github.com/dajamu
-* drhey: https://www.github.com/drhey
+* drhey (@drhey): https://www.github.com/drhey
 * Mehran Khodabandeh (@mkhodabandeh): https://www.github.com/mkhodabandeh
+* sdx23 (@sdx23): https://www.github.com/sdx23
