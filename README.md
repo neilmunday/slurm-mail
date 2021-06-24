@@ -61,7 +61,7 @@ Slurm-Mail will now log e-mail requests from Slurm users to the Slurm-Mail spool
 
 Create a cron job to run `slurm-send-mail.py` periodically to send HTML e-mails to users. As Slurm-Mail uses `sacct` to gather additional job information and may perform additional processing, the sending of e-mails was split into a separate application to prevent adding any overhead to `slurmctld`.
 
-Example cron job, e.g.`/etc/cron.d/slurm-mail.cron`:
+Example cron job, e.g.`/etc/cron.d/slurm-mail`:
 
 ```
 *    *    *    *    *    root    /opt/slurm-mail/bin/slurm-send-mail.py
