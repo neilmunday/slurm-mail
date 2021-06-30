@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 2.2
+-----------
+
+Date: 2021-06-30
+
+* Added support for sending e-mails to multiple addresses (issue #11)
+
 Version 2.1
 -----------
 
