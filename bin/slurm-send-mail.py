@@ -340,7 +340,7 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
         msg['subject'] = Template(email_subject).substitute(
             CLUSTER=job.cluster, JOB_ID=job.id, STATE=state
         )
-        msg['To'] = "{0} <{1}>".format(job.user, user_email)
+        msg['To'] = user_email
         msg['From'] = email_from_address
         msg.attach(MIMEText(body, "html"))
         logging.info(
@@ -354,7 +354,7 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
             s.starttls()
         if smtp_username != "" and smtp_password != "":
             s.login(smtp_username, smtp_password)
-        s.sendmail(email_from_address, user_email, msg.as_string())
+        s.sendmail(email_from_address, user_email.split(","), msg.as_string())
 
     # Remove spool file
     logging.info("Deleting: {0}".format(f))
