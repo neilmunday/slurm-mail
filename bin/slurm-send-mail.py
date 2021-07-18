@@ -44,6 +44,7 @@ README.md              -> Set-up info
 
 import argparse
 import configparser
+import grp
 import logging
 import os
 import pathlib
@@ -79,6 +80,7 @@ class Job:
         self.comment = None
         self.elapsed = 0
         self.exit_code = None
+        self.group = None
         self.id = id
         self.name = None
         self.nodelist = None
@@ -202,14 +204,16 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
     jobs = []  # store job object for each job in this array
 
     if state in ['Began', 'Ended', 'Failed']:
+        fields = [
+            "JobId", "User", "Group", "Partition", "Start", "End", "State",
+            "nnodes", "WorkDir", "Elapsed", "ExitCode", "Comment", "Cluster",
+            "NodeList", "TimeLimit", "TimelimitRaw", "JobIdRaw", "JobName"
+        ]
+        field_num = len(fields)
+        field_str = ",".join(fields)
+
         # Get job info from sacct
-        cmd = (
-            "{0} -j {1} -p -n --fields=JobId,Partition,JobName,Start,End,"
-            "State,nnodes,WorkDir,Elapsed,ExitCode,Comment,Cluster,User,"
-            "NodeList,TimeLimit,TimelimitRaw,JobIdRaw".format(
-                sacct_exe, first_job_id
-            )
-        )
+        cmd = (f"{sacct_exe} -j {first_job_id} -p -n --fields={field_str}")
         rc, stdout, stderr = run_command(cmd)
         if rc != 0:
             logging.error("Failed to run {0}".format(cmd))
@@ -218,55 +222,63 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
         else:
             logging.debug(stdout)
             for line in stdout.split("\n"):
-                data = line.split('|')
-                if len(data) != 18:
+                data = line.split("|", (field_num - 1))
+                if len(data) != field_num:
                     continue
 
-                if not re.match(r"^([0-9]+|[0-9]+_[0-9]+)$", data[0]):
+                sacct_dict = {}
+                for i in range(field_num):
+                    sacct_dict[fields[i]] = data[i]
+
+                if not re.match(
+                        r"^([0-9]+|[0-9]+_[0-9]+)$",
+                        sacct_dict['JobId']
+                        ):
                     continue
 
-                if "{0}".format(first_job_id) not in data[0]:
+                if f"{first_job_id}" not in sacct_dict['JobId']:
                     continue
 
-                job_id = int(data[16])
-                if "_" in data[0]:
-                    job = Job(job_id, data[0].split("_")[0])
+                job_id = int(sacct_dict['JobIdRaw'])
+                if "_" in sacct_dict['JobId']:
+                    job = Job(job_id, sacct_dict['JobId'].split("_")[0])
                 else:
                     job = Job(job_id)
 
-                job.cluster = data[11]
-                job.comment = data[10]
-                job.name = data[2]
-                job.nodelist = data[13]
-                job.nodes = data[6]
-                job.partition = data[1]
-                job.start_ts = data[3]
-                job.user = data[12]
-                job.workdir = data[7]
+                job.cluster = sacct_dict['Cluster']
+                job.comment = sacct_dict['Comment']
+                job.group = sacct_dict['Group']
+                job.name = sacct_dict['JobName']
+                job.nodelist = sacct_dict['NodeList']
+                job.nodes = sacct_dict['nnodes']
+                job.partition = sacct_dict['Partition']
+                job.start_ts = sacct_dict['Start']
+                job.user = sacct_dict['User']
+                job.workdir = sacct_dict['WorkDir']
 
-                if data[14] == "UNLIMITED":
+                if sacct_dict['TimeLimit'] == "UNLIMITED":
                     job.wallclock = 0
                 else:
-                    job.wallclock = int(data[15]) * 60
+                    job.wallclock = int(sacct_dict['TimelimitRaw']) * 60
 
                 if state != "Began":
-                    job.state = data[5]
-                    job.end_ts = data[4]
-                    job.exit_code = data[9]
+                    job.state = sacct_dict['State']
+                    job.end_ts = sacct_dict['End']
+                    job.exit_code = sacct_dict['ExitCode']
 
                 # Get additional info from scontrol.
                 # NOTE: this will fail if the job ended after a certain
                 # amount of time.
-                cmd = "{0} -o show job={1}".format(scontrol_exe, job_id)
+                cmd = f"{scontrol_exe} -o show job={job_id}"
                 rc, stdout, stderr = run_command(cmd)
                 if rc == 0:
-                    job_dict = {}
+                    scontrol_dict = {}
                     for i in stdout.split(" "):
                         x = i.split("=", 1)
                         if len(x) == 2:
-                            job_dict[x[0]] = x[1]
-                    job.stderr = job_dict['StdErr']
-                    job.stdout = job_dict['StdOut']
+                            scontrol_dict[x[0]] = x[1]
+                    job.stderr = scontrol_dict['StdErr']
+                    job.stdout = scontrol_dict['StdOut']
                 else:
                     logging.error("Failed to run: {0}".format(cmd))
                     logging.error(stdout)
@@ -309,6 +321,11 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
             job_output = ""
             if tail_lines > 0:
                 tpl = Template(get_file_contents(templates['job_output']))
+
+                # Drop privileges prior to tailing output
+                os.setegid(grp.getgrnam(job.group).gr_gid)
+                os.seteuid(pwd.getpwnam(job.user).pw_uid)
+
                 job_output = tpl.substitute(
                     OUTPUT_LINES=tail_lines, OUTPUT_FILE=job.stdout,
                     JOB_OUTPUT=tail_file(job.stdout, tail_lines)
@@ -318,6 +335,10 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
                         OUTPUT_LINES=tail_lines, OUTPUT_FILE=job.stderr,
                         JOB_OUTPUT=tail_file(job.stderr, tail_lines)
                     )
+
+                # Restore root privileges
+                os.setegid(0)
+                os.seteuid(0)
 
             if job.is_array():
                 tpl = Template(get_file_contents(templates['array_ended']))
@@ -378,22 +399,25 @@ def tail_file(f: str, num_lines: int) -> str:
     """
     Returns the last N lines of the given file.
     """
-    if not pathlib.Path(f).exists():
-        err_msg = "slurm-mail: file {0} does not exist".format(f)
-        logging.error(err_msg)
-        return err_msg
+    try:
+        if not pathlib.Path(f).exists():
+            err_msg = "slurm-mail: file {0} does not exist".format(f)
+            logging.error(err_msg)
+            return err_msg
 
-    rtn, stdout, stderr = run_command(
-        "{0} -{1} {2}".format(tail_exe, num_lines, f)
-    )
-    if rtn != 0:
-        err_msg = (
-            "slurm-mail encounted an error trying to read "
-            "the last {0} lines of {1}".format(num_lines, f)
+        rtn, stdout, stderr = run_command(
+            "{0} -{1} {2}".format(tail_exe, num_lines, f)
         )
-        logging.error(err_msg)
-        return err_msg
-    return stdout
+        if rtn != 0:
+            err_msg = (
+                "slurm-mail encounted an error trying to read "
+                "the last {0} lines of {1}".format(num_lines, f)
+            )
+            logging.error(err_msg)
+            return err_msg
+        return stdout
+    except Exception as e:
+        return f"Unable to return contents of file: {e}"
 
 
 if __name__ == "__main__":
