@@ -213,7 +213,7 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
         field_str = ",".join(fields)
 
         # Get job info from sacct
-        cmd = (f"{sacct_exe} -j {first_job_id} -p -n --fields={field_str}")
+        cmd = (f"{sacct_exe} -j {first_job_id} -P -n --fields={field_str}")
         rc, stdout, stderr = run_command(cmd)
         if rc != 0:
             logging.error("Failed to run {0}".format(cmd))

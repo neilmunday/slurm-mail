@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+Version 2.4
+-----------
+
+Date: 2021-09-14
+
+* Changed `sacct` command option `-p` to `-P` to handle pipe symbol in job names (issue #24)
+. Thanks to @jitkang for the fix
+
 Version 2.3
 -----------
 
