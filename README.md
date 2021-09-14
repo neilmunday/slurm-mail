@@ -127,3 +127,4 @@ Thank you to the following people who have contributed code improvements, featur
 * drhey (@drhey): https://www.github.com/drhey
 * Mehran Khodabandeh (@mkhodabandeh): https://www.github.com/mkhodabandeh
 * sdx23 (@sdx23): https://www.github.com/sdx23
+* Woody Chang (@jitkang): https://github.com/jitkang
