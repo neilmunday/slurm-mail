@@ -4,7 +4,7 @@ Change Log
 Version 2.3
 -----------
 
-Date: 20201-07-18
+Date: 2021-07-18
 
 * Fixed security issue regarding Slurm-Mail's tail feature (issue #22). Thanks to @voodookungfoo for reporting the issue and to @dajamu for providing a fix via pull request #23
 
