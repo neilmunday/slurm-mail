@@ -84,7 +84,7 @@ smtpPassword = your_gmail_password
 
 > **_NOTE:_**  As this file will contain your Gmail password make sure that it has the correct owner, group and file access permissions.
 
-For SMTP servers that use SSL rather than starttls please set `smtpUseSsl = yes`.n
+For SMTP servers that use SSL rather than starttls please set `smtpUseSsl = yes`.
 
 Customising E-mails
 -------------------
