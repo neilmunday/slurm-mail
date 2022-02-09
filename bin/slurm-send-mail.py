@@ -370,7 +370,13 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
                 job.user, user_email, job_id, state, smtp_server, smtp_port
             )
         )
-        s = smtplib.SMTP(host=smtp_server, port=smtp_port, timeout=60)
+
+        # check if ssl is being requested (usually port 465)
+        if smtp_use_ssl:
+            s = smtplib.SMTP_SSL(host=smtp_server, port=smtp_port, timeout=60)
+        else:
+            s = smtplib.SMTP(host=smtp_server, port=smtp_port, timeout=60)
+        
         if smtp_use_tls:
             s.starttls()
         if smtp_username != "" and smtp_password != "":
@@ -479,6 +485,7 @@ if __name__ == "__main__":
         smtp_server = config.get(section, "smtpServer")
         smtp_port = config.getint(section, "smtpPort")
         smtp_use_tls = config.getboolean(section, "smtpUseTls")
+        smtp_use_ssl = config.getboolean(section, "smtpUseSsl")
         smtp_username = config.get(section, "smtpUserName")
         smtp_password = config.get(section, "smtpPassword")
         tail_exe = config.get(section, "tailExe")
