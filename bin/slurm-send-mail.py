@@ -62,6 +62,7 @@ from email.mime.text import MIMEText
 from string import Template
 from typing import Optional
 
+MAIL_REGEX = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
 
 class Job:
     """
@@ -200,6 +201,15 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
     user_email = None
     with f.open() as spool_file:
         user_email = spool_file.read()
+
+    if not re.fullmatch(MAIL_REGEX, user_email):
+        # not a valid email
+        logging.error("The email %s is not valid" %(user_email))
+
+        # Remove spool file
+        logging.info("Deleting: {0}".format(f))
+        f.unlink()
+        return
 
     jobs = []  # store job object for each job in this array
 
