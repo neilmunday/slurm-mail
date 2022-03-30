@@ -48,6 +48,14 @@
 		<td>$ELAPSED</td>
 	</tr>
 	<tr class="jobEnd">
+		<td>CPU Time:</td>
+		<td>$CPU_TIME</td>
+	</tr>
+	<tr class="jobEnd">
+		<td>CPU Efficiency:</td>
+		<td>$CPU_EFFICIENCY</td>
+	</tr>
+	<tr class="jobEnd">
 		<td>Wallclock Accuracy:</td>
 		<td>$WALLCLOCK_ACCURACY</td>
 	</tr>

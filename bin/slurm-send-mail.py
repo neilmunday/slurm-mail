@@ -7,7 +7,7 @@
 #  much more information about their jobs compared to the standard Slurm
 #  e-mails.
 #
-#   Copyright (C) 2018-2021 Neil Munday (neil@mundayweb.com)
+#   Copyright (C) 2018-2022 Neil Munday (neil@mundayweb.com)
 #
 #  Slurm-Mail is free software: you can redistribute it and/or modify it
 #  under the terms of the GNU General Public License as published by the
@@ -69,6 +69,10 @@ class Job:
     """
 
     def __init__(self, id: int, array_id: Optional[str] = None):
+        self.__cpus = None
+        self.__cpu_efficiency = None
+        self.__cpu_time_usec = None # elapsed * cpu_total
+        self.__cpu_wallclock = None
         self.__end_ts = None
         self.__start_ts = None
         self.__state = None
@@ -88,11 +92,26 @@ class Job:
         self.partition = None
         self.stderr = "?"
         self.stdout = "?"
+        self.used_cpu_usec = None
         self.user = None
         self.workdir = None
 
     def __repr__(self) -> str:
         return "<Job object> ID: {0}".format(self.id)
+
+    # properties and setters
+
+    @property
+    def cpu_efficiency(self) -> str:
+        return "{0:.2f}%".format(self.__cpu_efficiency)
+
+    @property
+    def cpus(self) -> int:
+        return self.__cpus
+
+    @cpus.setter
+    def cpus(self, cpus: int):
+        self.__cpus = int(cpus)
 
     @property
     def end(self) -> str:
@@ -106,17 +125,7 @@ class Job:
 
     @end_ts.setter
     def end_ts(self, ts: int):
-        if self.wallclock is None:
-            raise Exception(
-                "A job's wallclock must be set before setting end_ts"
-            )
-
         self.__end_ts = int(ts)
-        self.elapsed = (self.__end_ts - self.__start_ts)
-        if self.wallclock > 0:
-            self.__wc_accuracy = (
-                (float(self.elapsed) / float(self.wallclock)) * 100.0
-            )
 
     @property
     def start(self) -> str:
@@ -142,6 +151,12 @@ class Job:
             self.__state = s
 
     @property
+    def used_cpu_str(self) -> str:
+        if self.used_cpu_usec:
+            return str(timedelta(seconds=self.used_cpu_usec / 1000000))
+        return None
+
+    @property
     def wallclock(self) -> int:
         return self.__wallclock
 
@@ -161,12 +176,42 @@ class Job:
             return "Unlimited"
         return str(timedelta(seconds=self.wallclock))
 
+    # functions
+
     def is_array(self) -> bool:
         return self.array_id is not None
 
+    def save(self):
+        """
+        This function should be called after all properties
+        have been set so that additional job properties
+        can be caclulated.
+        """
+        if self.cpus == None:
+            raise Exception(
+                "A job's CPU count must be set first"
+            )
+        if self.wallclock is None:
+            raise Exception(
+                "A job's wallclock must be set first"
+            )
+        if self.used_cpu_usec == None:
+            raise Exception(
+                "A job's used CPU time must be set first"
+            )
+        self.__cpu_wallclock = self.__wallclock * self.cpus
+        self.elapsed = (self.__end_ts - self.__start_ts)
+        if self.wallclock > 0:
+            self.__wc_accuracy = (
+                (float(self.elapsed) / float(self.wallclock)) * 100.0
+            )
+        self.__cpu_time_usec = self.elapsed * self.__cpus * 1000000
+        self.__cpu_efficiency = (
+                float(self.used_cpu_usec) / float(self.__cpu_time_usec)
+            ) * 100.0
+
     def separate_output(self) -> bool:
         return self.stderr == self.stdout
-
 
 def check_file(f: pathlib.Path):
     """
@@ -183,6 +228,26 @@ def die(msg: str):
     logging.error(msg)
     sys.stderr.write("{0}\n".format(msg))
     sys.exit(1)
+
+def get_usec_from_str(time_str: str) -> int:
+    """
+    Convert a Slurm elapsed time string into microseconds.
+    """
+    timeRe = re.compile(
+        "((?P<days>\d+)-)?((?P<hours>\d+):)?(?P<mins>\d+):(?P<secs>\d+).(?P<usec>\d+)"
+    )
+    match = timeRe.match(time_str)
+    if not match:
+        die("Could not parse: {0}".format(time_str))
+
+    usec = int(match.group("usec"))
+    usec += int(match.group("secs")) * 1000000
+    usec += int(match.group("mins")) * 1000000 * 60
+    if match.group("hours"):
+        usec += int(match.group("hours")) * 1000000 * 3600
+        if match.group("days"):
+            usec += int(match.group("days")) * 1000000 * 86400
+    return usec
 
 
 def get_file_contents(path: pathlib.Path) -> Optional[str]:
@@ -206,7 +271,8 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
     if state in ['Began', 'Ended', 'Failed']:
         fields = [
             "JobId", "User", "Group", "Partition", "Start", "End", "State",
-            "nnodes", "WorkDir", "Elapsed", "ExitCode", "Comment", "Cluster",
+            "ReqMem", "MaxRSS", "NCPUS", "TotalCPU",
+            "NNodes", "WorkDir", "Elapsed", "ExitCode", "Comment", "Cluster",
             "NodeList", "TimeLimit", "TimelimitRaw", "JobIdRaw", "JobName"
         ]
         field_num = len(fields)
@@ -247,12 +313,14 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
 
                 job.cluster = sacct_dict['Cluster']
                 job.comment = sacct_dict['Comment']
+                job.cpus = sacct_dict['NCPUS']
                 job.group = sacct_dict['Group']
                 job.name = sacct_dict['JobName']
                 job.nodelist = sacct_dict['NodeList']
-                job.nodes = sacct_dict['nnodes']
+                job.nodes = sacct_dict['NNodes']
                 job.partition = sacct_dict['Partition']
                 job.start_ts = sacct_dict['Start']
+                job.used_cpu_usec = get_usec_from_str(sacct_dict['TotalCPU'])
                 job.user = sacct_dict['User']
                 job.workdir = sacct_dict['WorkDir']
 
@@ -283,6 +351,7 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
                     logging.error("Failed to run: {0}".format(cmd))
                     logging.error(stdout)
                     logging.error(stderr)
+                job.save()
                 jobs.append(job)
 
     for job in jobs:
@@ -297,6 +366,7 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
             ELAPSED=str(timedelta(seconds=job.elapsed)), EXIT_STATE=job.state,
             EXIT_CODE=job.exit_code, COMMENT=job.comment, NODES=job.nodes,
             NODE_LIST=job.nodelist, STDOUT=job.stdout, STDERR=job.stderr,
+            CPU_EFFICIENCY=job.cpu_efficiency, CPU_TIME=job.used_cpu_str,
             WALLCLOCK=job.wc_string, WALLCLOCK_ACCURACY=job.wc_accuracy
         )
 
@@ -376,7 +446,7 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
             s = smtplib.SMTP_SSL(host=smtp_server, port=smtp_port, timeout=60)
         else:
             s = smtplib.SMTP(host=smtp_server, port=smtp_port, timeout=60)
-        
+
         if smtp_use_tls:
             s.starttls()
         if smtp_username != "" and smtp_password != "":
@@ -385,7 +455,7 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
 
     # Remove spool file
     logging.info("Deleting: {0}".format(f))
-    f.unlink()
+    #f.unlink()
 
 
 def run_command(cmd: str) -> tuple:
