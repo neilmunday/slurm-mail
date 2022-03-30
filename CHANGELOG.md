@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+Version 2.6
+-----------
+
+Date: 2022-03-30
+
+* Changed Job class to have a `save` method to handle the calculation of additional job properties.
+* Added CPU time efficiency metric to job e-amils (issue #29).
+
 Version 2.5
 -----------
 
