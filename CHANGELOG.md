@@ -1,13 +1,19 @@
 Change Log
 ==========
 
+Version 2.5
+-----------
+
+Date: 2022-02-09
+
+* Added `smtp_use_ssl` configuration option (pull request #25). Thanks to @hakasapl for the feature addition.
+
 Version 2.4
 -----------
 
 Date: 2021-09-14
 
-* Changed `sacct` command option `-p` to `-P` to handle pipe symbol in job names (issue #24)
-. Thanks to @jitkang for the fix
+* Changed `sacct` command option `-p` to `-P` to handle pipe symbol in job names (issue #24). Thanks to @jitkang for the fix
 
 Version 2.3
 -----------
