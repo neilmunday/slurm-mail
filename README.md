@@ -22,6 +22,9 @@ Slurm-Mail aims to address this by providing a drop in replacement for Slurm's e
 * Std err file path
 * No. of nodes used
 * Node list
+* Requested memory per node
+* Maximum memory usage per node
+* CPU efficiency
 * Wallclock
 * Wallclock accuracy
 
