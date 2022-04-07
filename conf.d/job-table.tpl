@@ -16,6 +16,10 @@
 		<td>$NODES</td>
 	</tr>
 	<tr>
+		<td>Memory per node:</td>
+		<td>$MEMORY</td>
+	</tr>
+	<tr>
 		<td>Wallclock:</td>
 		<td>$WALLCLOCK</td>
 	</tr>
@@ -54,6 +58,10 @@
 	<tr class="jobEnd">
 		<td>CPU Efficiency:</td>
 		<td>$CPU_EFFICIENCY</td>
+	</tr>
+	<tr class="jobEnd">
+		<td>Maximum memory usage per node:</td>
+		<td>$MAX_MEMORY</td>
 	</tr>
 	<tr class="jobEnd">
 		<td>Wallclock Accuracy:</td>

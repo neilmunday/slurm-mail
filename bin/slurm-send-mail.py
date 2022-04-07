@@ -86,10 +86,12 @@ class Job:
         self.exit_code = None
         self.group = None
         self.id = id
+        self.max_rss = None
         self.name = None
         self.nodelist = None
         self.nodes = None
         self.partition = None
+        self.requested_mem = None
         self.stderr = "?"
         self.stdout = "?"
         self.used_cpu_usec = None
@@ -126,6 +128,29 @@ class Job:
     @end_ts.setter
     def end_ts(self, ts: int):
         self.__end_ts = int(ts)
+
+    @property
+    def max_rss_str(self) -> str:
+        if not self.max_rss:
+            return "?"
+        return get_str_from_kbytes(self.max_rss)
+
+    @max_rss_str.setter
+    def max_rss_str(self, value: str):
+        self.max_rss = get_kbytes_from_str(value)
+
+    @property
+    def requested_mem_str(self) -> str:
+        if not self.requested_mem:
+            return "N/A"
+        return get_str_from_kbytes(self.requested_mem)
+
+    @requested_mem_str.setter
+    def requested_mem_str(self, value: str):
+        if value[-1:] == "?":
+            self.requested_mem = None
+        else:
+            self.requested_mem = get_kbytes_from_str(value)
 
     @property
     def start(self) -> str:
@@ -213,6 +238,7 @@ class Job:
     def separate_output(self) -> bool:
         return self.stderr == self.stdout
 
+
 def check_file(f: pathlib.Path):
     """
     Check if the given file exists, exit if it does not.
@@ -228,6 +254,41 @@ def die(msg: str):
     logging.error(msg)
     sys.stderr.write("{0}\n".format(msg))
     sys.exit(1)
+
+
+def get_file_contents(path: pathlib.Path) -> Optional[str]:
+    """
+    Helper function to read the contents of a file.
+    """
+    contents = None
+    with path.open() as f:
+        contents = f.read()
+    return contents
+
+
+def get_kbytes_from_str(value: str) -> int:
+    if value == "":
+        return "N/A"
+    units = value[-1:].upper()
+    kbytes = int(value[:-1])
+    if units == "K":
+        return kbytes
+    if units == "M":
+        return 1024 * kbytes
+    if units == "G":
+        return 1048576 * kbytes
+    if units == "T":
+        return 1073741824 * kbytes
+    die("get_kbytes_from_str: unknown unit '{0}' for value '{1}'".format(units, value))
+
+
+def get_str_from_kbytes(value: int) -> str:
+    for unit in ["Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"]:
+        if abs(value) < 1024.0:
+            return "{0:.2f}{1}B".format(value, unit)
+        value /= 1024.0
+    return "{0:.2f}YiB".format(value, unit)
+
 
 def get_usec_from_str(time_str: str) -> int:
     """
@@ -248,16 +309,6 @@ def get_usec_from_str(time_str: str) -> int:
         if match.group("days"):
             usec += int(match.group("days")) * 1000000 * 86400
     return usec
-
-
-def get_file_contents(path: pathlib.Path) -> Optional[str]:
-    """
-    Helper function to read the contents of a file.
-    """
-    contents = None
-    with path.open() as f:
-        contents = f.read()
-    return contents
 
 
 def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
@@ -300,6 +351,15 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
                         r"^([0-9]+|[0-9]+_[0-9]+)$",
                         sacct_dict['JobId']
                         ):
+                    # grab MaxRSS value
+                    if (
+                        sacct_dict['MaxRSS'] != ""  and
+                        (
+                            job.max_rss == None or
+                            get_kbytes_from_str(sacct_dict['MaxRSS']) > job.max_rss
+                        )
+                    ):
+                        job.max_rss_str = sacct_dict['MaxRSS']
                     continue
 
                 if f"{first_job_id}" not in sacct_dict['JobId']:
@@ -315,10 +375,13 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
                 job.comment = sacct_dict['Comment']
                 job.cpus = sacct_dict['NCPUS']
                 job.group = sacct_dict['Group']
+                if sacct_dict['MaxRSS'] != "":
+                    job.max_rss_str = sacct_dict['MaxRSS']
                 job.name = sacct_dict['JobName']
                 job.nodelist = sacct_dict['NodeList']
                 job.nodes = sacct_dict['NNodes']
                 job.partition = sacct_dict['Partition']
+                job.requested_mem_str = sacct_dict['ReqMem']
                 job.start_ts = sacct_dict['Start']
                 job.used_cpu_usec = get_usec_from_str(sacct_dict['TotalCPU'])
                 job.user = sacct_dict['User']
@@ -364,10 +427,12 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
             JOB_ID=job.id, JOB_NAME=job.name, PARTITION=job.partition,
             START=job.start, END=job.end, WORKDIR=job.workdir,
             ELAPSED=str(timedelta(seconds=job.elapsed)), EXIT_STATE=job.state,
-            EXIT_CODE=job.exit_code, COMMENT=job.comment, NODES=job.nodes,
-            NODE_LIST=job.nodelist, STDOUT=job.stdout, STDERR=job.stderr,
-            CPU_EFFICIENCY=job.cpu_efficiency, CPU_TIME=job.used_cpu_str,
-            WALLCLOCK=job.wc_string, WALLCLOCK_ACCURACY=job.wc_accuracy
+            EXIT_CODE=job.exit_code, COMMENT=job.comment,
+            MEMORY=job.requested_mem_str, MAX_MEMORY=job.max_rss_str,
+            NODES=job.nodes, NODE_LIST=job.nodelist, STDOUT=job.stdout,
+            STDERR=job.stderr, CPU_EFFICIENCY=job.cpu_efficiency,
+            CPU_TIME=job.used_cpu_str, WALLCLOCK=job.wc_string,
+            WALLCLOCK_ACCURACY=job.wc_accuracy
         )
 
         body = ""
