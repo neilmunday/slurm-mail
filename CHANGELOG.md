@@ -9,6 +9,7 @@ Date: 2022-03-30
 * Changed Job class to have a `save` method to handle the calculation of additional job properties.
 * Added CPU time efficiency metric to job e-mails (issue #29).
 * Added job memory information (issue #29)
+* Moved all format strings to `string.format` for < Python 3.6 compatibility
 
 Version 2.5
 -----------
