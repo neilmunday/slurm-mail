@@ -105,7 +105,9 @@ class Job:
 
     @property
     def cpu_efficiency(self) -> str:
-        return "{0:.2f}%".format(self.__cpu_efficiency)
+        if self.__cpu_efficiency:
+            return "{0:.2f}%".format(self.__cpu_efficiency)
+        return "?"
 
     @property
     def cpus(self) -> int:
@@ -225,15 +227,16 @@ class Job:
                 "A job's used CPU time must be set first"
             )
         self.__cpu_wallclock = self.__wallclock * self.cpus
-        self.elapsed = (self.__end_ts - self.__start_ts)
-        if self.wallclock > 0:
-            self.__wc_accuracy = (
-                (float(self.elapsed) / float(self.wallclock)) * 100.0
-            )
-        self.__cpu_time_usec = self.elapsed * self.__cpus * 1000000
-        self.__cpu_efficiency = (
-                float(self.used_cpu_usec) / float(self.__cpu_time_usec)
-            ) * 100.0
+        if self.__end_ts:
+            self.elapsed = (self.__end_ts - self.__start_ts)
+            if self.wallclock > 0:
+                self.__wc_accuracy = (
+                    (float(self.elapsed) / float(self.wallclock)) * 100.0
+                )
+            self.__cpu_time_usec = self.elapsed * self.__cpus * 1000000
+            self.__cpu_efficiency = (
+                    float(self.used_cpu_usec) / float(self.__cpu_time_usec)
+                ) * 100.0
 
     def separate_output(self) -> bool:
         return self.stderr == self.stdout
@@ -330,7 +333,7 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
         field_str = ",".join(fields)
 
         # Get job info from sacct
-        cmd = (f"{sacct_exe} -j {first_job_id} -P -n --fields={field_str}")
+        cmd = "{0} -j {1} -P -n --fields={2}".format(sacct_exe, first_job_id, field_str)
         rc, stdout, stderr = run_command(cmd)
         if rc != 0:
             logging.error("Failed to run {0}".format(cmd))
@@ -353,6 +356,7 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
                         ):
                     # grab MaxRSS value
                     if (
+                        state != "Began" and
                         sacct_dict['MaxRSS'] != ""  and
                         (
                             job.max_rss == None or
@@ -362,7 +366,7 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
                         job.max_rss_str = sacct_dict['MaxRSS']
                     continue
 
-                if f"{first_job_id}" not in sacct_dict['JobId']:
+                if "{0}".format(first_job_id) not in sacct_dict['JobId']:
                     continue
 
                 job_id = int(sacct_dict['JobIdRaw'])
@@ -375,8 +379,6 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
                 job.comment = sacct_dict['Comment']
                 job.cpus = sacct_dict['NCPUS']
                 job.group = sacct_dict['Group']
-                if sacct_dict['MaxRSS'] != "":
-                    job.max_rss_str = sacct_dict['MaxRSS']
                 job.name = sacct_dict['JobName']
                 job.nodelist = sacct_dict['NodeList']
                 job.nodes = sacct_dict['NNodes']
@@ -396,11 +398,13 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
                     job.state = sacct_dict['State']
                     job.end_ts = sacct_dict['End']
                     job.exit_code = sacct_dict['ExitCode']
+                    if sacct_dict['MaxRSS'] != "":
+                        job.max_rss_str = sacct_dict['MaxRSS']
 
                 # Get additional info from scontrol.
                 # NOTE: this will fail if the job ended after a certain
                 # amount of time.
-                cmd = f"{scontrol_exe} -o show job={job_id}"
+                cmd = "{0} -o show job={1}".format(scontrol_exe, job_id)
                 rc, stdout, stderr = run_command(cmd)
                 if rc == 0:
                     scontrol_dict = {}
@@ -520,7 +524,7 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
 
     # Remove spool file
     logging.info("Deleting: {0}".format(f))
-    #f.unlink()
+    f.unlink()
 
 
 def run_command(cmd: str) -> tuple:
@@ -558,7 +562,7 @@ def tail_file(f: str, num_lines: int) -> str:
             return err_msg
         return stdout
     except Exception as e:
-        return f"Unable to return contents of file: {e}"
+        return "Unable to return contents of file: {0}".format(e)
 
 
 if __name__ == "__main__":
