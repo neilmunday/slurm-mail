@@ -4,12 +4,13 @@ Change Log
 Version 2.6
 -----------
 
-Date: 2022-03-30
+Date: 2022-04-07
 
 * Changed Job class to have a `save` method to handle the calculation of additional job properties.
 * Added CPU time efficiency metric to job e-mails (issue #29).
-* Added job memory information (issue #29)
-* Moved all format strings to `string.format` for < Python 3.6 compatibility
+* Added job memory information (issue #29).
+* Moved all format strings to `string.format` for < Python 3.6 compatibility (issue #30).
+* Bug fix for issue #31 - correct log file creation for `slurm-send-mail.py`.
 
 Version 2.5
 -----------

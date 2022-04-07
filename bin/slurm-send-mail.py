@@ -639,7 +639,7 @@ if __name__ == "__main__":
     else:
         log_level = logging.INFO
 
-    if log_file and log_file.is_file():
+    if log_file:
         logging.basicConfig(
             format=log_format, datefmt=log_date, level=log_level,
             filename=log_file
