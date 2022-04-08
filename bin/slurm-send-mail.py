@@ -62,7 +62,6 @@ from email.mime.text import MIMEText
 from string import Template
 from typing import Optional
 
-
 class Job:
     """
     Helper object to store job data
@@ -640,6 +639,9 @@ if __name__ == "__main__":
         log_level = logging.INFO
 
     if log_file:
+        # check parent dir exists
+        if not log_file.parent.is_dir():
+            die("Error: {0} is not a directory".format(log_file.parent))
         logging.basicConfig(
             format=log_format, datefmt=log_date, level=log_level,
             filename=log_file

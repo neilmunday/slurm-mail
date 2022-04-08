@@ -74,9 +74,12 @@ if __name__ == "__main__":
                 )
             )
         spool_dir = config.get("common", "spoolDir")
-        log_file = config.get(section, "logFile")
+        log_file = pathlib.Path(config.get(section, "logFile"))
     except Exception as e:
         die("Error: {0}".format(e))
+
+    if not log_file.parent.is_dir():
+        die("Error: {0} is not a directory".format(log_file.parent))
 
     logging.basicConfig(
         format="%(asctime)s:%(levelname)s: %(message)s",
