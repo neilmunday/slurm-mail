@@ -11,6 +11,7 @@ Date: 2022-04-07
 * Added job memory information (issue #29).
 * Moved all format strings to `string.format` for < Python 3.6 compatibility (issue #30).
 * Bug fix for issue #31 - correct log file creation for `slurm-send-mail.py`.
+* Added additional directory existence and access checks
 
 Version 2.5
 -----------
