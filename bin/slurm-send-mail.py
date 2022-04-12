@@ -241,6 +241,18 @@ class Job:
         return self.stderr == self.stdout
 
 
+def check_dir(path: pathlib.Path):
+    """
+    Check if the given directory exists and is writeable,
+    otherwise exit.
+    """
+    if not path.is_dir():
+        die("Error: {0} is not a directory".format(path))
+    # can we write to the log directory?
+    if not os.access(path, os.W_OK):
+        die("Error: {0} is not writeable".format(path))
+
+
 def check_file(f: pathlib.Path):
     """
     Check if the given file exists, exit if it does not.
@@ -639,9 +651,7 @@ if __name__ == "__main__":
         log_level = logging.INFO
 
     if log_file:
-        # check parent dir exists
-        if not log_file.parent.is_dir():
-            die("Error: {0} is not a directory".format(log_file.parent))
+        check_dir(log_file.parent)
         logging.basicConfig(
             format=log_format, datefmt=log_date, level=log_level,
             filename=log_file

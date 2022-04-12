@@ -45,12 +45,27 @@ README.md              -> Set-up info
 
 import configparser
 import logging
+import os
 import pathlib
 import re
 import sys
 
+def check_dir(path: pathlib.Path):
+    """
+    Check if the given directory exists and is writeable,
+    otherwise exit.
+    """
+    if not path.is_dir():
+        die("Error: {0} is not a directory".format(path))
+    # can we write to the log directory?
+    if not os.access(path, os.W_OK):
+        die("Error: {0} is not writeable".format(path))
+
 
 def die(msg: str):
+    """
+    Exit the program with the given error message.
+    """
     logging.error(msg)
     sys.stderr.write("{0}\n".format(msg))
     sys.exit(1)
@@ -78,14 +93,17 @@ if __name__ == "__main__":
     except Exception as e:
         die("Error: {0}".format(e))
 
-    if not log_file.parent.is_dir():
-        die("Error: {0} is not a directory".format(log_file.parent))
+    check_dir(log_file.parent)
+    check_dir(pathlib.Path(spool_dir))
 
     logging.basicConfig(
         format="%(asctime)s:%(levelname)s: %(message)s",
         datefmt="%Y/%m/%d %H:%M:%S", level=logging.DEBUG, filename=log_file
     )
     logging.debug("Called with: {0}".format(sys.argv))
+
+    if len(sys.argv) != 4:
+        die("Incorrect number of command line arguments")
 
     try:
         info = sys.argv[2].split(',')[0]
