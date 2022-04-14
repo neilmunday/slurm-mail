@@ -369,6 +369,7 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
                     if (
                         state != "Began" and
                         sacct_dict['MaxRSS'] != ""  and
+                        sacct_dict['MaxRSS'] != "0"  and
                         (
                             job.max_rss == None or
                             get_kbytes_from_str(sacct_dict['MaxRSS']) > job.max_rss
