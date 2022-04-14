@@ -232,10 +232,11 @@ class Job:
                 self.__wc_accuracy = (
                     (float(self.elapsed) / float(self.wallclock)) * 100.0
                 )
-            self.__cpu_time_usec = self.elapsed * self.__cpus * 1000000
-            self.__cpu_efficiency = (
-                    float(self.used_cpu_usec) / float(self.__cpu_time_usec)
-                ) * 100.0
+            if self.elapsed > 0:
+                self.__cpu_time_usec = self.elapsed * self.__cpus * 1000000
+                self.__cpu_efficiency = (
+                        float(self.used_cpu_usec) / float(self.__cpu_time_usec)
+                    ) * 100.0
 
     def separate_output(self) -> bool:
         return self.stderr == self.stdout
