@@ -128,6 +128,7 @@ Contributors
 
 Thank you to the following people who have contributed code improvements, features and aided the development of Slurm-Mail:
 
+* Dan Barker (@danbarke): https://www.github.com/danbarke
 * David Murray (@dajamu): https://www.github.com/dajamu
 * drhey (@drhey): https://www.github.com/drhey
 * hakasapl (@hakasapl): https://www.github.com/hakasapl
