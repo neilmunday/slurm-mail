@@ -284,6 +284,8 @@ def get_file_contents(path: pathlib.Path) -> Optional[str]:
 def get_kbytes_from_str(value: str) -> int:
     if value == "":
         return "N/A"
+    if value == "0":
+        return 0
     units = value[-1:].upper()
     kbytes = int(value[:-1])
     if units == "K":
@@ -410,7 +412,11 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
                     job.state = sacct_dict['State']
                     job.end_ts = sacct_dict['End']
                     job.exit_code = sacct_dict['ExitCode']
-                    if sacct_dict['MaxRSS'] != "":
+                    if (
+                        sacct_dict['MaxRSS'] != "" and
+                        job.max_rss != None and
+                        get_kbytes_from_str(sacct_dict['MaxRSS']) > job.max_rss
+                    ):
                         job.max_rss_str = sacct_dict['MaxRSS']
 
                 # Get additional info from scontrol.
