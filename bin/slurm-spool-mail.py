@@ -109,17 +109,25 @@ if __name__ == "__main__":
         info = sys.argv[2].split(',')[0]
         logging.debug("info str: {0}".format(info))
         match = re.search(
-            r"Job_id=(?P<job_id>[0-9]+).*?(?P<action>[\w]+)$", info
+            r"^(?P<mail_type>.+?(?=Job_id))Job_id=(?P<job_id>[0-9]+|[0-9]+_[0-9]+|[0-9]+_\*)\ .*?(?P<action>[\w]+)$", info
         )
         if not match:
             die("Failed to parse Slurm info.")
 
-        logging.debug("Job ID: {0}".format(match.group("job_id")))
+        if "Summary" in match.group("mail_type"):
+            mail_type = "summary"
+            job_id = match.group("job_id").split('_')[0]
+        else:
+            mail_type = "individual"
+            job_id = match.group("job_id")
+
+        logging.debug("Mail Type: {0}".format(mail_type))
+        logging.debug("Job ID: {0}".format(job_id))
         logging.debug("Action: {0}".format(match.group("action")))
         logging.debug("User: {0}".format(sys.argv[3]))
 
         path = pathlib.Path(spool_dir).joinpath(
-            "{0}.{1}.mail".format(match.group("job_id"), match.group("action"))
+            "{0}.{1}.{2}.mail".format(job_id, match.group("action"), mail_type)
         )
         logging.debug("Job ID match, writing file {0}".format(path))
         with path.open(mode="w") as f:

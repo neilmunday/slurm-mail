@@ -67,7 +67,7 @@ class Job:
     Helper object to store job data
     """
 
-    def __init__(self, id: int, array_id: Optional[str] = None):
+    def __init__(self, id: str, array_id: Optional[str] = None):
         self.__cpus = None
         self.__cpu_efficiency = None
         self.__cpu_time_usec = None # elapsed * cpu_total
@@ -328,7 +328,7 @@ def get_usec_from_str(time_str: str) -> int:
     return usec
 
 
-def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
+def process_spool_file(f: pathlib.Path, first_job_id: str, state: str, mail_type: str):
     # Email address stored in the file
     user_email = None
     with f.open() as spool_file:
@@ -383,7 +383,7 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
                 if "{0}".format(first_job_id) not in sacct_dict['JobId']:
                     continue
 
-                job_id = int(sacct_dict['JobIdRaw'])
+                job_id = sacct_dict['JobId']
                 if "_" in sacct_dict['JobId']:
                     job = Job(job_id, sacct_dict['JobId'].split("_")[0])
                 else:
@@ -439,106 +439,112 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
                 job.save()
                 jobs.append(job)
 
-    for job in jobs:
-        # Will only be one job regardless of if it is an array in the
-        # "began" state. For jobs that have ended there can be mulitple
-        # jobs objects if it is an array.
-        logging.debug("Creating template for job {0}".format(job.id))
-        tpl = Template(get_file_contents(templates['job_table']))
-        job_table = tpl.substitute(
-            JOB_ID=job.id, JOB_NAME=job.name, PARTITION=job.partition,
-            START=job.start, END=job.end, WORKDIR=job.workdir,
-            ELAPSED=str(timedelta(seconds=job.elapsed)), EXIT_STATE=job.state,
-            EXIT_CODE=job.exit_code, COMMENT=job.comment,
-            MEMORY=job.requested_mem_str, MAX_MEMORY=job.max_rss_str,
-            NODES=job.nodes, NODE_LIST=job.nodelist, STDOUT=job.stdout,
-            STDERR=job.stderr, CPU_EFFICIENCY=job.cpu_efficiency,
-            CPU_TIME=job.used_cpu_str, WALLCLOCK=job.wc_string,
-            WALLCLOCK_ACCURACY=job.wc_accuracy
-        )
-
-        body = ""
+    if mail_type == "summary":
         if state == "Began":
-            if job.is_array():
+            job=jobs[0]
+
+    logging.debug("Creating template for job {0}".format(job.id))
+    tpl = Template(get_file_contents(templates['job_table']))
+    job_table = tpl.substitute(
+        JOB_ID=job.id, JOB_NAME=job.name, PARTITION=job.partition,
+        START=job.start, END=job.end, WORKDIR=job.workdir,
+        ELAPSED=str(timedelta(seconds=job.elapsed)), EXIT_STATE=job.state,
+        EXIT_CODE=job.exit_code, COMMENT=job.comment,
+        MEMORY=job.requested_mem_str, MAX_MEMORY=job.max_rss_str,
+        NODES=job.nodes, NODE_LIST=job.nodelist, STDOUT=job.stdout,
+        STDERR=job.stderr, CPU_EFFICIENCY=job.cpu_efficiency,
+        CPU_TIME=job.used_cpu_str, WALLCLOCK=job.wc_string,
+        WALLCLOCK_ACCURACY=job.wc_accuracy
+    )
+
+    body = ""
+    if state == "Began":
+        if job.is_array():
+            if mail_type == "summary":
+                tpl = Template(get_file_contents(templates['array_started_summary']))
+            else:
                 tpl = Template(get_file_contents(templates['array_started']))
-                body = tpl.substitute(
-                    CSS=css, ARRAY_JOB_ID=job.array_id,
-                    USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
-                    CLUSTER=job.cluster, EMAIL_FROM=email_from_name
-                )
-            else:
-                tpl = Template(get_file_contents(templates['started']))
-                body = tpl.substitute(
-                    CSS=css, JOB_ID=job.id, EMAIL_FROM=email_from_name,
-                    USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
-                    CLUSTER=job.cluster
-                )
-        elif state == "Ended" or state == "Failed":
-            end_txt = state.lower()
-            job_output = ""
-            if tail_lines > 0:
-                tpl = Template(get_file_contents(templates['job_output']))
-
-                # Drop privileges prior to tailing output
-                os.setegid(grp.getgrnam(job.group).gr_gid)
-                os.seteuid(pwd.getpwnam(job.user).pw_uid)
-
-                job_output = tpl.substitute(
-                    OUTPUT_LINES=tail_lines, OUTPUT_FILE=job.stdout,
-                    JOB_OUTPUT=tail_file(job.stdout, tail_lines)
-                )
-                if not job.separate_output():
-                    job_output += tpl.substitute(
-                        OUTPUT_LINES=tail_lines, OUTPUT_FILE=job.stderr,
-                        JOB_OUTPUT=tail_file(job.stderr, tail_lines)
-                    )
-
-                # Restore root privileges
-                os.setegid(0)
-                os.seteuid(0)
-
-            if job.is_array():
-                tpl = Template(get_file_contents(templates['array_ended']))
-                body = tpl.substitute(
-                    CSS=css, END_TXT=end_txt, JOB_ID=job.id,
-                    ARRAY_JOB_ID=job.array_id, EMAIL_FROM=email_from_name,
-                    USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
-                    JOB_OUTPUT=job_output, CLUSTER=job.cluster
-                )
-            else:
-                tpl = Template(get_file_contents(templates['ended']))
-                body = tpl.substitute(
-                    CSS=css, END_TXT=end_txt, JOB_ID=job.id,
-                    USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
-                    JOB_OUTPUT=job_output, CLUSTER=job.cluster,
-                    EMAIL_FROM=email_from_name
-                )
-
-        msg = MIMEMultipart("alternative")
-        msg['subject'] = Template(email_subject).substitute(
-            CLUSTER=job.cluster, JOB_ID=job.id, STATE=state
-        )
-        msg['To'] = user_email
-        msg['From'] = email_from_address
-        msg.attach(MIMEText(body, "html"))
-        logging.info(
-            "Sending e-mail to: {0} using {1} for job {2} ({3}) "
-            "via SMTP server {4}:{5}".format(
-                job.user, user_email, job_id, state, smtp_server, smtp_port
+            body = tpl.substitute(
+                CSS=css, ARRAY_JOB_ID=job.array_id, JOB_ID=job.id,
+                USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
+                CLUSTER=job.cluster, EMAIL_FROM=email_from_name
             )
-        )
-
-        # check if ssl is being requested (usually port 465)
-        if smtp_use_ssl:
-            s = smtplib.SMTP_SSL(host=smtp_server, port=smtp_port, timeout=60)
         else:
-            s = smtplib.SMTP(host=smtp_server, port=smtp_port, timeout=60)
+            tpl = Template(get_file_contents(templates['started']))
+            body = tpl.substitute(
+                CSS=css, JOB_ID=job.id, EMAIL_FROM=email_from_name,
+                USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
+                CLUSTER=job.cluster
+            )
+    elif state == "Ended" or state == "Failed":
+        end_txt = state.lower()
+        job_output = ""
+        if tail_lines > 0:
+            tpl = Template(get_file_contents(templates['job_output']))
 
-        if smtp_use_tls:
-            s.starttls()
-        if smtp_username != "" and smtp_password != "":
-            s.login(smtp_username, smtp_password)
-        s.sendmail(email_from_address, user_email.split(","), msg.as_string())
+            # Drop privileges prior to tailing output
+            os.setegid(grp.getgrnam(job.group).gr_gid)
+            os.seteuid(pwd.getpwnam(job.user).pw_uid)
+
+            job_output = tpl.substitute(
+                OUTPUT_LINES=tail_lines, OUTPUT_FILE=job.stdout,
+                JOB_OUTPUT=tail_file(job.stdout, tail_lines)
+            )
+            if not job.separate_output():
+                job_output += tpl.substitute(
+                    OUTPUT_LINES=tail_lines, OUTPUT_FILE=job.stderr,
+                    JOB_OUTPUT=tail_file(job.stderr, tail_lines)
+                )
+
+            # Restore root privileges
+            os.setegid(0)
+            os.seteuid(0)
+
+        if job.is_array():
+            if mail_type == "summary":
+                tpl = Template(get_file_contents(templates['array_ended_summary']))
+            else:
+                tpl = Template(get_file_contents(templates['array_ended']))
+            body = tpl.substitute(
+                CSS=css, END_TXT=end_txt, JOB_ID=job.id,
+                ARRAY_JOB_ID=job.array_id, EMAIL_FROM=email_from_name,
+                USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
+                JOB_OUTPUT=job_output, CLUSTER=job.cluster
+            )
+        else:
+            tpl = Template(get_file_contents(templates['ended']))
+            body = tpl.substitute(
+                CSS=css, END_TXT=end_txt, JOB_ID=job.id,
+                USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
+                JOB_OUTPUT=job_output, CLUSTER=job.cluster,
+                EMAIL_FROM=email_from_name
+            )
+
+    msg = MIMEMultipart("alternative")
+    msg['subject'] = Template(email_subject).substitute(
+        CLUSTER=job.cluster, JOB_ID=job.id, STATE=state
+    )
+    msg['To'] = user_email
+    msg['From'] = email_from_address
+    msg.attach(MIMEText(body, "html"))
+    logging.info(
+        "Sending e-mail to: {0} using {1} for job {2} ({3}) "
+        "via SMTP server {4}:{5}".format(
+            job.user, user_email, job_id, state, smtp_server, smtp_port
+        )
+    )
+
+    # check if ssl is being requested (usually port 465)
+    if smtp_use_ssl:
+        s = smtplib.SMTP_SSL(host=smtp_server, port=smtp_port, timeout=60)
+    else:
+        s = smtplib.SMTP(host=smtp_server, port=smtp_port, timeout=60)
+
+    if smtp_use_tls:
+        s.starttls()
+    if smtp_username != "" and smtp_password != "":
+        s.login(smtp_username, smtp_password)
+    s.sendmail(email_from_address, user_email.split(","), msg.as_string())
 
     # Remove spool file
     logging.info("Deleting: {0}".format(f))
@@ -602,6 +608,8 @@ if __name__ == "__main__":
     check_file(conf_file)
 
     templates = {}
+    templates['array_ended_summary'] = conf_dir / "ended-array-summary.tpl"
+    templates['array_started_summary'] = conf_dir / "started-array-summary.tpl"
     templates['array_ended'] = conf_dir / "ended-array.tpl"
     templates['array_started'] = conf_dir / "started-array.tpl"
     templates['ended'] = conf_dir / "ended.tpl"
@@ -681,12 +689,12 @@ if __name__ == "__main__":
     # Look for any new mail notifications in the spool dir
     for f in spool_dir.glob("*.mail"):
         fields = f.name.split('.')
-        if len(fields) != 3:
+        if len(fields) != 4:
             continue
 
         logging.info("processing: {0}".format(f))
         try:
-            process_spool_file(f, int(fields[0]), fields[1])
+            process_spool_file(f, fields[0], fields[1], fields[2])
         except Exception as e:
             logging.error("Failed to process: {0}".format(f))
             logging.error(e, exc_info=True)
