@@ -283,7 +283,7 @@ def get_file_contents(path: pathlib.Path) -> Optional[str]:
 
 def get_kbytes_from_str(value: str) -> float:
     if value == "":
-        return "N/A"
+        return 0
     if value == "0":
         return 0
     units = value[-1:].upper()
@@ -291,7 +291,7 @@ def get_kbytes_from_str(value: str) -> float:
         kbytes = float(value[:-1])
     except Exception as e:
         logging.error("get_kbytes_from_str: failed convert {0}".format(value))
-        return "?"
+        return 0
     if units == "K":
         return kbytes
     if units == "M":
@@ -303,7 +303,7 @@ def get_kbytes_from_str(value: str) -> float:
     logging.error(
         "get_kbytes_from_str: unknown unit '{0}' for value '{1}'".format(units, value)
     )
-    return "?"
+    return 0
 
 
 def get_str_from_kbytes(value: int) -> str:
