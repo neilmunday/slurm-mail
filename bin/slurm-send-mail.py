@@ -249,6 +249,7 @@ def check_dir(path: pathlib.Path):
     Check if the given directory exists and is writeable,
     otherwise exit.
     """
+    # pylint: disable=duplicate-code
     if not path.is_dir():
         die("Error: {0} is not a directory".format(path))
     # can we write to the log directory?

@@ -59,6 +59,7 @@ def check_dir(path: pathlib.Path):
     Check if the given directory exists and is writeable,
     otherwise exit.
     """
+    # pylint: disable=duplicate-code
     if not path.is_dir():
         die("Error: {0} is not a directory".format(path))
     # can we write to the log directory?
@@ -140,7 +141,7 @@ if __name__ == "__main__":
             "{0}_{1}.mail".format(match.group("job_id"), time.time())
         )
         logging.debug("Job ID match, writing file %s", output_path)
-        with output_path.open(mode="w") as f:
+        with output_path.open(mode="w", encoding="utf-8") as f:
             json.dump(data, f)
     except Exception as e:
         logging.error(e)
