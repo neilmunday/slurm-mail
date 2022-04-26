@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# pylint: disable=invalid-name,broad-except,consider-using-f-string
+# pylint: disable=invalid-name,broad-except,consider-using-f-string,too-many-locals,missing-function-docstring,disable=too-many-instance-attributes,redefined-outer-name
 
 #
 #  This file is part of Slurm-Mail.
@@ -57,7 +57,6 @@ import shlex
 import smtplib
 import subprocess
 import sys
-import time
 
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
@@ -70,11 +69,11 @@ class Job:
     Helper object to store job data
     """
 
-    def __init__(self, id: int, array_id: Optional[str] = None):
+    def __init__(self, job_id: int, array_id: Optional[str] = None):
         self.__cpus = None
         self.__cpu_efficiency = None
         self.__cpu_time_usec = None # elapsed * cpu_total
-        self.__cpu_wallclock = None
+        #self.__cpu_wallclock = None
         self.__end_ts = None
         self.__start_ts = None
         self.__state = None
@@ -87,7 +86,7 @@ class Job:
         self.elapsed = 0
         self.exit_code = None
         self.group = None
-        self.id = id
+        self.id = job_id
         self.max_rss = None
         self.name = None
         self.nodelist = None
@@ -216,7 +215,7 @@ class Job:
         have been set so that additional job properties
         can be caclulated.
         """
-        if self.cpus == None:
+        if self.cpus is None:
             raise Exception(
                 "A job's CPU count must be set first"
             )
@@ -224,11 +223,11 @@ class Job:
             raise Exception(
                 "A job's wallclock must be set first"
             )
-        if self.used_cpu_usec == None:
+        if self.used_cpu_usec is None:
             raise Exception(
                 "A job's used CPU time must be set first"
             )
-        self.__cpu_wallclock = self.__wallclock * self.cpus
+        #self.__cpu_wallclock = self.__wallclock * self.cpus
         if self.__end_ts:
             self.elapsed = (self.__end_ts - self.__start_ts)
             if self.wallclock > 0:
@@ -285,6 +284,7 @@ def get_file_contents(path: pathlib.Path) -> Optional[str]:
 
 
 def get_kbytes_from_str(value: str) -> float:
+    # pylint: disable=too-many-return-statements
     if value == "":
         return 0
     if value == "0":
@@ -292,7 +292,7 @@ def get_kbytes_from_str(value: str) -> float:
     units = value[-1:].upper()
     try:
         kbytes = float(value[:-1])
-    except Exception as e:
+    except Exception:
         logging.error("get_kbytes_from_str: failed convert %s", value)
         return 0
     if units == "K":
@@ -312,7 +312,7 @@ def get_str_from_kbytes(value: int) -> str:
         if abs(value) < 1024.0:
             return "{0:.2f}{1}B".format(value, unit)
         value /= 1024.0
-    return "{0:.2f}YiB".format(value, unit)
+    return "{0:.2f}YiB".format(value)
 
 
 def get_usec_from_str(time_str: str) -> int:
@@ -320,7 +320,7 @@ def get_usec_from_str(time_str: str) -> int:
     Convert a Slurm elapsed time string into microseconds.
     """
     timeRe = re.compile(
-        "((?P<days>\d+)-)?((?P<hours>\d+):)?(?P<mins>\d+):(?P<secs>\d+).(?P<usec>\d+)"
+        r"((?P<days>\d+)-)?((?P<hours>\d+):)?(?P<mins>\d+):(?P<secs>\d+).(?P<usec>\d+)"
     )
     match = timeRe.match(time_str)
     if not match:
@@ -337,6 +337,7 @@ def get_usec_from_str(time_str: str) -> int:
 
 
 def process_spool_file(json_file: pathlib.Path):
+    # pylint: disable=too-many-branches,too-many-statements,too-many-nested-blocks
     # data is JSON encoded as of version 2.6
     with json_file.open() as spool_file:
         data = json.load(spool_file)
@@ -390,7 +391,7 @@ def process_spool_file(json_file: pathlib.Path):
                         state != "Began" and
                         sacct_dict['MaxRSS'] != ""  and
                         (
-                            job.max_rss == None or
+                            job.max_rss is None or
                             get_kbytes_from_str(sacct_dict['MaxRSS']) > job.max_rss
                         )
                     ):
@@ -431,7 +432,7 @@ def process_spool_file(json_file: pathlib.Path):
                     job.exit_code = sacct_dict['ExitCode']
                     if (
                         sacct_dict['MaxRSS'] != "" and
-                        job.max_rss != None and
+                        job.max_rss is not None and
                         get_kbytes_from_str(sacct_dict['MaxRSS']) > job.max_rss
                     ):
                         job.max_rss_str = sacct_dict['MaxRSS']
@@ -490,7 +491,7 @@ def process_spool_file(json_file: pathlib.Path):
                     USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
                     CLUSTER=job.cluster
                 )
-        elif state == "Ended" or state == "Failed":
+        elif state in ["Ended", "Failed"]:
             end_txt = state.lower()
             job_output = ""
             if tail_lines > 0:
@@ -540,7 +541,7 @@ def process_spool_file(json_file: pathlib.Path):
         msg.attach(MIMEText(body, "html"))
         logging.info(
             "Sending e-mail to: %s using %s for job %s (%s) "
-            "via SMTP server {%s}:{%s}",
+            "via SMTP server %s:%s",
             job.user, user_email, job_id, state, smtp_server, smtp_port
         )
 
@@ -567,11 +568,11 @@ def run_command(cmd: str) -> tuple:
     return code, std out and std err output.
     """
     logging.debug("Running %s", cmd)
-    process = subprocess.Popen(
+    with subprocess.Popen(
         shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    )
-    stdout, stderr = process.communicate()
-    return (process.returncode, stdout.decode("utf-8"), stderr.decode("utf-8"))
+    ) as process:
+        stdout, stderr = process.communicate()
+        return (process.returncode, stdout.decode("utf-8"), stderr.decode("utf-8"))
 
 
 def tail_file(f: str, num_lines: int) -> str:
@@ -584,7 +585,7 @@ def tail_file(f: str, num_lines: int) -> str:
             logging.error(err_msg)
             return err_msg
 
-        rtn, stdout, stderr = run_command(
+        rtn, stdout, _ = run_command(
             "{0} -{1} {2}".format(tail_exe, num_lines, f)
         )
         if rtn != 0:
