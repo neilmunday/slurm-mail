@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# pylint: disable=invalid-name,broad-except,line-too-long
+
 #
 #  This file is part of Slurm-Mail.
 #
@@ -44,11 +46,13 @@ README.md              -> Set-up info
 """
 
 import configparser
+import json
 import logging
 import os
 import pathlib
 import re
 import sys
+import time
 
 def check_dir(path: pathlib.Path):
     """
@@ -100,29 +104,43 @@ if __name__ == "__main__":
         format="%(asctime)s:%(levelname)s: %(message)s",
         datefmt="%Y/%m/%d %H:%M:%S", level=logging.DEBUG, filename=log_file
     )
-    logging.debug("Called with: {0}".format(sys.argv))
+    logging.debug("Called with: %s", sys.argv)
 
     if len(sys.argv) != 4:
         die("Incorrect number of command line arguments")
 
     try:
         info = sys.argv[2].split(',')[0]
-        logging.debug("info str: {0}".format(info))
+        logging.debug("info str: %s", info)
         match = re.search(
-            r"Job_id=(?P<job_id>[0-9]+).*?(?P<action>[\w]+)$", info
+            r"Job_id=(?P<job_id>[0-9]+).*?(?P<state>(Began|Ended|Reached (?P<limit>[0-9]+)% of time limit))$",
+            info
         )
         if not match:
             die("Failed to parse Slurm info.")
 
-        logging.debug("Job ID: {0}".format(match.group("job_id")))
-        logging.debug("Action: {0}".format(match.group("action")))
-        logging.debug("User: {0}".format(sys.argv[3]))
+        job_id = int(match.group("job_id"))
+        email = sys.argv[3]
+        state = match.group("state")
+        time_reached = match.group("limit")
+        if time_reached:
+            state = "time_reached_{0}".format(time_reached)
 
-        path = pathlib.Path(spool_dir).joinpath(
-            "{0}.{1}.mail".format(match.group("job_id"), match.group("action"))
+        logging.debug("Job ID: %d", job_id)
+        logging.debug("State: %s", state)
+        logging.debug("E-mail to: %s", email)
+
+        data = {
+            "job_id": job_id,
+            "state": state,
+            "email": email
+        }
+
+        output_path = pathlib.Path(spool_dir).joinpath(
+            "{0}_{1}.mail".format(match.group("job_id"), time.time())
         )
-        logging.debug("Job ID match, writing file {0}".format(path))
-        with path.open(mode="w") as f:
-            f.write(sys.argv[3])
+        logging.debug("Job ID match, writing file %s", output_path)
+        with output_path.open(mode="w") as f:
+            json.dump(data, f)
     except Exception as e:
         logging.error(e)

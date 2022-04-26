@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# pylint: disable=invalid-name,broad-except
+
 #
 #  This file is part of Slurm-Mail.
 #
@@ -45,6 +47,7 @@ README.md              -> Set-up info
 import argparse
 import configparser
 import grp
+import json
 import logging
 import os
 import pathlib
@@ -290,7 +293,7 @@ def get_kbytes_from_str(value: str) -> float:
     try:
         kbytes = float(value[:-1])
     except Exception as e:
-        logging.error("get_kbytes_from_str: failed convert {0}".format(value))
+        logging.error("get_kbytes_from_str: failed convert %s", value)
         return 0
     if units == "K":
         return kbytes
@@ -300,9 +303,7 @@ def get_kbytes_from_str(value: str) -> float:
         return 1048576 * kbytes
     if units == "T":
         return 1073741824 * kbytes
-    logging.error(
-        "get_kbytes_from_str: unknown unit '{0}' for value '{1}'".format(units, value)
-    )
+    logging.error("get_kbytes_from_str: unknown unit '%s' for value '%s'", units, value)
     return 0
 
 
@@ -335,15 +336,24 @@ def get_usec_from_str(time_str: str) -> int:
     return usec
 
 
-def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
-    # Email address stored in the file
-    user_email = None
-    with f.open() as spool_file:
-        user_email = spool_file.read()
+def process_spool_file(json_file: pathlib.Path):
+    # data is JSON encoded as of version 2.6
+    with json_file.open() as spool_file:
+        data = json.load(spool_file)
+
+    for f in ["job_id", "email", "state"]:
+        if f not in data:
+            die("Could not find {0} in {1}".format(f, json_file))
+
+    first_job_id = int(data["job_id"])
+    user_email = data["email"]
+    state = data["state"]
 
     jobs = []  # store job object for each job in this array
 
-    if state in ['Began', 'Ended', 'Failed']:
+    if not state in ['Began', 'Ended', 'Failed']:
+        logging.warning("Unsupported job state: %s - no emails will be generated", state)
+    else:
         fields = [
             "JobId", "User", "Group", "Partition", "Start", "End", "State",
             "ReqMem", "MaxRSS", "NCPUS", "TotalCPU",
@@ -357,7 +367,7 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
         cmd = "{0} -j {1} -P -n --fields={2}".format(sacct_exe, first_job_id, field_str)
         rc, stdout, stderr = run_command(cmd)
         if rc != 0:
-            logging.error("Failed to run {0}".format(cmd))
+            logging.error("Failed to run %s", cmd)
             logging.error(stdout)
             logging.error(stderr)
         else:
@@ -440,7 +450,7 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
                     job.stderr = scontrol_dict['StdErr']
                     job.stdout = scontrol_dict['StdOut']
                 else:
-                    logging.error("Failed to run: {0}".format(cmd))
+                    logging.error("Failed to run: %s", cmd)
                     logging.error(stdout)
                     logging.error(stderr)
                 job.save()
@@ -450,7 +460,7 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
         # Will only be one job regardless of if it is an array in the
         # "began" state. For jobs that have ended there can be mulitple
         # jobs objects if it is an array.
-        logging.debug("Creating template for job {0}".format(job.id))
+        logging.debug("Creating template for job %s", job.id)
         tpl = Template(get_file_contents(templates['job_table']))
         job_table = tpl.substitute(
             JOB_ID=job.id, JOB_NAME=job.name, PARTITION=job.partition,
@@ -529,10 +539,9 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
         msg['From'] = email_from_address
         msg.attach(MIMEText(body, "html"))
         logging.info(
-            "Sending e-mail to: {0} using {1} for job {2} ({3}) "
-            "via SMTP server {4}:{5}".format(
-                job.user, user_email, job_id, state, smtp_server, smtp_port
-            )
+            "Sending e-mail to: %s using %s for job %s (%s) "
+            "via SMTP server {%s}:{%s}",
+            job.user, user_email, job_id, state, smtp_server, smtp_port
         )
 
         # check if ssl is being requested (usually port 465)
@@ -548,8 +557,8 @@ def process_spool_file(f: pathlib.Path, first_job_id: int, state: str):
         s.sendmail(email_from_address, user_email.split(","), msg.as_string())
 
     # Remove spool file
-    logging.info("Deleting: {0}".format(f))
-    f.unlink()
+    logging.info("Deleting: %s", json_file)
+    json_file.unlink()
 
 
 def run_command(cmd: str) -> tuple:
@@ -557,7 +566,7 @@ def run_command(cmd: str) -> tuple:
     Execute the given command and return a tuple that contains the
     return code, std out and std err output.
     """
-    logging.debug("Running {0}".format(cmd))
+    logging.debug("Running %s", cmd)
     process = subprocess.Popen(
         shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
@@ -687,13 +696,9 @@ if __name__ == "__main__":
 
     # Look for any new mail notifications in the spool dir
     for f in spool_dir.glob("*.mail"):
-        fields = f.name.split('.')
-        if len(fields) != 3:
-            continue
-
-        logging.info("processing: {0}".format(f))
+        logging.info("processing: %s", f)
         try:
-            process_spool_file(f, int(fields[0]), fields[1])
+            process_spool_file(f)
         except Exception as e:
-            logging.error("Failed to process: {0}".format(f))
+            logging.error("Failed to process: %s", f)
             logging.error(e, exc_info=True)
