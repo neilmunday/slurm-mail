@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# pylint: disable=invalid-name,broad-except
+# pylint: disable=invalid-name,broad-except,consider-using-f-string
 
 #
 #  This file is part of Slurm-Mail.
