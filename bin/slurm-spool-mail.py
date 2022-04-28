@@ -40,7 +40,7 @@ compared to the default Slurm e-mails.
 See also:
 
 conf.d/slurm-mail.conf -> application settings
-conf.d/*.tpl           -> customise e-mail content and layout
+conf.d/templates/*.tpl -> customise e-mail content and layout
 conf.d/style.css       -> customise e-mail style
 README.md              -> Set-up info
 """

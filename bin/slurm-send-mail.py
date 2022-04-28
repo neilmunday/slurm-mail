@@ -39,7 +39,7 @@ job. The e-mails include additional information retrieved from sacct.
 See also:
 
 conf.d/slurm-mail.conf -> application settings
-conf.d/*.tpl           -> customise e-mail content and layout
+conf.d/templates/*.tpl -> customise e-mail content and layout
 conf.d/style.css       -> customise e-mail style
 README.md              -> Set-up info
 """
@@ -613,19 +613,21 @@ if __name__ == "__main__":
     os.environ['SLURM_TIME_FORMAT'] = "%s"
 
     conf_dir = pathlib.Path(__file__).resolve().parents[1] / "conf.d"
-    if not conf_dir.is_dir():
-        die("{0} does not exist".format(conf_dir))
+    check_dir(conf_dir)
 
     conf_file = conf_dir / "slurm-mail.conf"
     check_file(conf_file)
 
+    tpl_dir = pathlib.Path(conf_dir) / "templates"
+    check_dir(tpl_dir)
+
     templates = {}
-    templates['array_ended'] = conf_dir / "ended-array.tpl"
-    templates['array_started'] = conf_dir / "started-array.tpl"
-    templates['ended'] = conf_dir / "ended.tpl"
-    templates['job_output'] = conf_dir / "job-output.tpl"
-    templates['job_table'] = conf_dir / "job-table.tpl"
-    templates['started'] = conf_dir / "started.tpl"
+    templates['array_ended'] = tpl_dir / "ended-array.tpl"
+    templates['array_started'] = tpl_dir / "started-array.tpl"
+    templates['ended'] = tpl_dir / "ended.tpl"
+    templates['job_output'] = tpl_dir / "job-output.tpl"
+    templates['job_table'] = tpl_dir / "job-table.tpl"
+    templates['started'] = tpl_dir / "started.tpl"
 
     for tpl, tpl_file in templates.items():
         check_file(tpl_file)
