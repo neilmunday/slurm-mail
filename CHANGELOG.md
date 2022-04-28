@@ -4,7 +4,7 @@ Change Log
 Version 3.0
 -----------
 
-Date: 2022-04-26
+Date: 2022-04-28
 
 * Changed Job class to have a `save` method to handle the calculation of additional job properties.
 * Added CPU time efficiency metric to job e-mails (issue #29).
@@ -14,6 +14,7 @@ Date: 2022-04-26
 * Added additional directory existence and access checks
 * Added pylint workflow for automated code checking
 * Changed spool mail file to use JSON format
+* Moved templates into conf.d/templates
 
 Version 2.5
 -----------
