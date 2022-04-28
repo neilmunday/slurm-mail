@@ -70,6 +70,19 @@ Example cron job, e.g.`/etc/cron.d/slurm-mail`:
 *    *    *    *    *    root    /opt/slurm-mail/bin/slurm-send-mail.py
 ```
 
+Upgrading from version 2.x to 3.x
+---------------------------------
+
+Version 3.0 onwards uses a new location for the e-mail templates. Therefore for versions prior to this, please run the following commands:
+
+```
+cd /opt/slurm-mail/conf.d
+mkdir templates
+mv ./*.tpl templates/
+```
+
+After moving the templates please merge any of the changes from the latest 3.x release with your local copies.
+
 SMTP Settings
 -------------
 
@@ -92,7 +105,7 @@ For SMTP servers that use SSL rather than starttls please set `smtpUseSsl = yes`
 Customising E-mails
 -------------------
 
-Slurm-Mail uses Python's [string.Template](https://docs.python.org/3/library/string.html#template-strings) class to create the e-mails it sends. Under Slurm-Mail's `conf.d` directory you will find the following files that you can edit to customise e-mails to your needs.
+Slurm-Mail uses Python's [string.Template](https://docs.python.org/3/library/string.html#template-strings) class to create the e-mails it sends. Under Slurm-Mail's `conf.d/templates` directory you will find the following files that you can edit to customise e-mails to your needs.
 
 | Filename          | Purpose                                                       |
 | ----------------- | ------------------------------------------------------------- |
