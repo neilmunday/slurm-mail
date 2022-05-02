@@ -483,6 +483,10 @@ def process_spool_file(json_file: pathlib.Path):
             WALLCLOCK_ACCURACY=job.wc_accuracy
         )
 
+        logging.debug("Creating e-mail signature template")
+        tpl = Template(get_file_contents(templates['signature']))
+        signature = tpl.substitute(EMAIL_FROM=email_from_name)
+
         body = ""
         if state == "Began":
             if job.is_array():
@@ -490,12 +494,12 @@ def process_spool_file(json_file: pathlib.Path):
                 body = tpl.substitute(
                     CSS=css, ARRAY_JOB_ID=job.array_id,
                     USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
-                    CLUSTER=job.cluster, EMAIL_FROM=email_from_name
+                    CLUSTER=job.cluster, SIGNATURE=signature
                 )
             else:
                 tpl = Template(get_file_contents(templates['started']))
                 body = tpl.substitute(
-                    CSS=css, JOB_ID=job.id, EMAIL_FROM=email_from_name,
+                    CSS=css, JOB_ID=job.id, SIGNATURE=signature,
                     USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
                     CLUSTER=job.cluster
                 )
@@ -527,7 +531,7 @@ def process_spool_file(json_file: pathlib.Path):
                 tpl = Template(get_file_contents(templates['array_ended']))
                 body = tpl.substitute(
                     CSS=css, END_TXT=end_txt, JOB_ID=job.id,
-                    ARRAY_JOB_ID=job.array_id, EMAIL_FROM=email_from_name,
+                    ARRAY_JOB_ID=job.array_id, SIGNATURE=signature,
                     USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
                     JOB_OUTPUT=job_output, CLUSTER=job.cluster
                 )
@@ -537,7 +541,7 @@ def process_spool_file(json_file: pathlib.Path):
                     CSS=css, END_TXT=end_txt, JOB_ID=job.id,
                     USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
                     JOB_OUTPUT=job_output, CLUSTER=job.cluster,
-                    EMAIL_FROM=email_from_name
+                    SIGNATURE=signature
                 )
         elif state in ["time_reached_50", "time_reached_80", "time_reached_90"]:
             reached = int(state[-2:])
@@ -547,7 +551,7 @@ def process_spool_file(json_file: pathlib.Path):
             body = tpl.substitute(
                 CSS=css, REACHED=reached,JOB_ID=job.id, REMAINING=remaining,
                 USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
-                CLUSTER=job.cluster, EMAIL_FROM=email_from_name
+                CLUSTER=job.cluster, SIGNATURE=signature
             )
             # change state value for upcomming e-mail send
             state = "{0}% of time limit reached".format(reached)
@@ -646,6 +650,7 @@ if __name__ == "__main__":
     templates['ended'] = tpl_dir / "ended.tpl"
     templates['job_output'] = tpl_dir / "job-output.tpl"
     templates['job_table'] = tpl_dir / "job-table.tpl"
+    templates['signature'] = tpl_dir / "signature.tpl"
     templates['started'] = tpl_dir / "started.tpl"
     templates['time'] = tpl_dir / "time.tpl"
 

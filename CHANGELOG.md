@@ -11,11 +11,12 @@ Date: 2022-04-28
 * Added job memory information (issue #29).
 * Moved all format strings to `string.format` for < Python 3.6 compatibility (issue #30).
 * Bug fix for issue #31 - correct log file creation for `slurm-send-mail.py`.
-* Added additional directory existence and access checks
-* Added pylint workflow for automated code checking
-* Changed spool mail file to use JSON format
-* Moved templates into conf.d/templates
-* Addd support for TIME_LIMIT_50, TIME_LIMIT_80 and TIME_LIMIT_90 mail types (issue #36)
+* Added additional directory existence and access checks.
+* Added pylint workflow for automated code checking.
+* Changed spool mail file to use JSON format.
+* Moved templates into conf.d/templates.
+* Created e-mail signature template.
+* Addd support for TIME_LIMIT_50, TIME_LIMIT_80 and TIME_LIMIT_90 mail types (issue #36).
 
 Version 2.5
 -----------

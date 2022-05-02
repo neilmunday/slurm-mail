@@ -114,6 +114,7 @@ Slurm-Mail uses Python's [string.Template](https://docs.python.org/3/library/str
 | ended.tpl         | Template used for jobs that have finished.                        |
 | ended-array.tpl   | Template used for jobs in an array that have finished.            |
 | job_table.tpl     | Template used to create the job info table in e-mails.            |
+| signature.tpl     | Template for the e-mail signature.                                |
 | started.tpl       | Template used for jobs that have started.                         |
 | started-array.tpl | Template used for the first job in an array that has started.     |
 | time.tpl          | Template used when a job reaches a percentage of it's time limit. |
