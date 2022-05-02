@@ -353,7 +353,14 @@ def process_spool_file(json_file: pathlib.Path):
 
     jobs = []  # store job object for each job in this array
 
-    if not state in ['Began', 'Ended', 'Failed']:
+    if not state in [
+            "Began",
+            "Ended",
+            "Failed",
+            "time_reached_50",
+            "time_reached_80",
+            "time_reached_90"
+        ]:
         logging.warning("Unsupported job state: %s - no emails will be generated", state)
     else:
         fields = [
@@ -427,7 +434,7 @@ def process_spool_file(json_file: pathlib.Path):
                 else:
                     job.wallclock = int(sacct_dict['TimelimitRaw']) * 60
 
-                if state != "Began":
+                if state in ["Ended", "Failed"]:
                     job.state = sacct_dict['State']
                     job.end_ts = sacct_dict['End']
                     job.exit_code = sacct_dict['ExitCode']
@@ -532,6 +539,18 @@ def process_spool_file(json_file: pathlib.Path):
                     JOB_OUTPUT=job_output, CLUSTER=job.cluster,
                     EMAIL_FROM=email_from_name
                 )
+        elif state in ["time_reached_50", "time_reached_80", "time_reached_90"]:
+            reached = int(state[-2:])
+            remaining = (1 - (reached / 100))  * job.wallclock
+            remaining = str(timedelta(seconds=remaining))
+            tpl = Template(get_file_contents(templates['time']))
+            body = tpl.substitute(
+                CSS=css, REACHED=reached,JOB_ID=job.id, REMAINING=remaining,
+                USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
+                CLUSTER=job.cluster, EMAIL_FROM=email_from_name
+            )
+            # change state value for upcomming e-mail send
+            state = "{0}% of time limit reached".format(reached)
 
         msg = MIMEMultipart("alternative")
         msg['subject'] = Template(email_subject).substitute(
@@ -628,6 +647,7 @@ if __name__ == "__main__":
     templates['job_output'] = tpl_dir / "job-output.tpl"
     templates['job_table'] = tpl_dir / "job-table.tpl"
     templates['started'] = tpl_dir / "started.tpl"
+    templates['time'] = tpl_dir / "time.tpl"
 
     for tpl, tpl_file in templates.items():
         check_file(tpl_file)

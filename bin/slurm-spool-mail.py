@@ -114,7 +114,7 @@ if __name__ == "__main__":
         info = sys.argv[2].split(',')[0]
         logging.debug("info str: %s", info)
         match = re.search(
-            r"Job_id=(?P<job_id>[0-9]+).*?(?P<state>(Began|Ended|Reached (?P<limit>[0-9]+)% of time limit))$",
+            r"Job_id=(?P<job_id>[0-9]+).*?(?P<state>(Began|Ended|Failed|Reached (?P<limit>[0-9]+)% of time limit))$",
             info
         )
         if not match:

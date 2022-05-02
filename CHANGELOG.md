@@ -15,6 +15,7 @@ Date: 2022-04-28
 * Added pylint workflow for automated code checking
 * Changed spool mail file to use JSON format
 * Moved templates into conf.d/templates
+* Addd support for TIME_LIMIT_50, TIME_LIMIT_80 and TIME_LIMIT_90 mail types (issue #36)
 
 Version 2.5
 -----------
