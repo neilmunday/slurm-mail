@@ -357,9 +357,10 @@ def process_spool_file(json_file: pathlib.Path):
             "Began",
             "Ended",
             "Failed",
-            "time_reached_50",
-            "time_reached_80",
-            "time_reached_90"
+            "Time reached 50%",
+            "Time reached 80%",
+            "Time reached 90%",
+            "Time limit reached"
         ]:
         logging.warning("Unsupported job state: %s - no emails will be generated", state)
     else:
@@ -434,7 +435,7 @@ def process_spool_file(json_file: pathlib.Path):
                 else:
                     job.wallclock = int(sacct_dict['TimelimitRaw']) * 60
 
-                if state in ["Ended", "Failed"]:
+                if state in ["Ended", "Failed", "Time limit reached"]:
                     job.state = sacct_dict['State']
                     job.end_ts = sacct_dict['End']
                     job.exit_code = sacct_dict['ExitCode']
@@ -503,7 +504,7 @@ def process_spool_file(json_file: pathlib.Path):
                     USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
                     CLUSTER=job.cluster
                 )
-        elif state in ["Ended", "Failed"]:
+        elif state in ["Ended", "Failed", "Time limit reached"]:
             end_txt = state.lower()
             job_output = ""
             if tail_lines > 0:
@@ -543,8 +544,8 @@ def process_spool_file(json_file: pathlib.Path):
                     JOB_OUTPUT=job_output, CLUSTER=job.cluster,
                     SIGNATURE=signature
                 )
-        elif state in ["time_reached_50", "time_reached_80", "time_reached_90"]:
-            reached = int(state[-2:])
+        elif state in ["Time reached 50%", "Time reached 80%", "Time reached 90%"]:
+            reached = int(state[-3:-1])
             remaining = (1 - (reached / 100))  * job.wallclock
             remaining = str(timedelta(seconds=remaining))
             tpl = Template(get_file_contents(templates['time']))

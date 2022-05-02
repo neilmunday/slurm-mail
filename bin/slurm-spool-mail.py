@@ -114,7 +114,7 @@ if __name__ == "__main__":
         info = sys.argv[2].split(',')[0]
         logging.debug("info str: %s", info)
         match = re.search(
-            r"Job_id=(?P<job_id>[0-9]+).*?(?P<state>(Began|Ended|Failed|Reached (?P<limit>[0-9]+)% of time limit))$",
+            r"Job_id=(?P<job_id>[0-9]+).*?(?P<state>(Began|Ended|Failed|Reached time limit|Reached (?P<limit>[0-9]+)% of time limit))$",
             info
         )
         if not match:
@@ -123,9 +123,11 @@ if __name__ == "__main__":
         job_id = int(match.group("job_id"))
         email = sys.argv[3]
         state = match.group("state")
+        if state == "Reached time limit":
+            state = "Time limit reached"
         time_reached = match.group("limit")
         if time_reached:
-            state = "time_reached_{0}".format(time_reached)
+            state = "Time reached {0}%".format(time_reached)
 
         logging.debug("Job ID: %d", job_id)
         logging.debug("State: %s", state)
