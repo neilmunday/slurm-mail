@@ -459,7 +459,7 @@ def process_spool_file(json_file: pathlib.Path):
                     # for the first job in an array, scontrol will
                     # output details about all jobs so let's just
                     # use the first line
-                    for i in stdout.split("\n")[0].split(" "):
+                    for i in stdout.split("\n", maxsplit=1)[0].split(" "):
                         x = i.split("=", 1)
                         if len(x) == 2:
                             scontrol_dict[x[0]] = x[1]
