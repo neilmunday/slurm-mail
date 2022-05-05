@@ -343,13 +343,14 @@ def process_spool_file(json_file: pathlib.Path):
     with json_file.open() as spool_file:
         data = json.load(spool_file)
 
-    for f in ["job_id", "email", "state"]:
+    for f in ["job_id", "email", "state", "array_summary"]:
         if f not in data:
             die("Could not find {0} in {1}".format(f, json_file))
 
     first_job_id = int(data["job_id"])
     user_email = data["email"]
     state = data["state"]
+    array_summary = data["array_summary"]
 
     jobs = []  # store job object for each job in this array
 
@@ -382,6 +383,7 @@ def process_spool_file(json_file: pathlib.Path):
             logging.error(stderr)
         else:
             logging.debug(stdout)
+            job = None
             for line in stdout.split("\n"):
                 data = line.split("|", (field_num - 1))
                 if len(data) != field_num:
@@ -392,13 +394,14 @@ def process_spool_file(json_file: pathlib.Path):
                     sacct_dict[fields[i]] = data[i]
 
                 if not re.match(
-                        r"^([0-9]+|[0-9]+_[0-9]+)$",
-                        sacct_dict['JobId']
-                        ):
+                    r"^([0-9]+|[0-9]+_[0-9]+)$",
+                    sacct_dict['JobId']
+                ):
                     # grab MaxRSS value
                     if (
                         state != "Began" and
                         sacct_dict['MaxRSS'] != ""  and
+                        job is not None and
                         (
                             job.max_rss is None or
                             get_kbytes_from_str(sacct_dict['MaxRSS']) > job.max_rss
@@ -453,7 +456,10 @@ def process_spool_file(json_file: pathlib.Path):
                 rc, stdout, stderr = run_command(cmd)
                 if rc == 0:
                     scontrol_dict = {}
-                    for i in stdout.split(" "):
+                    # for the first job in an array, scontrol will
+                    # output details about all jobs so let's just
+                    # use the first line
+                    for i in stdout.split("\n")[0].split(" "):
                         x = i.split("=", 1)
                         if len(x) == 2:
                             scontrol_dict[x[0]] = x[1]
@@ -465,6 +471,9 @@ def process_spool_file(json_file: pathlib.Path):
                     logging.error(stderr)
                 job.save()
                 jobs.append(job)
+
+    if array_summary or len(jobs) == 1:
+        jobs = [jobs[0]]
 
     for job in jobs:
         # Will only be one job regardless of if it is an array in the
@@ -491,9 +500,19 @@ def process_spool_file(json_file: pathlib.Path):
         body = ""
         if state == "Began":
             if job.is_array():
-                tpl = Template(get_file_contents(templates['array_started']))
+                tpl = None
+
+                if array_summary:
+                    tpl = Template(
+                        get_file_contents(templates['array_summary_started'])
+                    )
+                else:
+                    tpl = Template(
+                        get_file_contents(templates['array_started'])
+                    )
+
                 body = tpl.substitute(
-                    CSS=css, ARRAY_JOB_ID=job.array_id,
+                    CSS=css, JOB_ID=job.id, ARRAY_JOB_ID=job.array_id,
                     USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
                     CLUSTER=job.cluster, SIGNATURE=signature
                 )
@@ -529,13 +548,22 @@ def process_spool_file(json_file: pathlib.Path):
                 os.seteuid(0)
 
             if job.is_array():
-                tpl = Template(get_file_contents(templates['array_ended']))
-                body = tpl.substitute(
-                    CSS=css, END_TXT=end_txt, JOB_ID=job.id,
-                    ARRAY_JOB_ID=job.array_id, SIGNATURE=signature,
-                    USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
-                    JOB_OUTPUT=job_output, CLUSTER=job.cluster
-                )
+                if array_summary:
+                    tpl = Template(get_file_contents(templates['array_summary_ended']))
+                    body = tpl.substitute(
+                        CSS=css, END_TXT=end_txt, JOB_ID=job.id,
+                        ARRAY_JOB_ID=job.array_id, SIGNATURE=signature,
+                        USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
+                        JOB_OUTPUT=job_output, CLUSTER=job.cluster
+                    )
+                else:
+                    tpl = Template(get_file_contents(templates['array_ended']))
+                    body = tpl.substitute(
+                        CSS=css, END_TXT=end_txt, JOB_ID=job.id,
+                        ARRAY_JOB_ID=job.array_id, SIGNATURE=signature,
+                        USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
+                        JOB_OUTPUT=job_output, CLUSTER=job.cluster
+                    )
             else:
                 tpl = Template(get_file_contents(templates['ended']))
                 body = tpl.substitute(
@@ -648,6 +676,8 @@ if __name__ == "__main__":
     templates = {}
     templates['array_ended'] = tpl_dir / "ended-array.tpl"
     templates['array_started'] = tpl_dir / "started-array.tpl"
+    templates['array_summary_started'] = tpl_dir / "started-array-summary.tpl"
+    templates['array_summary_ended'] = tpl_dir / "ended-array-summary.tpl"
     templates['ended'] = tpl_dir / "ended.tpl"
     templates['job_output'] = tpl_dir / "job-output.tpl"
     templates['job_table'] = tpl_dir / "job-table.tpl"

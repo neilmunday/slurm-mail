@@ -8,7 +8,7 @@
 
 <p>Dear $USER,</p>
 
-<p>Your job $JOB_ID of job array $ARRAY_JOB_ID has $END_TXT on $CLUSTER.</p>
+<p>Your job $JOB_ID in job array $ARRAY_JOB_ID has $END_TXT on $CLUSTER.</p>
 
 <p>Details about the job can be found in the table below:</p>
 
