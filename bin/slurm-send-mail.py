@@ -362,6 +362,7 @@ def process_spool_file(json_file: pathlib.Path):
             "Failed",
             "Invalid dependency",
             "Requeued",
+            "Staged Out",
             "Time reached 50%",
             "Time reached 80%",
             "Time reached 90%",
@@ -529,12 +530,6 @@ def process_spool_file(json_file: pathlib.Path):
                     USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
                     CLUSTER=job.cluster
                 )
-        elif state == "Invalid dependency":
-            tpl = Template(get_file_contents(templates['invalid_dependency']))
-            body = tpl.substitute(
-                CSS=css, CLUSTER=job.cluster, JOB_ID=job.id, SIGNATURE=signature,
-                USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
-            )
         elif state in ["Ended", "Failed", "Requeued", "Time limit reached"]:
             end_txt = state.lower()
             job_output = ""
@@ -596,6 +591,18 @@ def process_spool_file(json_file: pathlib.Path):
             )
             # change state value for upcomming e-mail send
             state = "{0}% of time limit reached".format(reached)
+        elif state == "Invalid dependency":
+            tpl = Template(get_file_contents(templates['invalid_dependency']))
+            body = tpl.substitute(
+                CSS=css, CLUSTER=job.cluster, JOB_ID=job.id, SIGNATURE=signature,
+                USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
+            )
+        elif state == "Staged Out":
+            tpl = Template(get_file_contents(templates['staged_out']))
+            body = tpl.substitute(
+                CSS=css, CLUSTER=job.cluster, JOB_ID=job.id, SIGNATURE=signature,
+                USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
+            )
 
         msg = MIMEMultipart("alternative")
         msg['subject'] = Template(email_subject).substitute(
@@ -695,6 +702,7 @@ if __name__ == "__main__":
     templates['job_output'] = tpl_dir / "job-output.tpl"
     templates['job_table'] = tpl_dir / "job-table.tpl"
     templates['signature'] = tpl_dir / "signature.tpl"
+    templates['staged_out'] = tpl_dir / "staged-out.tpl"
     templates['started'] = tpl_dir / "started.tpl"
     templates['time'] = tpl_dir / "time.tpl"
 

@@ -117,6 +117,7 @@ Slurm-Mail uses Python's [string.Template](https://docs.python.org/3/library/str
 | invalid-dependency        | Used when a job has an invalid dependency.                        |
 | job_table.tpl             | Used to create the job info table in e-mails.                     |
 | signature.tpl             | Used to create the e-mail signature.                              |
+| staged-out.tpl            | Used when a job's burst buffer stage has completed.               |
 | started.tpl               | Used for jobs that have started.                                  |
 | started-array-summary.tpl | Used when the first job in an array has started.                  |
 | started-array.tpl         | Used for the first job in an array that has started.              |
