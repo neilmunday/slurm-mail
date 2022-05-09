@@ -120,7 +120,7 @@ if __name__ == "__main__":
         match = None
         if "Array" in info:
             match = re.search(
-                r"Slurm ((?P<array_summary>Array Summary)|Array Task) Job_id=[0-9]+_[0-9]+ \((?P<job_id>[0-9]+)\).*?(?P<state>(Began|Ended|Failed|Reached time limit|Reached (?P<limit>[0-9]+)% of time limit))",
+                r"Slurm ((?P<array_summary>Array Summary)|Array Task) Job_id=[0-9]+_([0-9]+|\*) \((?P<job_id>[0-9]+)\).*?(?P<state>(Began|Ended|Failed|Reached time limit|Reached (?P<limit>[0-9]+)% of time limit))",
                 info
             )
         else:
