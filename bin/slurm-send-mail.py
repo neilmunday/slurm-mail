@@ -157,7 +157,9 @@ class Job:
 
     @property
     def start(self) -> str:
-        return datetime.fromtimestamp(self.start_ts).strftime(datetime_format)
+        if self.start_ts:
+            return datetime.fromtimestamp(self.start_ts).strftime(datetime_format)
+        return "N/A"
 
     @property
     def start_ts(self) -> int:
@@ -428,7 +430,8 @@ def process_spool_file(json_file: pathlib.Path):
                 job.nodes = sacct_dict['NNodes']
                 job.partition = sacct_dict['Partition']
                 job.requested_mem_str = sacct_dict['ReqMem']
-                job.start_ts = sacct_dict['Start']
+                if sacct_dict['Start'] != 'Unknown':
+                    job.start_ts = sacct_dict['Start']
                 job.used_cpu_usec = get_usec_from_str(sacct_dict['TotalCPU'])
                 job.user = sacct_dict['User']
                 job.workdir = sacct_dict['WorkDir']
@@ -440,7 +443,8 @@ def process_spool_file(json_file: pathlib.Path):
 
                 if state in ["Ended", "Failed", "Time limit reached"]:
                     job.state = sacct_dict['State']
-                    job.end_ts = sacct_dict['End']
+                    if sacct_dict['End'] != 'Unknown':
+                        job.end_ts = sacct_dict['End']
                     job.exit_code = sacct_dict['ExitCode']
                     if (
                         sacct_dict['MaxRSS'] != "" and
