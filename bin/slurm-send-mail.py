@@ -360,6 +360,7 @@ def process_spool_file(json_file: pathlib.Path):
             "Began",
             "Ended",
             "Failed",
+            "Requeued",
             "Time reached 50%",
             "Time reached 80%",
             "Time reached 90%",
@@ -527,7 +528,7 @@ def process_spool_file(json_file: pathlib.Path):
                     USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
                     CLUSTER=job.cluster
                 )
-        elif state in ["Ended", "Failed", "Time limit reached"]:
+        elif state in ["Ended", "Failed", "Requeued", "Time limit reached"]:
             end_txt = state.lower()
             job_output = ""
             if tail_lines > 0:

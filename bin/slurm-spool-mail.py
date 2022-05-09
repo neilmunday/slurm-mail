@@ -128,7 +128,7 @@ if __name__ == "__main__":
             array_summary = (match.group("array_summary") is not None)
         else:
             match = re.search(
-                r"Slurm Job_id=(?P<job_id>[0-9]+).*?(?P<state>(Began|Ended|Failed|Reached time limit|Reached (?P<limit>[0-9]+)% of time limit))",
+                r"Slurm Job_id=(?P<job_id>[0-9]+).*?(?P<state>(Began|Ended|Failed|Requeued|Reached time limit|Reached (?P<limit>[0-9]+)% of time limit))",
                 info
             )
             if not match:
