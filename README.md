@@ -109,15 +109,18 @@ Customising E-mails
 
 Slurm-Mail uses Python's [string.Template](https://docs.python.org/3/library/string.html#template-strings) class to create the e-mails it sends. Under Slurm-Mail's `conf.d/templates` directory you will find the following files that you can edit to customise e-mails to your needs.
 
-| Filename          | Purpose                                                           |
-| ----------------- | ----------------------------------------------------------------- |
-| ended.tpl         | Template used for jobs that have finished.                        |
-| ended-array.tpl   | Template used for jobs in an array that have finished.            |
-| job_table.tpl     | Template used to create the job info table in e-mails.            |
-| signature.tpl     | Template for the e-mail signature.                                |
-| started.tpl       | Template used for jobs that have started.                         |
-| started-array.tpl | Template used for the first job in an array that has started.     |
-| time.tpl          | Template used when a job reaches a percentage of it's time limit. |
+| Filename                  | Template Purpose                                                  |
+| ------------------------- | ----------------------------------------------------------------- |
+| ended.tpl                 | Used for jobs that have finished.                                 |
+| ended-array.tpl           | Used for jobs in an array that have finished.                     |
+| ended-array_summary       | Used when all jobs in an array have finished.                     |
+| invalid-dependency        | Used when a job has an invalid dependency.                        |
+| job_table.tpl             | Used to create the job info table in e-mails.                     |
+| signature.tpl             | Used to create the e-mail signature.                              |
+| started.tpl               | Used for jobs that have started.                                  |
+| started-array-summary.tpl | Used when the first job in an array has started.                  |
+| started-array.tpl         | Used for the first job in an array that has started.              |
+| time.tpl                  | Used when a job reaches a percentage of it's time limit.          |
 
 You can adjust the font style, size, colours etc. by editing the Cascading Style Sheet (CSS) file `conf.d/style.css` used for generating the e-mails.
 
