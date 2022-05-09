@@ -360,6 +360,7 @@ def process_spool_file(json_file: pathlib.Path):
             "Began",
             "Ended",
             "Failed",
+            "Invalid dependency",
             "Requeued",
             "Time reached 50%",
             "Time reached 80%",
@@ -528,6 +529,12 @@ def process_spool_file(json_file: pathlib.Path):
                     USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
                     CLUSTER=job.cluster
                 )
+        elif state == "Invalid dependency":
+            tpl = Template(get_file_contents(templates['invalid_dependency']))
+            body = tpl.substitute(
+                CSS=css, CLUSTER=job.cluster, JOB_ID=job.id, SIGNATURE=signature,
+                USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
+            )
         elif state in ["Ended", "Failed", "Requeued", "Time limit reached"]:
             end_txt = state.lower()
             job_output = ""
@@ -684,6 +691,7 @@ if __name__ == "__main__":
     templates['array_summary_started'] = tpl_dir / "started-array-summary.tpl"
     templates['array_summary_ended'] = tpl_dir / "ended-array-summary.tpl"
     templates['ended'] = tpl_dir / "ended.tpl"
+    templates['invalid_dependency'] = tpl_dir / "invalid-dependency.tpl"
     templates['job_output'] = tpl_dir / "job-output.tpl"
     templates['job_table'] = tpl_dir / "job-table.tpl"
     templates['signature'] = tpl_dir / "signature.tpl"
