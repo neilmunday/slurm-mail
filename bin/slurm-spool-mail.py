@@ -123,13 +123,17 @@ if __name__ == "__main__":
                 r"Slurm ((?P<array_summary>Array Summary)|Array Task) Job_id=[0-9]+_([0-9]+|\*) \((?P<job_id>[0-9]+)\).*?(?P<state>(Began|Ended|Failed|Reached time limit|Reached (?P<limit>[0-9]+)% of time limit))",
                 info
             )
+            if not match:
+                die("Failed to parse Slurm info.")
+            array_summary = (match.group("array_summary") is not None)
         else:
             match = re.search(
                 r"Slurm Job_id=(?P<job_id>[0-9]+).*?(?P<state>(Began|Ended|Failed|Reached time limit|Reached (?P<limit>[0-9]+)% of time limit))",
                 info
             )
-        if not match:
-            die("Failed to parse Slurm info.")
+            if not match:
+                die("Failed to parse Slurm info.")
+            array_summary = False
 
         job_id = int(match.group("job_id"))
         email = sys.argv[3]
@@ -139,7 +143,6 @@ if __name__ == "__main__":
         time_reached = match.group("limit")
         if time_reached:
             state = "Time reached {0}%".format(time_reached)
-        array_summary = (match.group("array_summary") is not None)
 
         logging.debug("Job ID: %d", job_id)
         logging.debug("State: %s", state)
@@ -160,4 +163,4 @@ if __name__ == "__main__":
         with output_path.open(mode="w", encoding="utf-8") as f:
             json.dump(data, f)
     except Exception as e:
-        logging.error(e)
+        logging.error(e, exc_info=True)
