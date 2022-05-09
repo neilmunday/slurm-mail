@@ -95,15 +95,20 @@ if __name__ == "__main__":
             )
         spool_dir = config.get("common", "spoolDir")
         log_file = pathlib.Path(config.get(section, "logFile"))
+        verbose = config.getboolean(section, "verbose")
     except Exception as e:
         die("Error: {0}".format(e))
 
     check_dir(log_file.parent)
     check_dir(pathlib.Path(spool_dir))
 
+    log_level = logging.INFO
+    if verbose:
+        log_level = logging.DEBUG
+
     logging.basicConfig(
         format="%(asctime)s:%(levelname)s: %(message)s",
-        datefmt="%Y/%m/%d %H:%M:%S", level=logging.DEBUG, filename=log_file
+        datefmt="%Y/%m/%d %H:%M:%S", level=log_level, filename=log_file
     )
     logging.debug("Called with: %s", sys.argv)
 
@@ -113,10 +118,6 @@ if __name__ == "__main__":
     try:
         info = sys.argv[2].split(',')[0]
         logging.debug("info str: %s", info)
-        #match = re.search(
-        #    r"Slurm ((?P<array_summary>Array Summary )|Array Task)?Job_id=(?P<job_id>[0-9]+).*?(?P<state>(Began|Ended|Failed|Reached time limit|Reached (?P<limit>[0-9]+)% of time limit))",
-        #    info
-        #)
         match = None
         if "Array" in info:
             match = re.search(
@@ -159,7 +160,7 @@ if __name__ == "__main__":
         output_path = pathlib.Path(spool_dir).joinpath(
             "{0}_{1}.mail".format(match.group("job_id"), time.time())
         )
-        logging.debug("Job ID match, writing file %s", output_path)
+        logging.info("writing file: %s", output_path)
         with output_path.open(mode="w", encoding="utf-8") as f:
             json.dump(data, f)
     except Exception as e:

@@ -730,6 +730,7 @@ if __name__ == "__main__":
             log_file = pathlib.Path(config.get(section, "logFile"))
         else:
             log_file = None
+        verbose = config.getboolean(section, "verbose")
         email_from_address = config.get(section, "emailFromUserAddress")
         email_from_name = config.get(section, "emailFromName")
         email_subject = config.get(section, "emailSubject")
@@ -749,10 +750,9 @@ if __name__ == "__main__":
 
     log_date = "%Y/%m/%d %H:%M:%S"
     log_format = "%(asctime)s:%(levelname)s: %(message)s"
-    if args.verbose:
+    log_level = logging.INFO
+    if args.verbose or verbose:
         log_level = logging.DEBUG
-    else:
-        log_level = logging.INFO
 
     if log_file:
         check_dir(log_file.parent)
