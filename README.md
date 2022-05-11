@@ -135,6 +135,11 @@ To change the subject of the e-mails, change the `emailSubject` configuration op
 | $JOB_ID      | The Slurm ID of the job |
 | $STATE       | The state of the job    |
 
+Validating E-mails
+------------------
+
+By default Slurm-Mail will not perform any checks on the destination e-mail address (i.e the value supplied to `sbatch` via `--mail-user`). If you would like Slurm-Mail to only send e-mails for jobs that correspond to a valid e-mail address (e.g. user@some.domain) then you can set the `validateEmail` option in `conf.d/slurm-mail.conf` to `true`. E-mail addresses that failed this check will be logged in `/var/log/slurm-mail/slurm-send-mail.log` as an error.
+
 Including Job Output in E-mails
 -------------------------------
 

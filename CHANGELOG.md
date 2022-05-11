@@ -18,6 +18,7 @@ Date: 2022-05-09
 * Created e-mail signature template.
 * Added support for REQUEUE, INVALID_DEPEND, STAGE_OUT, TIME_LIMIT_50, TIME_LIMIT_80, TIME_LIMIT_90, and TIME_LIMIT mail types (issue #36).
 * Added `verbose` option to `conf.d/slurm-mail.conf` for issue #37
+* Added `validateEmail` option to `conf.d/slurm-mail.conf` to prevent e-mails being sent to invalid e-mail address. Thanks to @hakasapl for the suggestion.
 
 Version 2.5
 -----------

@@ -266,6 +266,11 @@ def check_file(f: pathlib.Path):
     if not f.is_file():
         die("{0} does not exist".format(f))
 
+def delete_spool_file(f: pathlib.Path):
+    # Remove spool file
+    logging.info("Deleting: %s", f)
+    f.unlink()
+
 
 def die(msg: str):
     """
@@ -353,6 +358,12 @@ def process_spool_file(json_file: pathlib.Path):
     user_email = data["email"]
     state = data["state"]
     array_summary = data["array_summary"]
+
+    if validate_email and not re.fullmatch(MAIL_REGEX, user_email):
+        # not a valid email address
+        logging.error("Email address not valid: %s" % user_email)
+        delete_spool_file(json_file)
+        return
 
     jobs = []  # store job object for each job in this array
 
@@ -629,9 +640,7 @@ def process_spool_file(json_file: pathlib.Path):
             s.login(smtp_username, smtp_password)
         s.sendmail(email_from_address, user_email.split(","), msg.as_string())
 
-    # Remove spool file
-    logging.info("Deleting: %s", json_file)
-    json_file.unlink()
+    delete_spool_file(json_file)
 
 
 def run_command(cmd: str) -> tuple:
@@ -682,6 +691,8 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     os.environ['SLURM_TIME_FORMAT'] = "%s"
+
+    MAIL_REGEX = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
 
     conf_dir = pathlib.Path(__file__).resolve().parents[1] / "conf.d"
     check_dir(conf_dir)
@@ -734,6 +745,7 @@ if __name__ == "__main__":
         email_from_address = config.get(section, "emailFromUserAddress")
         email_from_name = config.get(section, "emailFromName")
         email_subject = config.get(section, "emailSubject")
+        validate_email = config.getboolean(section, "validateEmail")
         sacct_exe = pathlib.Path(config.get(section, "sacctExe"))
         scontrol_exe = pathlib.Path(config.get(section, "scontrolExe"))
         datetime_format = config.get(section, "datetimeFormat")
