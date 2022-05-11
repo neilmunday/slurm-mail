@@ -361,7 +361,7 @@ def process_spool_file(json_file: pathlib.Path):
 
     if validate_email and not re.fullmatch(MAIL_REGEX, user_email):
         # not a valid email address
-        logging.error("Email address not valid: %s" % user_email)
+        logging.error("Email address not valid: %s", user_email)
         delete_spool_file(json_file)
         return
 
