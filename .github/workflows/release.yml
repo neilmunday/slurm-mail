@@ -1,0 +1,28 @@
+name: release
+
+permissions:
+  contents: write
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Get version
+        run: echo "VERSION=${GITHUB_REF_NAME:1}" >> $GITHUB_ENV
+      - name: Build
+        run: tar cvfz slurm-mail-${VERSION}.tar.gz --exclude .github ./*
+      - name: Check tar
+        run: tar tvfz slurm-mail-${VERSION}.tar.gz
+      - name: GH Release
+        uses: softprops/action-gh-release@v0.1.14
+        with:
+          files: slurm-mail-${{env.VERSION}}.tar.gz
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
