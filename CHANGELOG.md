@@ -4,7 +4,7 @@ Change Log
 Version 3.0
 -----------
 
-Date: 2022-05-09
+Date: 2022-05-11
 
 * Changed Job class to have a `save` method to handle the calculation of additional job properties.
 * Added CPU time efficiency metric to job e-mails (issue #29).
