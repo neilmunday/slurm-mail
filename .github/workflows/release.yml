@@ -12,16 +12,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Get version
+        run: echo "VERSION=${GITHUB_REF_NAME:1}" >> $GITHUB_ENV
       - name: Create checkout directory
-        run: mkdir slurm-mail
+        run: mkdir slurm-mail-${VERSION}
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          path: slurm-mail
-      - name: Get version
-        run: echo "VERSION=${GITHUB_REF_NAME:1}" >> $GITHUB_ENV
+          path: slurm-mail-${{env.VERSION}}
       - name: Build
-        run: tar cvfz slurm-mail-${VERSION}.tar.gz --exclude .git* slurm-mail
+        run: tar cvfz slurm-mail-${VERSION}.tar.gz --exclude .git* slurm-mail-${VERSION}
       - name: Check tar
         run: tar tvfz slurm-mail-${VERSION}.tar.gz
       - name: GH Release
