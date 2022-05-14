@@ -53,6 +53,6 @@ rsync -av ./* --exclude .git --exclude .github --exclude testing --exclude build
 cd $TMP_DIR
 tar cvfz $TAR_FILE slurm-mail-${VERSION}
 
-rpmbuild -ta $TAR_FILE
+rpmbuild -tb $TAR_FILE
 
 rm -rf $TMP_DIR
