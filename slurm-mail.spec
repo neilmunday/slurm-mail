@@ -2,7 +2,7 @@
 %define rel 1
 
 Name:       slurm-mail
-Version:    %{_slurm_mail_version}
+Version:    3.0
 Release:    %{rel}%{?dist}
 Summary:    Provides enhanced e-mails for Slurm
 URL:        https://www.github.com/neilmunday/slurm-mail
