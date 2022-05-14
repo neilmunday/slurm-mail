@@ -14,7 +14,8 @@ BuildArch:  noarch
 
 Source: %{name}-%{version}.tar.gz
 
-Requires:   python38
+%{?el7:Requires: python3}
+%{?el8:Requires: python38}
 Requires:   slurm-slurmctld
 
 %description
@@ -37,12 +38,16 @@ install -d -m700 %{buildroot}/var/spool/slurm-mail
 install -d -m700 %{buildroot}/var/log/slurm-mail
 touch %{buildroot}/var/log/slurm-mail/slurm-send-mail.log
 touch %{buildroot}/var/log/slurm-mail/slurm-spool-mail.log
+install -d -m755 %{buildroot}/etc/cron.d
+echo "*    *    *    *    *    root    /opt/slurm-mail/bin/slurm-send-mail.py" > %{buildroot}/etc/cron.d/slurm-mail
 
 # set permissions on directories?
 
 %files
 %defattr(-,root,root,0700)
 /opt/slurm-mail/bin/*
+%defattr(-,root,root,0644)
+%config /etc/cron.d/slurm-mail
 %defattr(-,root,root,0600)
 %config /opt/slurm-mail/conf.d/slurm-mail.conf
 %config /opt/slurm-mail/conf.d/style.css
