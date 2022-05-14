@@ -7,6 +7,8 @@ Author: Neil Munday (neil at mundayweb.com)
 
 Repository: https://github.com/neilmunday/slurm-mail
 
+Requires: Python 3
+
 Introduction
 ------------
 
@@ -34,10 +36,19 @@ E-mails can be easily customised to your needs using the provided templates (see
 
 You can also opt to include a number of lines from the end of the job's output files in the job completion e-mails (see below).
 
-Installation
-------------
+RPM Installation
+----------------
 
-> **_NOTE:_**  As of version 2.0 of Slurm-Mail the code is tested with Python 3 only and no assurance of backwards compatibility with Python 2 is given. The try/except clauses for common gotchas like `configparser` vs `ConfigParser` have now been removed.
+To create a Slurm-Mail RPM for your OS download the Slurm-Mail tar archive and then run:
+
+```
+rpmbuild -tb slurm-mail-3.0.tar.gz
+```
+
+Take note of where `rpmbuild` wrote the generated RPM and then install with your package manager.
+
+Source Installation
+-------------------
 
 Download the latest release of Slurm-Mail and unpack it to a directory of your choosing on the server(s) running the Slurm controller daemon `slurmctld`, e.g. `/opt/slurm-mail`
 
