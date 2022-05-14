@@ -35,7 +35,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $DIR/..
 
 for exe in rpmbuild rsync tar; do
-  if ! which $exe > /dev/null 2>&1; then
+  if ! command -v $exe; then
     echo "$exe is not installed"
     exit 1
   fi
@@ -53,6 +53,6 @@ rsync -av ./* --exclude .git --exclude .github --exclude testing --exclude build
 cd $TMP_DIR
 tar cvfz $TAR_FILE slurm-mail-${VERSION}
 
-rpmbuild --define "%_slurm_mail_version $VERSION" -ta $TAR_FILE
+rpmbuild -ta $TAR_FILE
 
 rm -rf $TMP_DIR
