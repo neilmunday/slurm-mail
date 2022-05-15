@@ -12,25 +12,31 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Get version
-        run: echo "VERSION=${GITHUB_REF_NAME:1}" >> $GITHUB_ENV
-      - name: Create checkout directory
-        run: mkdir slurm-mail-${VERSION}
       - name: Checkout
         uses: actions/checkout@v3
-        with:
-          path: slurm-mail-${{env.VERSION}}
-      - name: Build
-        run: tar cvfz slurm-mail-${VERSION}.tar.gz --exclude .git* --exclude build slurm-mail-${VERSION}
-      - name: Check tar
-        run: tar tvfz slurm-mail-${VERSION}.tar.gz
-      - name: Create tar md5sum
-        run: md5sum slurm-mail-${VERSION}.tar.gz | awk '{ print $1 }' > slurm-mail-${VERSION}.tar.gz.md5sum
+      - name: Create tar
+        id: create_tar
+        run: >-
+          echo "::set-output name=TAR_PATH::$(
+            build/create-tar.sh
+          )"
+      - name: Get tar file name
+        id: tar_name
+        run: >-
+          echo "::set-output name=TAR_NAME::$(
+            basename ${{steps.create_tar.outputs.TAR_PATH}}
+          )"
+      - name: Move tar file
+        run: mv -v ${{steps.create_tar.outputs.TAR_PATH}} ./
+      - name: Create md5sum for tar file
+        run: md5sum ${{steps.tar_name.outputs.TAR_NAME}} | awk '{ print $1}' > ${{steps.tar_name.outputs.TAR_NAME}}.md5sum
+      - name: Cat md5sum
+        run: cat ${{steps.tar_name.outputs.TAR_NAME}}.md5sum
       - name: GH Release
         uses: softprops/action-gh-release@v0.1.14
         with:
           files: |
-            slurm-mail-${{env.VERSION}}.tar.gz
-            slurm-mail-${{env.VERSION}}.tar.gz.md5sum
+            ${{steps.tar_name.outputs.TAR_NAME}}
+            ${{steps.tar_name.outputs.TAR_NAME}}.md5sum
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
