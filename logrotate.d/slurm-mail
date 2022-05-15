@@ -1,0 +1,7 @@
+/var/log/slurm-mail/*
+{
+    missingok
+    weekly
+    compress
+    rotate 5 
+}

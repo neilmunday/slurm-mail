@@ -28,18 +28,20 @@ Slurm-Mail is a drop in replacement for Slurm's e-mails to give users much more 
 # nothing to do here
 
 %install
-install -d -m755 %{buildroot}/opt/slurm-mail/bin
+install -d -m 755 %{buildroot}/opt/slurm-mail/bin
 install -m 755 bin/* %{buildroot}/opt/slurm-mail/bin/
 install -d -m 700 %{buildroot}/opt/slurm-mail/conf.d/templates
 install -m 600 conf.d/slurm-mail.conf conf.d/style.css %{buildroot}/opt/slurm-mail/conf.d/
 install -m 600 conf.d/templates/* %{buildroot}/opt/slurm-mail/conf.d/templates
 install -m 644 README.md %{buildroot}/opt/slurm-mail/
-install -d -m700 %{buildroot}/var/spool/slurm-mail
-install -d -m700 %{buildroot}/var/log/slurm-mail
+install -d -m 700 %{buildroot}/var/spool/slurm-mail
+install -d -m 700 %{buildroot}/var/log/slurm-mail
 touch %{buildroot}/var/log/slurm-mail/slurm-send-mail.log
 touch %{buildroot}/var/log/slurm-mail/slurm-spool-mail.log
-install -d -m755 %{buildroot}/etc/cron.d
+install -d -m 755 %{buildroot}/etc/cron.d
 echo "*    *    *    *    *    root    /opt/slurm-mail/bin/slurm-send-mail.py" > %{buildroot}/etc/cron.d/slurm-mail
+install -d m 755 %{buildroot}/etc/logrotate.d
+install -m 644 logrotate.d/slurm-mail %{buildroot}/etc/logrotate.d/
 
 # set permissions on directories?
 
@@ -48,6 +50,7 @@ echo "*    *    *    *    *    root    /opt/slurm-mail/bin/slurm-send-mail.py" >
 /opt/slurm-mail/bin/*
 %defattr(-,root,root,0644)
 %config /etc/cron.d/slurm-mail
+%config /etc/logrotate.d/slurm-mail
 %config %attr(0640,root,slurm) /opt/slurm-mail/conf.d/slurm-mail.conf
 %defattr(-,root,root,0600)
 %config /opt/slurm-mail/conf.d/style.css
