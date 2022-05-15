@@ -24,9 +24,13 @@ jobs:
         run: tar cvfz slurm-mail-${VERSION}.tar.gz --exclude .git* --exclude build slurm-mail-${VERSION}
       - name: Check tar
         run: tar tvfz slurm-mail-${VERSION}.tar.gz
+      - name: Create tar md5sum
+        run: md5sum slurm-mail-${VERSION}.tar.gz | awk '{ print $1 }' > slurm-mail-${VERSION}.tar.gz.md5sum
       - name: GH Release
         uses: softprops/action-gh-release@v0.1.14
         with:
-          files: slurm-mail-${{env.VERSION}}.tar.gz
+          files: |
+            slurm-mail-${{env.VERSION}}.tar.gz
+            slurm-mail-${{env.VERSION}}.tar.gz.md5sum
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
