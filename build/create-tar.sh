@@ -23,23 +23,33 @@
 #  along with Slurm-Mail.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
 set -e
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 source $DIR/common.sh
 
-check_exe rpmbuild
+check_exe tar
 
-TAR_FILE=$($DIR/create-tar.sh)
+cd $DIR/..
 
-if [ ! -f $TAR_FILE ]; then
-  echo "$TAR_FILE does not exist"
-  exit 1
-fi
+VERSION=`cat ./VERSION`
+TMP_DIR=`mktemp -d`
+TAR_FILE="slurm-mail-${VERSION}.tar.gz"
 
-echo "creating RPM using $TAR_FILE"
+check_dir $TMP_DIR
 
-rpmbuild -tb $TAR_FILE
+TAR_DIR="$TMP_DIR/slurm-mail-${VERSION}"
 
-rm -rf $(dirname $TAR_FILE)
+#rsync -a ./* --exclude .git --exclude .github --exclude testing --exclude build $TAR_DIR
+mkdir $TAR_DIR
+cp -a ./* ${TAR_DIR}/
+cd $TMP_DIR
+tar cfz $TAR_FILE \
+  --exclude .git \
+  --exclude .github \
+  --exclude build \
+  --exclude testing  \
+  slurm-mail-${VERSION}
+
+echo "${TMP_DIR}/${TAR_FILE}"

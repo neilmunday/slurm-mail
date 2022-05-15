@@ -23,6 +23,20 @@
 #  along with Slurm-Mail.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+function check_dir {
+  if [ ! -d $1 ]; then
+    echo "$1 does not exist or is not a directory"
+    exit 1
+  fi
+}
+
+function check_exe {
+	if ! command -v $1 > /dev/null 2>&1 ; then
+    echo "$1 is not installed"
+    exit 1
+  fi
+}
+
 function tidyup {
 	echo "stopping container..."
 	docker container stop slurm-mail-builder
