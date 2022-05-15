@@ -24,18 +24,12 @@
 #
 
 function tidyup {
-
-	# noddy hack to change permissions
-	rpm=`ls -1 slurm-mail-*.rpm`
-	cp $rpm ${rpm}.temp
-	rm -f $rpm
-	mv ${rpm}.temp $rpm
-
-	# tidy up
-	if [ `docker ps -q -a | wc -l` -gt 1 ]; then
-		docker rm $(docker ps -q -a)
-	fi
-
+	echo "stopping container..."
+	docker container stop slurm-mail-builder
+	echo "deleting container..."
+	docker container rm slurm-mail-builder
 	docker container prune -f
+	echo "deleting image..."
 	docker image rm slurm-mail-builder
+	echo "tidy-up complete"
 }

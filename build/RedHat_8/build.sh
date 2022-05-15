@@ -34,6 +34,14 @@ rm -f ./slurm-mail*.rpm
 
 docker build -t slurm-mail-builder:latest .
 
-docker run --mount type=bind,source=$(realpath "../../"),target=/root/slurm-mail slurm-mail-builder /bin/bash -c "cd /root/slurm-mail/build; ./build-rpm.sh && cp /root/rpmbuild/RPMS/noarch/slurm-mail-*.rpm /root/slurm-mail/build/RedHat_8/"
+tar cvfz files.tar.gz ../../*
+
+docker run -d --name slurm-mail-builder slurm-mail-builder
+docker cp files.tar.gz slurm-mail-builder:/root/
+rm -f files.tar.gz
+docker exec slurm-mail-builder /bin/bash -c "cd /root/slurm-mail && tar xvf ../files.tar.gz"
+docker exec slurm-mail-builder /bin/bash -c "/root/slurm-mail/build/build-rpm.sh"
+rpm=`docker exec slurm-mail-builder /bin/bash -c "ls -1 /root/rpmbuild/RPMS/noarch/slurm-mail*.rpm"`
+docker cp slurm-mail-builder:$rpm .
 
 tidyup
