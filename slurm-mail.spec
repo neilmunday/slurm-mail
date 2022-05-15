@@ -29,7 +29,7 @@ Slurm-Mail is a drop in replacement for Slurm's e-mails to give users much more 
 
 %install
 install -d -m755 %{buildroot}/opt/slurm-mail/bin
-install -m 700 bin/* %{buildroot}/opt/slurm-mail/bin/
+install -m 755 bin/* %{buildroot}/opt/slurm-mail/bin/
 install -d -m 700 %{buildroot}/opt/slurm-mail/conf.d/templates
 install -m 600 conf.d/slurm-mail.conf conf.d/style.css %{buildroot}/opt/slurm-mail/conf.d/
 install -m 600 conf.d/templates/* %{buildroot}/opt/slurm-mail/conf.d/templates
@@ -44,13 +44,14 @@ echo "*    *    *    *    *    root    /opt/slurm-mail/bin/slurm-send-mail.py" >
 # set permissions on directories?
 
 %files
-%defattr(-,root,root,0700)
+%defattr(-,root,root,0755)
 /opt/slurm-mail/bin/*
 %defattr(-,root,root,0644)
 %config /etc/cron.d/slurm-mail
+%config %attr(0640,root,slurm) /opt/slurm-mail/conf.d/slurm-mail.conf
 %defattr(-,root,root,0600)
-%config /opt/slurm-mail/conf.d/slurm-mail.conf
 %config /opt/slurm-mail/conf.d/style.css
+%dir %attr(0700,root,root) /opt/slurm-mail/conf.d/templates
 %config /opt/slurm-mail/conf.d/templates/ended-array-summary.tpl
 %config /opt/slurm-mail/conf.d/templates/ended-array.tpl
 %config /opt/slurm-mail/conf.d/templates/ended.tpl
@@ -63,8 +64,9 @@ echo "*    *    *    *    *    root    /opt/slurm-mail/bin/slurm-send-mail.py" >
 %config /opt/slurm-mail/conf.d/templates/started-array.tpl
 %config /opt/slurm-mail/conf.d/templates/started.tpl
 %config /opt/slurm-mail/conf.d/templates/time.tpl
+%defattr(-,root,root,0644)
 %doc /opt/slurm-mail/README.md
-%attr(0700,root,root) %dir /var/log/slurm-mail
+%dir %attr(0700,slurm,slurm) /var/log/slurm-mail
 %ghost /var/log/slurm-mail/slurm-send-mail.log
 %ghost /var/log/slurm-mail/slurm-spool-mail.log
-%attr(0700,slurm,slurm) %dir /var/spool/slurm-mail
+%dir %attr(0700,slurm,slurm) /var/spool/slurm-mail
