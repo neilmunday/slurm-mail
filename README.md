@@ -9,8 +9,20 @@ Repository: https://github.com/neilmunday/slurm-mail
 
 Requires: Python 3
 
-Introduction
-------------
+**Contents**
+
+1. [Introduction](#introduction)
+2. [RPM Installation](#rpm-installation)
+3. [Source Installation](#source-installation)
+4. [Configuration](#configuration)
+5. [Upgrading from version 2.x to 3.x](#upgrading-from-version-2.x-to-3.x)
+6. [SMTP Settings](#smtp-settings)
+7. [Customising E-mails](#customising-e-mails)
+8. [Validating E-mails](#validating-e-mails)
+9. [Including Job Output in E-mails](#including-job-output-in-e-mails)
+10. [Contributors](#contributors)
+
+## Introduction
 
 E-mail notifications from [Slurm](https://slurm.schedmd.com/) are rather brief and all the information is contained in the subject of the e-mail - the body is empty.
 
@@ -36,24 +48,24 @@ E-mails can be easily customised to your needs using the provided templates (see
 
 You can also opt to include a number of lines from the end of the job's output files in the job completion e-mails (see below).
 
-RPM Installation
-----------------
+## RPM Installation
 
 To create a Slurm-Mail RPM for your OS download the Slurm-Mail tar archive and then run:
 
 ```
-rpmbuild -tb slurm-mail-3.0.tar.gz
+rpmbuild -tb slurm-mail-3.1.tar.gz
 ```
+
+The Slurm-Mail RPM will install to `/opt/slurm-mail` and will also create the required cron job for Slurm-Mail to function as well as providing a `logrotate` configuration for handling Slurm-Mail's log files.
 
 Take note of where `rpmbuild` wrote the generated RPM and then install with your package manager.
 
-Source Installation
--------------------
+## Source Installation
 
 Download the latest release of Slurm-Mail and unpack it to a directory of your choosing on the server(s) running the Slurm controller daemon `slurmctld`, e.g. `/opt/slurm-mail`
 
 ```bash
-tar xfz slurm-mail-3.0.tar.gz
+tar xfz slurm-mail-3.1.tar.gz
 ```
 
 Create the spool and log directories for Slurm-Mail on your Slurm controller(s):
@@ -63,7 +75,24 @@ mkdir -p /var/spool/slurm-mail /var/log/slurm-mail
 chown slurm. /var/spool/slurm-mail /var/log/slurm-mail
 chmod 0700 /var/spool/slurm-mail /var/log/slurm-mail
 ```
-Now edit `conf.d/slurm-mail.conf` to suit your needs. For example, check that the location of `sacct` is correct and set the log and spool directories to match those created in the previous step.
+
+Create a cron job to run `slurm-send-mail.py` periodically to send HTML e-mails to users. As Slurm-Mail uses `sacct` to gather additional job information and may perform additional processing, the sending of e-mails was split into a separate application to prevent adding any overhead to `slurmctld`.
+
+Example cron job, e.g.`/etc/cron.d/slurm-mail`:
+
+```
+*    *    *    *    *    root    /opt/slurm-mail/bin/slurm-send-mail.py
+```
+
+Set-up `logrotate`:
+
+```
+cp /opt/slurm-mail/logrotate.d/slurm-mail /etc/logrotate.d/
+```
+
+## Configuration
+
+Edit `/opt/slurm-mail/conf.d/slurm-mail.conf` to suit your needs. For example, check that the location of `sacct` is correct. If you are installing from source check that the log and spool directories are set to your desired values.
 
 Change the value of `MailProg` in your `slurm.conf` file to `/opt/slurm-mail/bin/slurm-spool-mail.py`. By default the Slurm config file will be located at `/etc/slurm/slurm.conf`.
 
@@ -75,16 +104,7 @@ systemctl restart slurmctld
 
 Slurm-Mail will now log e-mail requests from Slurm users to the Slurm-Mail spool directory.
 
-Create a cron job to run `slurm-send-mail.py` periodically to send HTML e-mails to users. As Slurm-Mail uses `sacct` to gather additional job information and may perform additional processing, the sending of e-mails was split into a separate application to prevent adding any overhead to `slurmctld`.
-
-Example cron job, e.g.`/etc/cron.d/slurm-mail`:
-
-```
-*    *    *    *    *    root    /opt/slurm-mail/bin/slurm-send-mail.py
-```
-
-Upgrading from version 2.x to 3.x
----------------------------------
+## Upgrading from version 2.x to 3.x
 
 Version 3.0 onwards uses a new location for the e-mail templates. Therefore for versions prior to this, please run the following commands:
 
@@ -96,8 +116,7 @@ mv ./*.tpl templates/
 
 After moving the templates please merge any of the changes from the latest 3.x release with your local copies.
 
-SMTP Settings
--------------
+## SMTP Settings
 
 By default Slurm-Mail will send e-mails to a mail server running on the same host as Slurm-Mail is installed on, i.e. `localhost`.
 
@@ -115,8 +134,7 @@ smtpPassword = your_gmail_password
 
 For SMTP servers that use SSL rather than starttls please set `smtpUseSsl = yes`.
 
-Customising E-mails
--------------------
+## Customising E-mails
 
 Slurm-Mail uses Python's [string.Template](https://docs.python.org/3/library/string.html#template-strings) class to create the e-mails it sends. Under Slurm-Mail's `conf.d/templates` directory you will find the following files that you can edit to customise e-mails to your needs.
 
@@ -146,13 +164,11 @@ To change the subject of the e-mails, change the `emailSubject` configuration op
 | $JOB_ID      | The Slurm ID of the job |
 | $STATE       | The state of the job    |
 
-Validating E-mails
-------------------
+## Validating E-mails
 
 By default Slurm-Mail will not perform any checks on the destination e-mail address (i.e the value supplied to `sbatch` via `--mail-user`). If you would like Slurm-Mail to only send e-mails for jobs that correspond to a valid e-mail address (e.g. user@some.domain) then you can set the `validateEmail` option in `conf.d/slurm-mail.conf` to `true`. E-mail addresses that failed this check will be logged in `/var/log/slurm-mail/slurm-send-mail.log` as an error.
 
-Including Job Output in E-mails
--------------------------------
+## Including Job Output in E-mails
 
 In `conf.d/slurm-mail.conf` you can set the `includeOutputLines` to the number of lines to include from the end of each job's standard out and standard error files.
 
@@ -161,8 +177,7 @@ Notes:
 * if the user has decided to use the same file for both standard output and standard error then there will be only one section of job output in the job completion e-mails.
 * Job output can only be included if the process that is running `slurm-send-mail.py` is able to read the user's output files.
 
-Contributors
-------------
+## Contributors
 
 Thank you to the following people who have contributed code improvements, features and aided the development of Slurm-Mail:
 
