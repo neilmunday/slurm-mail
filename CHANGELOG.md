@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+Version 3.1
+-----------
+
+Date: 2022-05-15
+
+* Added support for creating RHEL 7 and 8 RPMs for Slurm-Mail
+* Added logrotate config file
+
 Version 3.0
 -----------
 
