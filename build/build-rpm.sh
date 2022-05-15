@@ -49,7 +49,7 @@ check_dir $TMP_DIR
 
 TAR_DIR="$TMP_DIR/slurm-mail-${VERSION}"
 
-rsync -av ./* --exclude .git --exclude .github --exclude testing --exclude build-rpm.sh $TAR_DIR
+rsync -av ./* --exclude .git --exclude .github --exclude testing --exclude build $TAR_DIR
 cd $TMP_DIR
 tar cvfz $TAR_FILE slurm-mail-${VERSION}
 
