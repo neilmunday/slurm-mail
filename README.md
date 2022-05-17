@@ -50,6 +50,8 @@ You can also opt to include a number of lines from the end of the job's output f
 
 ## RPM Installation
 
+Note: pre-bult RPMs for RHEL7 and RHEL8 compatible operating systes are available at [Slurm-Mail releases](https://github.com/neilmunday/slurm-mail/releases).
+
 To create a Slurm-Mail RPM for your OS download the Slurm-Mail tar archive and then run:
 
 ```
