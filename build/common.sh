@@ -38,12 +38,12 @@ function check_exe {
 }
 
 function tidyup {
-	echo "stopping container..."
-	docker container stop slurm-mail-builder
-	echo "deleting container..."
-	docker container rm slurm-mail-builder
+	echo "stopping container: $1"
+	docker container stop $1
+	echo "deleting container: $1"
+	docker container rm $1
 	docker container prune -f
-	echo "deleting image..."
-	docker image rm slurm-mail-builder
+	#echo "deleting image..."
+	#docker image rm slurm-mail-builder
 	echo "tidy-up complete"
 }

@@ -26,22 +26,25 @@
 set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+NAME=slurm-mail-builder-rhel8
 
 cd $DIR
 source ../common.sh
 
 rm -f ./slurm-mail*.rpm
 
-docker build -t slurm-mail-builder:latest .
+docker build -t ${NAME}:latest .
 
 tar cvfz files.tar.gz ../../*
 
-docker run -d --name slurm-mail-builder slurm-mail-builder
-docker cp files.tar.gz slurm-mail-builder:/root/
+docker run -d --name ${NAME} ${NAME}
+docker cp files.tar.gz ${NAME}:/root/
 rm -f files.tar.gz
-docker exec slurm-mail-builder /bin/bash -c "cd /root/slurm-mail && tar xvf ../files.tar.gz"
-docker exec slurm-mail-builder /bin/bash -c "/root/slurm-mail/build/build-rpm.sh"
-rpm=`docker exec slurm-mail-builder /bin/bash -c "ls -1 /root/rpmbuild/RPMS/noarch/slurm-mail*.rpm"`
-docker cp slurm-mail-builder:$rpm .
+docker exec ${NAME} /bin/bash -c "cd /root/slurm-mail && tar xvf ../files.tar.gz"
+docker exec ${NAME} /bin/bash -c "/root/slurm-mail/build/build-rpm.sh"
+rpm=`docker exec ${NAME} /bin/bash -c "ls -1 /root/rpmbuild/RPMS/noarch/slurm-mail*.rpm"`
+docker cp ${NAME}:$rpm .
 
-tidyup
+echo "Created: "`ls -1 slurm-mail*.rpm`
+
+tidyup ${NAME}
