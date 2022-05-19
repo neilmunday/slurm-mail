@@ -1,0 +1,25 @@
+tests:
+  test1:
+    mail_type: ALL
+    time_limit: "00:05"
+    commands: |
+      srun hostname
+      sleep 2
+    job_fail: false
+    emails:
+      - start
+      - end
+    send_errors: false
+    spool_errors: false
+  test2:
+    mail_type: ALL
+    time_limit: "00:01"
+    commands: |
+      srun hostname
+      sleep 120
+    job_fail: true
+    emails:
+      - start
+      - end
+    send_errors: false
+    spool_errors: false
