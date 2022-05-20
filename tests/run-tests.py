@@ -151,10 +151,9 @@ if __name__ == "__main__":
             f.write("#!/bin/bash\n")
             f.write("#SBATCH -J {0}\n".format(test))
             f.write("#SBATCH -o {0}/%j.out\n".format(output_dir))
-            if "time_limit" in fields:
-                f.write("#SBATCH -t {0}\n".format(fields["time_limit"]))
-            if "mail_type" in fields:
-                f.write("#SBATCH --mail-type={0}\n".format(fields["mail_type"]))
+            if "options" in fields:
+                for sbatch_option, sbatch_value in fields["options"].items():
+                    f.write("#SBATCH --{0}={1}\n".format(sbatch_option, sbatch_value))
             f.write(fields["commands"])
         # display generated JCF
         with open(jcf_file, mode="r", encoding="utf-8") as f:
