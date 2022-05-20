@@ -2,7 +2,7 @@ FROM neilmunday/rocky8-slurm:latest
 
 ARG SLURM_MAIL_RPM
 
-RUN dnf install -y cronie python3-pyyaml && \
+RUN dnf install -y chrony cronie python38 python3-pyyaml && \
     pip3 install aiosmtpd
 
 COPY supervisord.conf /etc/supervisord.conf
