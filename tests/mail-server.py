@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# pylint: disable=broad-except,consider-using-f-string,duplicate-code,invalid-name,redefined-outer-name
+
 #
 #  This file is part of Slurm-Mail.
 #
@@ -23,26 +25,46 @@
 #  along with Slurm-Mail.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# based on example from: https://aiosmtpd.readthedocs.io/en/latest/controller.html
+"""
+mail-server.py
 
-import aiosmtpd.controller
+Author: Neil Munday
+
+Runs a simple receive only mail server on the given host and port.
+
+Note: based on example from: https://aiosmtpd.readthedocs.io/en/latest/controller.html
+"""
+
 import argparse
 import asyncio
 import logging
-import sys
+import aiosmtpd.controller
 
 logging.getLogger("mail.log").setLevel(logging.WARNING)
 
 class TestHandler:
+    """
+    E-mail handler.
+    """
 
-    async def handle_RCPT(self, server, session, envelope, address, rcpt_options):
+    @staticmethod
+    async def handle_RCPT(server, session, envelope, address, rcpt_options):
+        """
+        Handle receipt of e-mail.
+        """
+        # pylint: disable=unused-argument
         envelope.rcpt_tos.append(address)
         return "250 OK"
 
-    async def handle_DATA(self, server, session, envelope):
+    @staticmethod
+    async def handle_DATA(server, session, envelope):
+        """
+        Handle the e-mail itself.
+        """
+        # pylint: disable=unused-argument
         logging.info("New email!")
-        logging.info("Message from %s" % envelope.mail_from)
-        logging.info("Message for %s" % envelope.rcpt_tos)
+        logging.info("Message from %s", envelope.mail_from)
+        logging.info("Message for %s", envelope.rcpt_tos)
         logging.info("Message data")
         for ln in envelope.content.decode("utf8", errors="replace").splitlines():
             logging.info(ln.strip())
@@ -50,10 +72,13 @@ class TestHandler:
         return "250 Message accepted for delivery"
 
 async def amain(loop, ip, port):
+    """
+    Asyc main function.
+    """
     try:
         controller = aiosmtpd.controller.Controller(TestHandler(), hostname=ip, port=port)
         controller.start()
-        logging.info("mail server listening on %s:%d" % (ip, port))
+        logging.info("mail server listening on %s:%d", ip, port)
     except PermissionError as e:
         logging.error(e)
         controller.stop()
