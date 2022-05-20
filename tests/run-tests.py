@@ -1,5 +1,15 @@
 #!/usr/bin/env python3
 
+# pylint: disable=broad-except,consider-using-f-string,invalid-name,redefined-outer-name
+
+"""
+run-tests.py
+
+Author: Neil Munday
+
+Script to automatically run tests for Slurm-Mail.
+"""
+
 import argparse
 import configparser
 import logging
@@ -52,10 +62,13 @@ def run_command(cmd: str) -> tuple:
         return (process.returncode, stdout.decode("utf-8"), stderr.decode("utf-8"))
 
 def wait_for_job():
+    """
+    Wait for all jobs to complete.
+    """
     i = 0
     limit = 120
     for i in range(0, limit):
-        rtn, stdout, stderr = run_command("squeue --noheader")
+        rtn, stdout, _ = run_command("squeue --noheader")
         if rtn != 0:
             die("failed to run squeue")
         if stdout != "":
@@ -118,8 +131,8 @@ if __name__ == "__main__":
     except Exception as e:
         die("Error: {0}".format(e))
 
-    stream = open(input_file, 'r')
-    dictionary = yaml.load(stream)
+    with open(input_file, mode="r", encoding="utf-8") as stream:
+        dictionary = yaml.load(stream)
 
     if "tests" not in dictionary:
         die("invalid YAML: could not find \"tests\" definition")
@@ -130,10 +143,10 @@ if __name__ == "__main__":
 
     for test, fields in dictionary["tests"].items():
         total += 1
-        logging.info("running: {0}".format(test))
+        logging.info("running: %s", test)
         logging.info("creating JCF...")
         jcf_file = output_dir / "{0}.jcf".format(test)
-        with open(jcf_file, "w") as f:
+        with open(jcf_file, mode="w", encoding="utf-8") as f:
             f.write("#!/bin/bash\n")
             f.write("#SBATCH -J {0}\n".format(test))
             f.write("#SBATCH -o {0}/%j.out\n".format(output_dir))
@@ -143,8 +156,8 @@ if __name__ == "__main__":
                 f.write("#SBATCH --mail-type={0}\n".format(fields["mail_type"]))
             f.write(fields["commands"])
         # display generated JCF
-        with open(jcf_file, "r") as f:
-            logging.debug("\n{0}".format(f.read()))
+        with open(jcf_file, mode="r", encoding="utf-8") as f:
+            logging.debug("\n%s", f.read())
         logging.info("submitting job...")
         run_command("sbatch {0}".format(jcf_file))
         logging.info("waiting for job to finish...")
@@ -158,24 +171,29 @@ if __name__ == "__main__":
                 break
             time.sleep(1)
         if not spool_ok:
-            logging.error("spool files still present - deleting for next test")
+            logging.error("test failed: spool files still present - deleting for next test")
             dictionary["tests"][test]["pass"] = False
             for f in spool_dir.glob("*.mail"):
-                logging.debug("deleting: {0}".format(f))
+                logging.debug("deleting: %s", f)
                 os.remove(f)
             continue
         logging.info("spool files gone, checking log files")
         if not fields["send_errors"]:
-            with open(send_log, "r") as f:
+            with open(send_log, mode="r", encoding="utf-8") as f:
                 lines = f.read().split("\n")
                 for line in lines:
                     match = error_re.search(line)
                     if match:
-                        logging.error("errors present in slurm-mail-send log")
+                        logging.error("test failed: errors present in slurm-mail-send log")
                         dictionary["tests"][test]["pass"] = False
                         continue
         dictionary["tests"][test]["pass"] = True
         passed += 1
+        logging.info("test passed: OK")
 
     # display test results
-    logging.info("passed: %d, failed: %d", passed, total - passed)
+    failed = total - passed
+    logging.info("passed: %d, failed: %d", passed, failed)
+    if failed > 0:
+        sys.exit(1)
+    sys.exit(0)
