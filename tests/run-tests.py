@@ -133,7 +133,7 @@ if __name__ == "__main__":
         die("Error: {0}".format(e))
 
     with open(input_file, mode="r", encoding="utf-8") as stream:
-        dictionary = yaml.load(stream)
+        dictionary = yaml.safe_load(stream)
 
     if "tests" not in dictionary:
         die("invalid YAML: could not find \"tests\" definition")
