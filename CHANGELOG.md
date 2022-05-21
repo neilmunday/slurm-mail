@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+Version 3.2 (WIP)
+-----------------
+
+Date: 2022-05-22
+
+* Added test harness.
+* Bug fix for issue #38 - correct `sacct` ReqMem handling for Slurm versions 20 and below.
+
 Version 3.1
 -----------
 
