@@ -443,6 +443,12 @@ def process_spool_file(json_file: pathlib.Path):
                 job.nodelist = sacct_dict['NodeList']
                 job.nodes = sacct_dict['NNodes']
                 job.partition = sacct_dict['Partition']
+                # for Slurm < 21, the ReqMem value will have 'n' or 'c'
+                # appended depending on whether the user has requested per node
+                # see issue #38
+                if sacct_dict['ReqMem'][-1:] == "c" or sacct_dict['ReqMem'][-1:] == "n":
+                    logging.debug("Applying ReqMem workaround for Slurm versions < 21")
+                    sacct_dict['ReqMem'] = sacct_dict['ReqMem'][:-1]
                 job.requested_mem_str = sacct_dict['ReqMem']
                 if sacct_dict['Start'] != 'Unknown':
                     job.start_ts = sacct_dict['Start']
