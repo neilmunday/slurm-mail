@@ -49,6 +49,14 @@ def die(msg: str):
     sys.stderr.write("{0}\n".format(msg))
     sys.exit(1)
 
+def remove_logs():
+    """
+    Delete Slurm-Mail log files
+    """
+    logging.debug("deleting: %s, %s", spool_log, send_log)
+    os.unlink(spool_log)
+    os.unlink(send_log)
+
 def run_command(cmd: str) -> tuple:
     """
     Execute the given command and return a tuple that contains the
@@ -81,6 +89,8 @@ def wait_for_job():
         die("jobs still running after {0}s".format(limit))
 
 if __name__ == "__main__":
+
+    SLURM_SEND_MAIL_EXE = "/opt/slurm-mail/bin/slurm-send-mail.py"
 
     parser = argparse.ArgumentParser(
         description="Perform tests of Slurm-Mail", add_help=True
@@ -162,16 +172,25 @@ if __name__ == "__main__":
         run_command("sbatch {0}".format(jcf_file))
         logging.info("waiting for job to finish...")
         wait_for_job()
-        logging.info("job finished, checking result (waiting for cron to fire)")
+        #logging.info("job finished, checking result (waiting for cron to fire)")
         # there should be no spool files if cron fires
-        spool_ok = False
-        for i in range(0, 60):
-            if len(list(spool_dir.glob("*.mail"))) == 0:
-                spool_ok = True
-                break
-            time.sleep(1)
-        if not spool_ok:
-            logging.error("test failed: spool files still present - deleting for next test")
+        #spool_ok = False
+        #for i in range(0, 60):
+        #    if len(list(spool_dir.glob("*.mail"))) == 0:
+        #        spool_ok = True
+        #        break
+        #    time.sleep(1)
+        #if not spool_ok:
+        rtn, stdout, stderr = run_command(SLURM_SEND_MAIL_EXE)
+        if rtn != 0:
+            logging.error(
+                "failed to run %s\nsdtout:\n%s\nstderr:\n%s",
+                SLURM_SEND_MAIL_EXE,
+                stdout,
+                stderr
+            )
+        if len(list(spool_dir.glob("*.mail"))) != 0:
+            logging.error("%s failed: spool files still present - deleting for next test", test)
             dictionary["tests"][test]["pass"] = False
             for f in spool_dir.glob("*.mail"):
                 logging.debug("deleting: %s", f)
@@ -179,17 +198,33 @@ if __name__ == "__main__":
             continue
         logging.info("spool files gone, checking log files")
         if not fields["send_errors"]:
+            send_log_output = None
+            send_log_ok = True
             with open(send_log, mode="r", encoding="utf-8") as f:
-                lines = f.read().split("\n")
-                for line in lines:
+                send_log_output = f.read().split("\n")
+                for line in send_log_output:
                     match = error_re.search(line)
                     if match:
-                        logging.error("test failed: errors present in slurm-mail-send log")
-                        dictionary["tests"][test]["pass"] = False
-                        continue
+                        send_log_ok = False
+                        break
+
+            if not send_log_ok:
+                lines = ""
+                for l in send_log_output:
+                    lines += "---> {0}\n".format(l)
+                logging.error(
+                    "%s failed: errors present in %s:\n%s",
+                    test,
+                    send_log,
+                    lines
+                )
+                dictionary["tests"][test]["pass"] = False
+                remove_logs()
+                continue
         dictionary["tests"][test]["pass"] = True
         passed += 1
-        logging.info("test passed: OK")
+        logging.info("%s passed: OK", test)
+        remove_logs()
 
     # display test results
     failed = total - passed
