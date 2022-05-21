@@ -1,4 +1,6 @@
-FROM neilmunday/rocky8-slurm:latest
+ARG SLURM_VER
+
+FROM neilmunday/rocky8-slurm:$SLURM_VER
 
 ARG SLURM_MAIL_RPM
 
@@ -19,6 +21,10 @@ COPY $SLURM_MAIL_RPM /root/
 
 RUN dnf localinstall -y /root/$SLURM_MAIL_RPM
 
-RUN sed -i s#MailProg=/usr/bin/mailx#MailProg=/opt/slurm-mail/bin/slurm-spool-mail.py# /etc/slurm/slurm.conf
+RUN sed -i "s#MailProg=/usr/bin/mailx#MailProg=/opt/slurm-mail/bin/slurm-spool-mail.py#" /etc/slurm/slurm.conf
+
+RUN sed -i "s/verbose = false/verbose = true/" /opt/slurm-mail/conf.d/slurm-mail.conf
+
+RUN rm /etc/cron.d/slurm-mail
 
 CMD ["tail -f /dev/null"]

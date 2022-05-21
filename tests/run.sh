@@ -23,7 +23,47 @@
 #  along with Slurm-Mail.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+function catch {
+  if [ "$1" != "0" ]; then
+    echo "Error $1 occurred on line $2" 1>&2
+    tidyup
+  fi
+}
+
+function tidyup {
+  echo "stopping container..."
+  docker container stop slurm-mail
+  echo "deleting container..."
+  docker container rm slurm-mail
+  echo "done"
+}
+
+function usage {
+  echo "Usage: $0 -s SLURM_VERSION" 1>&2
+  exit 0
+}
+
 set -e
+trap 'catch $? $LINENO' EXIT
+
+while getopts ":s:" options; do
+  case "${options}" in
+    s)
+      SLURM_VER=${OPTARG}
+      ;;
+    :)
+      echo "Error: -${OPTARG} requires a value"
+      usage
+      ;;
+    *)
+      usage
+      ;;
+  esac
+done
+
+if [ -z $SLURM_VER ]; then
+  usage
+fi
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -38,12 +78,8 @@ mv ./*.rpm $DIR/
 cd $DIR
 RPM=`ls -1 slurm-mail*.rpm`
 
-docker build --build-arg SLURM_MAIL_RPM=$RPM  -t neilmunday/slurm-mail:latest .
-docker run -d -h compute --name slurm-mail neilmunday/slurm-mail
+docker build --build-arg SLURM_MAIL_RPM=${RPM} --build-arg SLURM_VER=${SLURM_VER} -t neilmunday/slurm-mail:${SLURM_VER} .
+docker run -d -h compute --name slurm-mail neilmunday/slurm-mail:${SLURM_VER}
 docker exec slurm-mail /bin/bash -c "/root/testing/run-tests.py -i /root/testing/tests.yml -o /root/testing/output"
 
-echo "stopping container..."
-docker container stop slurm-mail
-echo "deleting container..."
-docker container rm slurm-mail
-echo "done"
+tidyup
