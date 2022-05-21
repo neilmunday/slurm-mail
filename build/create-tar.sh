@@ -49,7 +49,7 @@ tar cfz $TAR_FILE \
   --exclude .git \
   --exclude .github \
   --exclude build \
-  --exclude testing  \
+  --exclude tests  \
   slurm-mail-${VERSION}
 
 echo "${TMP_DIR}/${TAR_FILE}"
