@@ -1,6 +1,6 @@
 ARG SLURM_VER
 
-FROM neilmunday/rocky8-slurm:$SLURM_VER
+FROM ghcr.io/neilmunday/rocky8-slurm:$SLURM_VER
 
 ARG SLURM_MAIL_RPM
 
