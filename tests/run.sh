@@ -39,15 +39,22 @@ function tidyup {
 }
 
 function usage {
-  echo "Usage: $0 -s SLURM_VERSION" 1>&2
+  echo "Usage: $0 -s SLURM_VERSION [-r ] " 1>&2
+  echo "  -s SLURM_VERSION     version of Slurm to test against"
+  echo "  -r                   don't build slurm-mail RPM - use existing file"
   exit 0
 }
 
 set -e
 trap 'catch $? $LINENO' EXIT
 
-while getopts ":s:" options; do
+USE_RPM=0
+
+while getopts ":s:r" options; do
   case "${options}" in
+    r)
+      USE_RPM=1
+      ;;
     s)
       SLURM_VER=${OPTARG}
       ;;
@@ -67,13 +74,15 @@ fi
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-cd $DIR
-rm -f ./*.rpm
+if [ $USE_RPM -eq 0 ]; then
+  cd $DIR
+  rm -f ./*.rpm
 
-cd ../build/RedHat_8
-rm -f ./*.rpm
-./build.sh
-mv ./*.rpm $DIR/
+  cd ../build/RedHat_8
+  rm -f ./*.rpm
+  ./build.sh
+  mv ./*.rpm $DIR/
+fi
 
 cd $DIR
 RPM=`ls -1 slurm-mail*.rpm`

@@ -3,26 +3,82 @@ tests:
     commands: |
       srun hostname
       sleep 2
+    description: simple job, mem-per-cpu
     emails:
       - start
       - end
     job_fail: false
     options:
       mail-type: ALL
+      mem-per-cpu: 100M
+      nodes: 1
       time: "00:05"
     send_errors: false
     spool_errors: false
+    spool_file_total: 2
   test2:
     commands: |
       srun hostname
-      sleep 120
-    options:
-      mail-type: ALL
-      time: "00:01"
-    job_fail: true
+      sleep 2
+    description: simple job, mem-per-node
     emails:
       - start
       - end
+    job_fail: false
+    options:
+      mail-type: ALL
+      mem: 100M
+      nodes: 1
+      time: "00:05"
     send_errors: false
     spool_errors: false
-  
+    spool_file_total: 2
+  test3:
+    commands: |
+      srun hostname
+      sleep 2
+    description: job array, summary e-mails
+    emails:
+      - start
+      - end
+    job_fail: false
+    options:
+      array: 0-3
+      mail-type: ALL
+      nodes: 1
+      time: "00:05"
+    send_errors: false
+    spool_errors: false
+    spool_file_total: 2
+  test4:
+    commands: |
+      srun hostname
+      sleep 2
+    description: job array, e-mail per job
+    emails:
+      - start
+      - end
+    job_fail: false
+    options:
+      array: 0-3
+      mail-type: ALL,ARRAY_TASKS
+      nodes: 1
+      time: "00:05"
+    send_errors: false
+    spool_errors: false
+    spool_file_total: 8
+  test5:
+    commands: |
+      srun hostname
+      sleep 120
+    description: job failure
+    emails:
+      - start
+      - end
+    job_fail: true
+    options:
+      mail-type: ALL
+      time: "00:01"
+    send_errors: false
+    spool_errors: false
+    spool_file_total: 2

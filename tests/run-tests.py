@@ -49,13 +49,34 @@ def die(msg: str):
     sys.stderr.write("{0}\n".format(msg))
     sys.exit(1)
 
+def echo_log(log_file: pathlib.Path):
+    """
+    Helper function to display the contents of the given file.
+    """
+    if log_file.is_file():
+        with open(log_file, mode="r", encoding="utf-8") as f:
+            log_output = f.read().split("\n")
+            lines = ""
+            for line in log_output:
+                lines += "---> {0}\n".format(line)
+            logging.error("%s contents:\n%s", log_file, lines)
+    else:
+        logging.warning("%s does not exist", log_file)
+
 def remove_logs():
     """
     Delete Slurm-Mail log files
     """
-    logging.debug("deleting: %s, %s", spool_log, send_log)
-    os.unlink(spool_log)
-    os.unlink(send_log)
+    if spool_log.is_file():
+        logging.debug("deleting: %s", spool_log)
+        os.unlink(spool_log)
+    else:
+        logging.debug("%s does not exist", spool_log)
+    if send_log.is_file():
+        logging.debug("deleting: %s", send_log)
+        os.unlink(send_log)
+    else:
+        logging.debug("deleting %s does not exist", send_log)
 
 def run_command(cmd: str) -> tuple:
     """
@@ -91,6 +112,7 @@ def wait_for_job():
 if __name__ == "__main__":
 
     SLURM_SEND_MAIL_EXE = "/opt/slurm-mail/bin/slurm-send-mail.py"
+    MAIL_LOG = pathlib.Path("/var/log/supervisor/mailserver.log")
 
     parser = argparse.ArgumentParser(
         description="Perform tests of Slurm-Mail", add_help=True
@@ -148,13 +170,27 @@ if __name__ == "__main__":
     if "tests" not in dictionary:
         die("invalid YAML: could not find \"tests\" definition")
 
+    # check that slurm is up
+    logging.info("waiting for Slurm...")
+    slurm_ok = False
+    for i in range(0, 30):
+        rtn, _, _ = run_command("sinfo")
+        if rtn == 0:
+            slurm_ok = True
+            break
+        time.sleep(1)
+
+    if not slurm_ok:
+        die("no response from Slurm")
+    logging.info("Slurm is ready")
+
     error_re = re.compile(r":ERROR:")
     passed = 0
     total = 0
 
     for test, fields in dictionary["tests"].items():
         total += 1
-        logging.info("running: %s", test)
+        logging.info("running: %s: %s", test, fields["description"])
         logging.info("creating JCF...")
         jcf_file = output_dir / "{0}.jcf".format(test)
         with open(jcf_file, mode="w", encoding="utf-8") as f:
@@ -169,18 +205,38 @@ if __name__ == "__main__":
         with open(jcf_file, mode="r", encoding="utf-8") as f:
             logging.debug("\n%s", f.read())
         logging.info("submitting job...")
-        run_command("sbatch {0}".format(jcf_file))
+        rtn, stdout, stderr = run_command("sbatch {0}".format(jcf_file))
+        if rtn != 0:
+            logging.error(
+                "%s failed: could not submit job\nstdout:\n%s\nstderr:\n%s",
+                test,
+                stdout,
+                stderr
+            )
+            dictionary["tests"][test]["pass"] = False
+            continue
         logging.info("waiting for job to finish...")
         wait_for_job()
-        #logging.info("job finished, checking result (waiting for cron to fire)")
-        # there should be no spool files if cron fires
-        #spool_ok = False
-        #for i in range(0, 60):
-        #    if len(list(spool_dir.glob("*.mail"))) == 0:
-        #        spool_ok = True
-        #        break
-        #    time.sleep(1)
-        #if not spool_ok:
+        # Although the job has finished there is a chance
+        # that slurmctld hasn't triggered slurm-spool-mail
+        # just yet.
+        logging.info("waiting for %s spool files...", fields["spool_file_total"])
+        spoolOk = False
+        WAIT_FOR = 25
+        for i in range(0, WAIT_FOR):
+            if len(list(spool_dir.glob("*.mail"))) == fields["spool_file_total"]:
+                spoolOk = True
+                break
+            time.sleep(1)
+        if spoolOk:
+            logging.info("%s: spool files created ok", test)
+        else:
+            logging.error("%s failed: no spool files after %s", test, WAIT_FOR)
+            dictionary["tests"][test]["pass"] = False
+            if spool_log.is_file():
+                echo_log(spool_log)
+            remove_logs()
+            continue
         rtn, stdout, stderr = run_command(SLURM_SEND_MAIL_EXE)
         if rtn != 0:
             logging.error(
@@ -191,6 +247,7 @@ if __name__ == "__main__":
             )
         if len(list(spool_dir.glob("*.mail"))) != 0:
             logging.error("%s failed: spool files still present - deleting for next test", test)
+            echo_log(send_log)
             dictionary["tests"][test]["pass"] = False
             for f in spool_dir.glob("*.mail"):
                 logging.debug("deleting: %s", f)
@@ -226,6 +283,8 @@ if __name__ == "__main__":
         logging.info("%s passed: OK", test)
         remove_logs()
 
+    #logging.info("Mail log:")
+    #echo_log(MAIL_LOG)
     # display test results
     failed = total - passed
     logging.info("passed: %d, failed: %d", passed, failed)
