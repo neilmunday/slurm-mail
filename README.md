@@ -12,6 +12,7 @@ Requires: Python 3
 **Contents**
 
 1. [Introduction](#introduction)
+2. [Requirements](#requirements)
 2. [RPM Installation](#rpm-installation)
 3. [Source Installation](#source-installation)
 4. [Configuration](#configuration)
@@ -47,6 +48,11 @@ Slurm-Mail aims to address this by providing a drop in replacement for Slurm's e
 E-mails can be easily customised to your needs using the provided templates (see below).
 
 You can also opt to include a number of lines from the end of the job's output files in the job completion e-mails (see below).
+
+## Requirements
+
+* Python 3
+* Slurm 20 or Slurm 21
 
 ## RPM Installation
 
