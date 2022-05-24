@@ -1,6 +1,13 @@
 name: Pylint
 
-on: [ pull_request, push, workflow_dispatch ]
+on:
+  pull_request:
+    paths:
+      - '**.py'
+  push:
+    paths:
+      - '**.py'
+  workflow_dispatch:
 
 jobs:
   build:
