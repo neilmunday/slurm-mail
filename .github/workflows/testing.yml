@@ -1,0 +1,15 @@
+name: testing
+
+on: [ push, workflow_dispatch ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        slurm-version: ["20.11.9", "21.08.8-2"]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run tests
+        run: |
+          tests/run.sh -s ${{ matrix.slurm-version }}
