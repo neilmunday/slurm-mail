@@ -43,7 +43,7 @@ tests:
       - end
     job_fail: false
     options:
-      array: 0-3
+      array: 0-1
       mail-type: ALL
       nodes: 1
       time: "00:05"
@@ -60,13 +60,13 @@ tests:
       - end
     job_fail: false
     options:
-      array: 0-3
+      array: 0-1
       mail-type: ALL,ARRAY_TASKS
       nodes: 1
       time: "00:05"
     send_errors: false
     spool_errors: false
-    spool_file_total: 8
+    spool_file_total: 4
   test5:
     commands: |
       srun hostname
