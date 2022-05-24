@@ -113,6 +113,7 @@ if __name__ == "__main__":
 
     SLURM_SEND_MAIL_EXE = "/opt/slurm-mail/bin/slurm-send-mail.py"
     MAIL_LOG = pathlib.Path("/var/log/supervisor/mailserver.log")
+    SLURMCTLD_LOG = pathlib.Path("/var/log/slurm/slurmctld.log")
 
     parser = argparse.ArgumentParser(
         description="Perform tests of Slurm-Mail", add_help=True
@@ -237,10 +238,12 @@ if __name__ == "__main__":
         if spoolOk:
             logging.info("%s: spool files created ok", test)
         else:
-            logging.error("%s failed: no spool files after %s", test, WAIT_FOR)
+            logging.error("%s failed: no spool files after %ss", test, WAIT_FOR)
             dictionary["tests"][test]["pass"] = False
             if spool_log.is_file():
                 echo_log(spool_log)
+            if SLURMCTLD_LOG.is_file():
+                echo_log(SLURMCTLD_LOG)
             remove_logs()
             continue
         rtn, stdout, stderr = run_command(SLURM_SEND_MAIL_EXE)
