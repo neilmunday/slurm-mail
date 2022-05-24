@@ -5,13 +5,11 @@ on: [ workflow_dispatch ]
 jobs:
   test:
     runs-on: ubuntu-latest
-    #strategy:
-    #  matrix:
-    #    slurm-version: ["20.11.9", "21.08.8-2"]
+    strategy:
+      matrix:
+        slurm-version: ["20.11.9", "21.08.8-2"]
     steps:
       - uses: actions/checkout@v3
       - name: Run tests
         run: |
-          tests/run.sh -s "21.08.8-2"
-        #run: |
-        #  tests/run.sh -s ${{ matrix.slurm-version }}
+          tests/run.sh -s "${{ matrix.slurm-version }}"
