@@ -12,4 +12,4 @@ jobs:
       - uses: actions/checkout@v3
       - name: Run tests
         run: |
-          tests/run.sh -s ${{ matrix.slurm-version }}
+          tests/run.sh -s "${{ matrix.slurm-version }}"
