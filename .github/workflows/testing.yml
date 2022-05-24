@@ -12,6 +12,6 @@ jobs:
       - uses: actions/checkout@v3
       - name: Run tests
         run: |
-          tests.run.sh -s "21.08.8-2"
+          tests/run.sh -s "21.08.8-2"
         #run: |
         #  tests/run.sh -s ${{ matrix.slurm-version }}
