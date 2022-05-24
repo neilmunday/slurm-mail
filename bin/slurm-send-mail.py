@@ -293,9 +293,7 @@ def get_file_contents(path: pathlib.Path) -> Optional[str]:
 
 def get_kbytes_from_str(value: str) -> float:
     # pylint: disable=too-many-return-statements
-    if value == "":
-        return 0
-    if value == "0":
+    if value in ["", "0"]:
         return 0
     units = value[-1:].upper()
     try:
@@ -446,7 +444,20 @@ def process_spool_file(json_file: pathlib.Path):
                 # for Slurm < 21, the ReqMem value will have 'n' or 'c'
                 # appended depending on whether the user has requested per node
                 # see issue #38
-                if sacct_dict['ReqMem'][-1:] == "c" or sacct_dict['ReqMem'][-1:] == "n":
+                if sacct_dict['ReqMem'][-1:] == "c":
+                    logging.debug("Applying ReqMem workaround for Slurm versions < 21")
+                    # need to multiply by job.cpus
+                    try:
+                        sacct_dict['ReqMem'] = "{0}{1}".format(
+                            float(sacct_dict['ReqMem'][:-2]) * job.cpus,
+                            sacct_dict['ReqMem'][-2:-1]
+                        )
+                    except ValueError:
+                        logging.error(
+                            "Failed to convert ReqMem \"%s\" to a float",
+                            sacct_dict['ReqMem'][:-2]
+                        )
+                elif sacct_dict['ReqMem'][-1:] == "n":
                     logging.debug("Applying ReqMem workaround for Slurm versions < 21")
                     sacct_dict['ReqMem'] = sacct_dict['ReqMem'][:-1]
                 job.requested_mem_str = sacct_dict['ReqMem']
