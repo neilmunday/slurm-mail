@@ -39,9 +39,10 @@ function tidyup {
 }
 
 function usage {
-  echo "Usage: $0 -s SLURM_VERSION [-r ] " 1>&2
+  echo "Usage: $0 -s SLURM_VERSION [-r ] [-t TEST_NAME] " 1>&2
   echo "  -s SLURM_VERSION     version of Slurm to test against"
   echo "  -r                   don't build slurm-mail RPM - use existing file"
+  echo "  -t TEST_NAME         only run this named test"
   exit 0
 }
 
@@ -50,13 +51,16 @@ trap 'catch $? $LINENO' EXIT
 
 USE_RPM=0
 
-while getopts ":s:r" options; do
+while getopts ":s:rt:" options; do
   case "${options}" in
     r)
       USE_RPM=1
       ;;
     s)
       SLURM_VER=${OPTARG}
+      ;;
+    t)
+      RUN_TEST=${OPTARG}
       ;;
     :)
       echo "Error: -${OPTARG} requires a value"
@@ -70,6 +74,11 @@ done
 
 if [ -z $SLURM_VER ]; then
   usage
+fi
+
+OPTS=""
+if [ ! -z $RUN_TEST ]; then
+  OPTS="-t $RUN_TEST"
 fi
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -89,6 +98,6 @@ RPM=`ls -1 slurm-mail*.rpm`
 
 docker build --build-arg SLURM_MAIL_RPM=${RPM} --build-arg SLURM_VER=${SLURM_VER} -t neilmunday/slurm-mail:${SLURM_VER} .
 docker run -d -h compute --name slurm-mail neilmunday/slurm-mail:${SLURM_VER}
-docker exec slurm-mail /bin/bash -c "/root/testing/run-tests.py -i /root/testing/tests.yml -o /root/testing/output"
+docker exec slurm-mail /bin/bash -c "/root/testing/run-tests.py -i /root/testing/tests.yml -o /root/testing/output $OPTS"
 
 tidyup

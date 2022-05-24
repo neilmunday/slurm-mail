@@ -126,6 +126,9 @@ if __name__ == "__main__":
         required=True
     )
     parser.add_argument(
+        "-t", "--test", help="Run a particular test", dest="test"
+    )
+    parser.add_argument(
         "-v", "--verbose", help="Turn on debug messages", dest="verbose",
         action="store_true"
     )
@@ -189,6 +192,9 @@ if __name__ == "__main__":
     total = 0
 
     for test, fields in dictionary["tests"].items():
+        if args.test and args.test != test:
+            logging.info("skipping test: %s", test)
+            continue
         total += 1
         logging.info("running: %s: %s", test, fields["description"])
         logging.info("creating JCF...")
