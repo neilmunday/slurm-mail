@@ -7,8 +7,6 @@ Author: Neil Munday (neil at mundayweb.com)
 
 Repository: https://github.com/neilmunday/slurm-mail
 
-Requires: Python 3
-
 **Contents**
 
 1. [Introduction](#introduction)
