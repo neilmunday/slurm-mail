@@ -3,13 +3,17 @@ name: testing
 on:
   pull_request:
     paths:
+      - '.github/workflows/testing.yml'
       - 'bin/*.py'
       - 'tests/*.py'
+      - 'tests/run.sh'
       - 'tests/tests.yml'
   push:
     paths:
+      - '.github/workflows/testing.yml'
       - 'bin/*.py'
       - 'tests/*.py'
+      - 'tests/run.sh'
       - 'tests/tests.yml'
   workflow_dispatch:
 
