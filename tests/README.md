@@ -6,7 +6,7 @@ The tests directory contains an automated test harness for Slurm-Mail. It makes 
 
 ## Adding new Slurm version support
 
-**Note:** When a new version of Slurm is released https://github.com/neilmunday/rocky8-slurm needs to have been updated to support this new version first.
+> **_Note:_** When a new version of Slurm is released https://github.com/neilmunday/rocky8-slurm needs to have been updated to support this new version first.
 
 Update the `../.github/workflows/testing.yml` workflow to include the new Slurm version.
 
@@ -71,4 +71,4 @@ Enable verbose logging:
 ./run.sh -s 22.05.0 -v
 ```
 
-> **_TIP:_**: As `run.sh` will build a Slurm-Mail RPM you can use the `-r` flag on subsequent invocations to skip building the RPM and thus save time.
+> **_Tip:_** As `run.sh` will build a Slurm-Mail RPM you can use the `-r` flag on subsequent invocations to skip building the RPM and thus save time.
