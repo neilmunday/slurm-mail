@@ -58,7 +58,7 @@ Note: pre-bult RPMs for RHEL7 and RHEL8 compatible operating systes are availabl
 
 To create a Slurm-Mail RPM for your OS download the Slurm-Mail tar archive and then run:
 
-```
+```bash
 rpmbuild -tb slurm-mail-3.1.tar.gz
 ```
 
@@ -92,7 +92,7 @@ Example cron job, e.g.`/etc/cron.d/slurm-mail`:
 
 Set-up `logrotate`:
 
-```
+```bash
 cp /opt/slurm-mail/logrotate.d/slurm-mail /etc/logrotate.d/
 ```
 
@@ -114,7 +114,7 @@ Slurm-Mail will now log e-mail requests from Slurm users to the Slurm-Mail spool
 
 Version 3.0 onwards uses a new location for the e-mail templates. Therefore for versions prior to this, please run the following commands:
 
-```
+```bash
 cd /opt/slurm-mail/conf.d
 mkdir templates
 mv ./*.tpl templates/
