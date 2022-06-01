@@ -4,9 +4,6 @@ tests:
       srun hostname
       sleep 20
     description: simple job, mem-per-cpu
-    emails:
-      - start
-      - end
     job_fail: false
     options:
       mail-type: ALL
@@ -21,9 +18,6 @@ tests:
       srun hostname
       sleep 20
     description: simple job, mem-per-node
-    emails:
-      - start
-      - end
     job_fail: false
     options:
       mail-type: ALL
@@ -38,9 +32,6 @@ tests:
       srun hostname
       sleep 20
     description: job array, summary e-mails
-    emails:
-      - start
-      - end
     job_fail: false
     options:
       array: 0-1
@@ -55,9 +46,6 @@ tests:
       srun hostname
       sleep 20
     description: job array, e-mail per job
-    emails:
-      - start
-      - end
     job_fail: false
     options:
       array: 0-1
@@ -72,9 +60,6 @@ tests:
       srun hostname
       sleep 120
     description: job failure
-    emails:
-      - start
-      - end
     job_fail: true
     options:
       mail-type: ALL
