@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 #  This file is part of Slurm-Mail.
 #
 #  Slurm-Mail is a drop in replacement for Slurm's e-mails to give users
