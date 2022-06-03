@@ -41,7 +41,6 @@ check_dir $TMP_DIR
 
 TAR_DIR="$TMP_DIR/slurm-mail-${VERSION}"
 
-#rsync -a ./* --exclude .git --exclude .github --exclude testing --exclude build $TAR_DIR
 mkdir $TAR_DIR
 cp -a ./* ${TAR_DIR}/
 cd $TMP_DIR
