@@ -59,7 +59,7 @@ Note: pre-bult RPMs for RHEL7 and RHEL8 compatible operating systes are availabl
 To create a Slurm-Mail RPM for your OS download the Slurm-Mail tar archive and then run:
 
 ```bash
-rpmbuild -tb slurm-mail-3.1.tar.gz
+rpmbuild -tb slurm-mail-3.2.tar.gz
 ```
 
 The Slurm-Mail RPM will install to `/opt/slurm-mail` and will also create the required cron job for Slurm-Mail to function as well as providing a `logrotate` configuration for handling Slurm-Mail's log files.
@@ -71,7 +71,7 @@ Take note of where `rpmbuild` wrote the generated RPM and then install with your
 Download the latest release of Slurm-Mail and unpack it to a directory of your choosing on the server(s) running the Slurm controller daemon `slurmctld`, e.g. `/opt/slurm-mail`
 
 ```bash
-tar xfz slurm-mail-3.1.tar.gz
+tar xfz slurm-mail-3.2.tar.gz
 ```
 
 Create the spool and log directories for Slurm-Mail on your Slurm controller(s):
@@ -182,6 +182,10 @@ Notes:
 
 * if the user has decided to use the same file for both standard output and standard error then there will be only one section of job output in the job completion e-mails.
 * Job output can only be included if the process that is running `slurm-send-mail.py` is able to read the user's output files.
+
+## Job Arrays
+
+Slurm-Mail will honour the behaviour of `--mail-type` option of `sbatch` for job arrays. If a user specifies `--mail-type=ARRAY_TASKS` then Slurm-Mail will send notification e-mails for all jobs in the array. If you want to limit the number of e-mails that will be sent in this scenario then change the `arrayMaxNotifications` parameter in `slurm-mail.conf` to a value greater than zero.
 
 ## Contributors
 
