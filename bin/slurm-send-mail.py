@@ -510,10 +510,13 @@ def process_spool_file(json_file: pathlib.Path):
     if array_summary or len(jobs) == 1:
         jobs = [jobs[0]]
 
-    if len(jobs) > array_max_notifications:
-        logging.info("Asked to send notifications for %d array-jobs, which exceeds the limit %d. "
-            + "Will send only the first one.", len(jobs), array_max_notifications)
-        jobs = [jobs[0]]
+    if not array_summary and 0 < array_max_notifications > len(jobs):
+        logging.info(
+            "Asked to send notifications for %d array-jobs which exceeds the limit of %d. "
+            "Will send only send the first %d.",
+            len(jobs), array_max_notifications, array_max_notifications
+        )
+        jobs = jobs[:array_max_notifications]
 
     for job in jobs:
         # Will only be one job regardless of if it is an array in the
@@ -764,6 +767,7 @@ if __name__ == "__main__":
         else:
             log_file = None
         verbose = config.getboolean(section, "verbose")
+        array_max_notifications = config.getint(section, "arrayMaxNotifications")
         email_from_address = config.get(section, "emailFromUserAddress")
         email_from_name = config.get(section, "emailFromName")
         email_subject = config.get(section, "emailSubject")
@@ -779,7 +783,6 @@ if __name__ == "__main__":
         smtp_password = config.get(section, "smtpPassword")
         tail_exe = config.get(section, "tailExe")
         tail_lines = config.getint(section, "includeOutputLines")
-        array_max_notifications = config.getint(section, "arrayMaxNotifications")
     except Exception as e:
         die("Error: {0}".format(e))
 
