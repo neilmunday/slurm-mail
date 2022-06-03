@@ -1,13 +1,14 @@
 Change Log
 ==========
 
-Version 3.2 (WIP)
------------------
+Version 3.2
+-----------
 
-Date: 2022-05-22
+Date: 2022-06-03
 
 * Added test harness.
 * Bug fix for issue #38 - correct `sacct` ReqMem handling for Slurm versions 20 and below.
+* Added `arrayMaxNotifications` config setting to allow the number of e-mail notifications for job arrays to be restricted (pull request #39). Thanks to @sdx23 for the suggestion
 
 Version 3.1
 -----------
