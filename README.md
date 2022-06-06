@@ -51,6 +51,7 @@ You can also opt to include a number of lines from the end of the job's output f
 
 * Python 3
 * Slurm 20, 21 or 22
+* A working e-mail server
 
 ## RPM Installation
 
