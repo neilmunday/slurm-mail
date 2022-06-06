@@ -12,7 +12,7 @@ Update the `../.github/workflows/testing.yml` workflow to include the new Slurm 
 
 ## Adding tests
 
-Slurm tests are defined in `tests.yml` to include new tests.
+Slurm tests should be added to `tests.yml`.
 
 A test is defined like so:
 
