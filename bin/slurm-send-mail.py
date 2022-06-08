@@ -342,7 +342,7 @@ def get_usec_from_str(time_str: str) -> int:
     return usec
 
 
-def process_spool_file(json_file: pathlib.Path):
+def process_spool_file(json_file: pathlib.Path, smtp_conn):
     # pylint: disable=too-many-branches,too-many-statements,too-many-nested-blocks
     # data is JSON encoded as of version 2.6
     with json_file.open() as spool_file:
@@ -653,17 +653,7 @@ def process_spool_file(json_file: pathlib.Path):
             job.user, user_email, job_id, state, smtp_server, smtp_port
         )
 
-        # check if ssl is being requested (usually port 465)
-        if smtp_use_ssl:
-            s = smtplib.SMTP_SSL(host=smtp_server, port=smtp_port, timeout=60)
-        else:
-            s = smtplib.SMTP(host=smtp_server, port=smtp_port, timeout=60)
-
-        if smtp_use_tls:
-            s.starttls()
-        if smtp_username != "" and smtp_password != "":
-            s.login(smtp_username, smtp_password)
-        s.sendmail(email_from_address, user_email.split(","), msg.as_string())
+        smtp_conn.sendmail(email_from_address, user_email.split(","), msg.as_string())
 
     delete_spool_file(json_file)
 
@@ -813,11 +803,28 @@ if __name__ == "__main__":
             "and that the directory exists.".format(spool_dir)
         )
 
+    smtp_conn = None
     # Look for any new mail notifications in the spool dir
     for f in spool_dir.glob("*.mail"):
         logging.info("processing: %s", f)
         try:
-            process_spool_file(f)
+            # check if connection is still alive
+            smtp_conn.noop()[0]
+        except Exception as e:
+            # start new connection if previous connection dies or not exists
+            # check if ssl is being requested (usually port 465)
+            if smtp_use_ssl:
+                smtp_conn = smtplib.SMTP_SSL(host=smtp_server, port=smtp_port, timeout=60)
+            else:
+                smtp_conn = smtplib.SMTP(host=smtp_server, port=smtp_port, timeout=60)
+            
+            if smtp_use_tls:
+                smtp_conn.starttls()
+            if smtp_username != "" and smtp_password != "":
+                smtp_conn.login(smtp_username, smtp_password)
+
+        try:
+            process_spool_file(f, smtp_conn)
         except Exception as e:
             logging.error("Failed to process: %s", f)
             logging.error(e, exc_info=True)
