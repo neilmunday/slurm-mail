@@ -342,7 +342,7 @@ def get_usec_from_str(time_str: str) -> int:
     return usec
 
 
-def process_spool_file(json_file: pathlib.Path, smtp_conn):
+def process_spool_file(json_file: pathlib.Path, smtp_conn: smtplib.SMTP):
     # pylint: disable=too-many-branches,too-many-statements,too-many-nested-blocks
     # data is JSON encoded as of version 2.6
     with json_file.open() as spool_file:
@@ -817,7 +817,7 @@ if __name__ == "__main__":
                 smtp_conn = smtplib.SMTP_SSL(host=smtp_server, port=smtp_port, timeout=60)
             else:
                 smtp_conn = smtplib.SMTP(host=smtp_server, port=smtp_port, timeout=60)
-            
+
             if smtp_use_tls:
                 smtp_conn.starttls()
             if smtp_username != "" and smtp_password != "":
