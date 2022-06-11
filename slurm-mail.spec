@@ -16,7 +16,7 @@ Source: %{name}-%{version}.tar.gz
 
 %{?el7:Requires: python3}
 %{?el8:Requires: python38}
-Requires:   chrony
+Requires:   cronie
 Requires:   logrotate
 Requires:   slurm-slurmctld
 
