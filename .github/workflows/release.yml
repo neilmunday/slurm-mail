@@ -62,8 +62,8 @@ jobs:
           files: |
             ${{steps.tar_name.outputs.TAR_NAME}}
             ${{steps.tar_name.outputs.TAR_NAME}}.md5sum
-            ${{steps.rpm_paths.output.OPENSUSE15_RPM}}
-            ${{steps.rpm_paths.output.OPENSUSE15_RPM}}.md5sum
+            ${{steps.rpm_paths.outputs.OPENSUSE15_RPM}}
+            ${{steps.rpm_paths.outputs.OPENSUSE15_RPM}}.md5sum
             ${{steps.rpm_paths.outputs.RHEL7_RPM}}
             ${{steps.rpm_paths.outputs.RHEL7_RPM}}.md5sum
             ${{steps.rpm_paths.outputs.RHEL8_RPM}}
