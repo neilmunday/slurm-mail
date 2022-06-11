@@ -47,7 +47,7 @@ jobs:
             ls -1 build/RedHat_8/slurm-mail*.rpm
           )"
           echo "::set-output name=OPENSUSE15_RPM::$(
-            ls -1 build/OpenSUSE_15/slurm=mail*.rpm
+            ls -1 build/OpenSUSE_15/slurm-mail*.rpm
             )"
       - name: Create md5sum for OpenSUSE 15 RPM
         run: md5sum ${{steps.rpm_paths.outputs.OPENSUSE15_RPM}} > ${{steps.rpm_paths.outputs.OPENSUSE15_RPM}}.md5sum
