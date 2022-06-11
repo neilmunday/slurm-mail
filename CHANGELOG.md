@@ -4,9 +4,12 @@ Change Log
 Version 3.3
 -----------
 
-Date: 2022-06-08
+Date: 2022-06-11
 
 * Changed SMTP connection handling to use a persistent connection to address issue reported in pull request #41. Thanks to @jitkang for this improvement.
+* Added support for building RPM for OpenSUSE 15.
+* Corrected requirement for cronie in RPM spec file.
+* Set build host name in Docker files.
 
 Version 3.2
 -----------

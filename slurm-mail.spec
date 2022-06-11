@@ -1,6 +1,10 @@
 %define debug_package %{nil}
 %define rel 1
 
+%if 0%{?sle_version} >= 150000 && 0%{?sle_version} < 160000
+%define dist .sl15
+%endif
+
 Name:       slurm-mail
 Version:    3.3
 Release:    %{rel}%{?dist}
@@ -16,6 +20,7 @@ Source: %{name}-%{version}.tar.gz
 
 %{?el7:Requires: python3}
 %{?el8:Requires: python38}
+%{?sle_version:Requires: python3}
 Requires:   cronie
 Requires:   logrotate
 Requires:   slurm-slurmctld

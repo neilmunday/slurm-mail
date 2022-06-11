@@ -31,6 +31,8 @@ jobs:
         run: mv -v ${{steps.create_tar.outputs.TAR_PATH}} ./
       - name: Create md5sum for tar file
         run: md5sum ${{steps.tar_name.outputs.TAR_NAME}} | awk '{ print $1}' > ${{steps.tar_name.outputs.TAR_NAME}}.md5sum
+      - name: Create OpenSUSE 15 RPM
+        run: build/OpenSUSE_15/build.sh
       - name: Create RHEL 7 RPM
         run: build/RedHat_7/build.sh
       - name: Create RHEL 8 RPM
@@ -44,6 +46,11 @@ jobs:
           echo "::set-output name=RHEL8_RPM::$(
             ls -1 build/RedHat_8/slurm-mail*.rpm
           )"
+          echo "::set-output name=OPENSUSE15_RPM::$(
+            ls -1 build/OpenSUSE_15/slurm=mail*.rpm
+            )"
+      - name: Create md5sum for OpenSUSE 15 RPM
+        run: md5sum ${{steps.rpm_paths.outputs.OPENSUSE15_RPM}} > ${{steps.rpm_paths.outputs.OPENSUSE15_RPM}}.md5sum
       - name: Create md5sum for RHEL 7 RPM
         run: md5sum ${{steps.rpm_paths.outputs.RHEL7_RPM}} > ${{steps.rpm_paths.outputs.RHEL7_RPM}}.md5sum
       - name: Create md5sum for RHEL 8 RPM
@@ -55,6 +62,8 @@ jobs:
           files: |
             ${{steps.tar_name.outputs.TAR_NAME}}
             ${{steps.tar_name.outputs.TAR_NAME}}.md5sum
+            ${{steps.rpm_paths.output.OPENSUSE15_RPM}}
+            ${{steps.rpm_paths.output.OPENSUSE15_RPM}}.md5sum
             ${{steps.rpm_paths.outputs.RHEL7_RPM}}
             ${{steps.rpm_paths.outputs.RHEL7_RPM}}.md5sum
             ${{steps.rpm_paths.outputs.RHEL8_RPM}}
