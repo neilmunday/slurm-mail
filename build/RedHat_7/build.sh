@@ -37,7 +37,7 @@ docker build -t slurm-mail-builder-rhel7:latest .
 
 tar cvfz files.tar.gz ../../*
 
-docker run -d --name ${NAME} ${NAME}
+docker run -h slurm-mail-buildhost -d --name ${NAME} ${NAME}
 docker cp files.tar.gz ${NAME}:/root/
 rm -f files.tar.gz
 docker exec ${NAME} /bin/bash -c "cd /root/slurm-mail && tar xvf ../files.tar.gz"
