@@ -25,6 +25,8 @@ RUN sed -i "s#MailProg=/usr/bin/mailx#MailProg=/opt/slurm-mail/bin/slurm-spool-m
 
 RUN sed -i "s/verbose = false/verbose = true/" /opt/slurm-mail/conf.d/slurm-mail.conf
 
+RUN sed -i "s/includeOutputLines = 0/includeOutputLines = 20/" /opt/slurm-mail/conf.d/slurm-mail.conf
+
 RUN rm /etc/cron.d/slurm-mail
 
 CMD ["tail -f /dev/null"]
