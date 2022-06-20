@@ -498,8 +498,16 @@ def process_spool_file(json_file: pathlib.Path, smtp_conn: smtplib.SMTP):
                         x = i.split("=", 1)
                         if len(x) == 2:
                             scontrol_dict[x[0]] = x[1]
-                    job.stderr = scontrol_dict['StdErr']
-                    job.stdout = scontrol_dict['StdOut']
+                    # StdOut and StdError will not be present
+                    # for interactive jobs
+                    if "StdErr" in scontrol_dict:
+                        job.stderr = scontrol_dict['StdErr']
+                    else:
+                        job.stderr = "N/A"
+                    if "StdOut" in scontrol_dict:
+                        job.stdout = scontrol_dict['StdOut']
+                    else:
+                        job.stdout = "N/A"
                 else:
                     logging.error("Failed to run: %s", cmd)
                     logging.error(stdout)
@@ -569,7 +577,7 @@ def process_spool_file(json_file: pathlib.Path, smtp_conn: smtplib.SMTP):
         elif state in ["Ended", "Failed", "Requeued", "Time limit reached"]:
             end_txt = state.lower()
             job_output = ""
-            if tail_lines > 0:
+            if tail_lines > 0 and job.stdout not in ["?", "N/A"]:
                 tpl = Template(get_file_contents(templates['job_output']))
 
                 # Drop privileges prior to tailing output
@@ -580,7 +588,7 @@ def process_spool_file(json_file: pathlib.Path, smtp_conn: smtplib.SMTP):
                     OUTPUT_LINES=tail_lines, OUTPUT_FILE=job.stdout,
                     JOB_OUTPUT=tail_file(job.stdout, tail_lines)
                 )
-                if not job.separate_output():
+                if not job.separate_output() and job.stderr not in ["?", "N/A"]:
                     job_output += tpl.substitute(
                         OUTPUT_LINES=tail_lines, OUTPUT_FILE=job.stderr,
                         JOB_OUTPUT=tail_file(job.stderr, tail_lines)
