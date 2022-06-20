@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+Version 3.4
+-----------
+
+Date: 2022-06-20
+
+* Fix for issue #42. Thanks to @mafn for reporting.
+* Increased Slurm 22.05 testing version to Slurm 22.05.2
+
 Version 3.3
 -----------
 
