@@ -6,7 +6,7 @@
 %endif
 
 Name:       slurm-mail
-Version:    3.3
+Version:    3.4
 Release:    %{rel}%{?dist}
 Summary:    Provides enhanced e-mails for Slurm
 URL:        https://www.github.com/neilmunday/slurm-mail
