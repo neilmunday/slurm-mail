@@ -535,6 +535,7 @@ def process_spool_file(json_file: pathlib.Path, smtp_conn: smtplib.SMTP):
         job_table = tpl.substitute(
             JOB_ID=job.id, JOB_NAME=job.name, PARTITION=job.partition,
             START=job.start, END=job.end, WORKDIR=job.workdir,
+            START_TS=job.start_ts, END_TS=job.end_ts,
             ELAPSED=str(timedelta(seconds=job.elapsed)), EXIT_STATE=job.state,
             EXIT_CODE=job.exit_code, COMMENT=job.comment,
             MEMORY=job.requested_mem_str, MAX_MEMORY=job.max_rss_str,
