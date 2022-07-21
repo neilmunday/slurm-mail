@@ -143,14 +143,16 @@ For SMTP servers that use SSL rather than starttls please set `smtpUseSsl = yes`
 
 ## Customising E-mails
 
+### Templates
+
 Slurm-Mail uses Python's [string.Template](https://docs.python.org/3/library/string.html#template-strings) class to create the e-mails it sends. Under Slurm-Mail's `conf.d/templates` directory you will find the following files that you can edit to customise e-mails to your needs.
 
 | Filename                  | Template Purpose                                                  |
 | ------------------------- | ----------------------------------------------------------------- |
-| ended.tpl                 | Used for jobs that have finished.                                 |
 | ended-array.tpl           | Used for jobs in an array that have finished.                     |
 | ended-array_summary       | Used when all jobs in an array have finished.                     |
-| invalid-dependency        | Used when a job has an invalid dependency.                        |
+| ended.tpl                 | Used for jobs that have finished.                                 |
+| invalid-dependency.tpl    | Used when a job has an invalid dependency.                        |
 | job_table.tpl             | Used to create the job info table in e-mails.                     |
 | signature.tpl             | Used to create the e-mail signature.                              |
 | staged-out.tpl            | Used when a job's burst buffer stage has completed.               |
@@ -159,9 +161,130 @@ Slurm-Mail uses Python's [string.Template](https://docs.python.org/3/library/str
 | started-array.tpl         | Used for the first job in an array that has started.              |
 | time.tpl                  | Used when a job reaches a percentage of it's time limit.          |
 
+Each template has a number of variables which are are used during e-mail generation. The following sub sections detail which variables are available to which templates. You can use these to customise the templates to your individual requirements.
+
+#### ended-array.tpl, ended-array_summary.tpl
+
+| Variable      | Purpose                                                      |
+| ------------- | ------------------------------------------------------------ |
+| $ARRAY_JOB_ID | The ID of array job ID.                                      |
+| $CLUSTER      | The name of the cluster.                                     |
+| $END_TXT      | The state of the job at its end.                             |
+| $JOB_ID       | The job ID.                                                  |
+| $JOB_TABLE    | HTML table of job information created by `job_table.pl`      |
+| $JOB_OUTPUT   | Output from the job (if enabled) created by `job_output.tpl` |
+| $SIGNATURE    | E-mail signature                                             |
+| $USER         | The user's name.                                             |
+
+#### ended.tpl
+
+| Variable    | Purpose                                                      |
+| ----------- | ------------------------------------------------------------ |
+| $CLUSTER    | The name of the cluster.                                     |
+| $END_TXT    | The state of the job at its end.                             |
+| $JOB_ID     | The job ID.                                                  |
+| $JOB_TABLE  | HTML table of job information created by `job_table.pl`      |
+| $JOB_OUTPUT | Output from the job (if enabled) created by `job_output.tpl` |
+| $SIGNATURE  | E-mail signature                                             |
+| $USER       | The user's name.                                             |
+
+#### invalid-dependency.tpl, staged-out.tpl
+
+| Variable   | Purpose                                                 |
+| ---------- | ------------------------------------------------------- |
+| $CLUSTER   | The name of the cluster.                                |
+| $END_TXT   | The state of the job at its end.                        |
+| $JOB_ID    | The job ID.                                             |
+| $JOB_TABLE | HTML table of job information created by `job_table.pl` |
+| $SIGNATURE | E-mail signature                                        |
+| $USER      | The user's name.                                        |
+
+#### job-output.tpl
+
+| Variable      | Purpose                                                     |
+| ------------- | ----------------------------------------------------------- |
+| $JOB_OUTPUT   | The output of the job from `$OUTPUT_FILE` file.             | 
+| $OUTPUT_FILE  | The full path to the job's output file.                     |
+| $OUTPUT_LINES | The number of lines of job output included in the e-mail.   |
+
+#### job-table.tpl
+
+Note: some variables are only displayed in the e-mail if the job has ended.
+
+| Variable            | Purpose                                               |
+| ------------------- | ----------------------------------------------------- |
+| $COMMENT            | The job's comment.                                    |
+| $CPU_EFFICIENCY     | The CPU efficiency of the job.                        |
+| $CPU_TIME           | The CPU time used by the job.                         |
+| $MAX_MEMORY         | The maximum amount of RAM used by a node in the job.  |
+| $MEMORY             | The amount of RAM used by the job.                    |
+| $ELAPSED            | How long the job ran for.                             |
+| $END                | When the job ended as a date string.                  |
+| $END_TS             | When the job started as a Unix timestamp.             |
+| $EXIT_STATE         | The exit state of the job.                            |
+| $JOB_ID             | The job ID.                                           |
+| $JOB_NAME           | The name of the job.                                  |
+| $NODES              | The number of nodes used by the job.                  |
+| $NODE_LIST          | The list of nodes used by the job.                    |
+| $PARTITION          | The partition used by the job.                        |
+| $START              | When the job started as a date string.                |
+| $START_TS           | When the job started as a Unix timestamp.             |
+| $STDERR             | The standard error file of the job.                   |
+| $STDOUT             | The standard output file of the job.                  |
+| $WALLCLOCK          | The wall clock of the job as a formatted date string. |
+| $WALLCLOCK_ACCURACY | The wallclock accuracy of the job.                    |
+| $WORKDIR            | The work directory used by the job.                   |
+
+#### signature.tpl
+
+| Variable    | Purpose                                                   |
+| ------------| --------------------------------------------------------- |
+| $EMAIL_FROM | Who the e-mail is from (as defined in `slurm-mail.conf`). |
+
+#### started-array-summary.tpl, started-array.tpl
+
+| Variable      | Purpose                                                    |
+| ------------- | ---------------------------------------------------------- |
+| $ARRAY_JOB_ID | The ID of array job ID.                                    |
+| $CLUSTER      | The name of the cluster.                                   |
+| $JOB_ID       | The job ID.                                                |
+| $JOB_TABLE    | HTML table of job information created by `job_table.pl`    |
+| $SIGNATURE    | E-mail signature                                           |
+| $USER         | The user's name.                                           |
+
+#### started.tpl
+
+| Variable      | Purpose                                                    |
+| ------------- | ---------------------------------------------------------- |
+| $CLUSTER      | The name of the cluster.                                   |
+| $JOB_ID       | The job ID.                                                |
+| $JOB_TABLE    | HTML table of job information created by `job_table.pl`    |
+| $SIGNATURE    | E-mail signature                                           |
+| $USER         | The user's name.                                           |
+
+#### time.pl
+
+| Variable    | Purpose                                                      |
+| ----------- | ------------------------------------------------------------ |
+| $CLUSTER    | The name of the cluster.                                     |
+| $END_TXT    | The state of the job at its end.                             |
+| $JOB_ID     | The job ID.                                                  |
+| $JOB_TABLE  | HTML table of job information created by `job_table.pl`      |
+| $JOB_OUTPUT | Output from the job (if enabled) created by `job_output.tpl` |
+| $REACHED    | The percentage of wallclock that the job has got to.         |
+| $REMAINING  | The amount of time the job has left.                         |
+| $SIGNATURE  | E-mail signature                                             |
+| $USER       | The user's name.                                             |
+
+### Styling
+
 You can adjust the font style, size, colours etc. by editing the Cascading Style Sheet (CSS) file `conf.d/style.css` used for generating the e-mails.
 
+### Date/time format
+
 To change the date/time format used for job start and end times in the e-mails, change the `datetimeFormat` configuration option in `conf.d/slurm-mail.conf`. The format string used is the same as Python's [datetime.strftime function](https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior).
+
+### E-mail subject
 
 To change the subject of the e-mails, change the `emailSubject` configuration option in `conf.d/slurm-mail.conf`. You use the following place holders in the string:
 
