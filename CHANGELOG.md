@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+Version 3.5
+-----------
+
+Date: 2022-07-22
+
+* Updated README to include details about which variables can be used in each template.
+* Added START_TS and END_TS variables to the job table template (pull request #43 from @sdx23)
+
 Version 3.4
 -----------
 
