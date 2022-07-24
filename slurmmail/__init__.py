@@ -1,3 +1,7 @@
+"""
+Slurm Mail global variables
+"""
+
 import pathlib
 
 conf_dir = pathlib.Path("/etc/slurm-mail")

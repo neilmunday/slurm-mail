@@ -1,3 +1,5 @@
+# pylint: disable=invalid-name,broad-except,line-too-long,consider-using-f-string,missing-function-docstring
+
 #
 #  This file is part of Slurm-Mail.
 #

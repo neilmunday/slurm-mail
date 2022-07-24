@@ -1,3 +1,5 @@
+# pylint: disable=invalid-name,broad-except,line-too-long,consider-using-f-string,missing-function-docstring
+
 #
 #  This file is part of Slurm-Mail.
 #
@@ -31,6 +33,7 @@ from typing import Optional
 from slurmmail.common import get_kbytes_from_str, get_str_from_kbytes
 
 class Job:
+    # pylint: disable=too-many-instance-attributes
     """
     Helper object to store job data
     """

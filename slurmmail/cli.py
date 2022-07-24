@@ -1,3 +1,5 @@
+# pylint: disable=invalid-name,broad-except,line-too-long,consider-using-f-string
+
 #
 #  This file is part of Slurm-Mail.
 #
@@ -65,6 +67,10 @@ from slurmmail.common import \
 from slurmmail.slurm import Job
 
 class ProcessSpoolFileOptions:
+    # pylint: disable=too-few-public-methods,too-many-instance-attributes
+    """
+    A helper class to provide settings to `__process_spool_file`
+    """
 
     def __init__(self):
         self.array_max_notifications = None
@@ -84,7 +90,7 @@ class ProcessSpoolFileOptions:
         self.templates = None
 
 def __process_spool_file(json_file: pathlib.Path, smtp_conn: smtplib.SMTP, options: ProcessSpoolFileOptions):
-    # pylint: disable=too-many-branches,too-many-statements,too-many-nested-blocks
+    # pylint: disable=too-many-branches,too-many-locals,too-many-statements,too-many-nested-blocks
     # data is JSON encoded as of version 2.6
     with json_file.open() as spool_file:
         data = json.load(spool_file)
@@ -408,6 +414,7 @@ def __process_spool_file(json_file: pathlib.Path, smtp_conn: smtplib.SMTP, optio
     delete_spool_file(json_file)
 
 def send_mail_main():
+    # pylint: disable=too-many-branches,too-many-locals,too-many-statements
     """
     Examines the Slurm-Mail spool directory as defined in slurm-mail.conf
     for any new e-mail notifications that have been created by
@@ -525,7 +532,7 @@ def send_mail_main():
         try:
             # check if connection is still alive
             smtp_conn.noop()[0]
-        except Exception as e:
+        except Exception:
             # start new connection if previous connection dies or not exists
             # check if ssl is being requested (usually port 465)
             if smtp_use_ssl:
@@ -545,6 +552,7 @@ def send_mail_main():
             logging.error(e, exc_info=True)
 
 def spool_mail_main():
+    # pylint: disable=too-many-locals,too-many-statements
     """
     A drop in replacement for MailProg in Slurm's slurm.conf file.
     Instead of sending an e-mail the details about the requested e-mail are
