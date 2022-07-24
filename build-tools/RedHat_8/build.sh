@@ -26,14 +26,14 @@
 set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-NAME=slurm-mail-builder-rhel7
+NAME=slurm-mail-builder-rhel8
 
 cd $DIR
 source ../common.sh
 
 rm -f ./slurm-mail*.rpm
 
-docker build -t slurm-mail-builder-rhel7:latest .
+docker build -t ${NAME}:latest .
 
 tar cvfz files.tar.gz ../../*
 
@@ -41,7 +41,7 @@ docker run -h slurm-mail-buildhost -d --name ${NAME} ${NAME}
 docker cp files.tar.gz ${NAME}:/root/
 rm -f files.tar.gz
 docker exec ${NAME} /bin/bash -c "cd /root/slurm-mail && tar xvf ../files.tar.gz"
-docker exec ${NAME} /bin/bash -c "/root/slurm-mail/build/build-rpm.sh"
+docker exec ${NAME} /bin/bash -c "/root/slurm-mail/build-tools/build-rpm.sh"
 rpm=`docker exec ${NAME} /bin/bash -c "ls -1 /root/rpmbuild/RPMS/noarch/slurm-mail*.rpm"`
 docker cp ${NAME}:$rpm .
 

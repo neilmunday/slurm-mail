@@ -4,7 +4,7 @@ FROM ghcr.io/neilmunday/rocky8-slurm:$SLURM_VER
 
 ARG SLURM_MAIL_RPM
 
-RUN dnf install -y chrony cronie python38 python3-pyyaml && \
+RUN dnf install -y chrony cronie python36 python3-pyyaml && \
     pip3 install aiosmtpd
 
 COPY supervisord.conf /etc/supervisord.conf
@@ -21,11 +21,11 @@ COPY $SLURM_MAIL_RPM /root/
 
 RUN dnf localinstall -y /root/$SLURM_MAIL_RPM
 
-RUN sed -i "s#MailProg=/usr/bin/mailx#MailProg=/opt/slurm-mail/bin/slurm-spool-mail.py#" /etc/slurm/slurm.conf
+RUN sed -i "s#MailProg=/usr/bin/mailx#MailProg=/usr/bin/slurm-spool-mail#" /etc/slurm/slurm.conf
 
-RUN sed -i "s/verbose = false/verbose = true/" /opt/slurm-mail/conf.d/slurm-mail.conf
+RUN sed -i "s/verbose = false/verbose = true/" /etc/slurm-mail/slurm-mail.conf
 
-RUN sed -i "s/includeOutputLines = 0/includeOutputLines = 20/" /opt/slurm-mail/conf.d/slurm-mail.conf
+RUN sed -i "s/includeOutputLines = 0/includeOutputLines = 20/" /etc/slurm-mail/slurm-mail.conf
 
 RUN rm /etc/cron.d/slurm-mail
 

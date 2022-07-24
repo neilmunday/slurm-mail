@@ -95,7 +95,7 @@ if [ $USE_RPM -eq 0 ]; then
   cd $DIR
   rm -f ./*.rpm
 
-  cd ../build/RedHat_8
+  cd ../build-tools/RedHat_8
   rm -f ./*.rpm
   ./build.sh
   mv ./*.rpm $DIR/

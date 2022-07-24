@@ -16,38 +16,12 @@ import logging
 import pathlib
 import os
 import re
-import shlex
-import subprocess
 import sys
 import time
 import yaml
 
-def check_dir(path: pathlib.Path):
-    """
-    Check if the given directory exists and is writeable,
-    otherwise exit.
-    """
-    # pylint: disable=duplicate-code
-    if not path.is_dir():
-        die("Error: {0} is not a directory".format(path))
-    # can we write to the log directory?
-    if not os.access(path, os.W_OK):
-        die("Error: {0} is not writeable".format(path))
-
-def check_file(f: pathlib.Path):
-    """
-    Check if the given file exists, exit if it does not.
-    """
-    if not f.is_file():
-        die("{0} does not exist".format(f))
-
-def die(msg: str):
-    """
-    Exit the program with the given error message.
-    """
-    logging.error(msg)
-    sys.stderr.write("{0}\n".format(msg))
-    sys.exit(1)
+import slurmmail
+from slurmmail.common import check_file, check_dir, die, run_command
 
 def echo_log(log_file: pathlib.Path):
     """
@@ -78,19 +52,6 @@ def remove_logs():
     else:
         logging.debug("deleting %s does not exist", send_log)
 
-def run_command(cmd: str) -> tuple:
-    """
-    Execute the given command and return a tuple that contains the
-    return code, std out and std err output.
-    """
-    # pylint: disable=duplicate-code
-    logging.debug("running %s", cmd)
-    with subprocess.Popen(
-        shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    ) as process:
-        stdout, stderr = process.communicate()
-        return (process.returncode, stdout.decode("utf-8"), stderr.decode("utf-8"))
-
 def wait_for_job():
     """
     Wait for all jobs to complete.
@@ -111,7 +72,7 @@ def wait_for_job():
 
 if __name__ == "__main__":
 
-    SLURM_SEND_MAIL_EXE = "/opt/slurm-mail/bin/slurm-send-mail.py"
+    SLURM_SEND_MAIL_EXE = pathlib.Path("/usr/bin/slurm-send-mail")
     MAIL_LOG = pathlib.Path("/var/log/supervisor/mailserver.log")
     SLURMCTLD_LOG = pathlib.Path("/var/log/slurm/slurmctld.log")
 
@@ -148,21 +109,21 @@ if __name__ == "__main__":
     input_file = pathlib.Path(args.input)
     output_dir = pathlib.Path(args.output)
     spool_dir = pathlib.Path("/var/spool/slurm-mail")
-    slurm_mail_config = pathlib.Path("/opt/slurm-mail/conf.d/slurm-mail.conf")
 
     logging.info("using tests defined in: %s", input_file)
 
+    check_file(SLURM_SEND_MAIL_EXE)
     check_file(input_file)
     check_dir(output_dir)
     check_dir(spool_dir)
-    check_file(slurm_mail_config)
+    check_file(slurmmail.conf_file)
 
     spool_log = None
     send_log = None
 
     try:
         config = configparser.RawConfigParser()
-        config.read(str(slurm_mail_config))
+        config.read(str(slurmmail.conf_file))
         send_log = pathlib.Path(config.get("slurm-send-mail", "logFile"))
         spool_log = pathlib.Path(config.get("slurm-spool-mail", "logFile"))
     except Exception as e:
@@ -246,7 +207,7 @@ if __name__ == "__main__":
                 echo_log(SLURMCTLD_LOG)
             remove_logs()
             continue
-        rtn, stdout, stderr = run_command(SLURM_SEND_MAIL_EXE)
+        rtn, stdout, stderr = run_command(str(SLURM_SEND_MAIL_EXE))
         if rtn != 0:
             logging.error(
                 "failed to run %s\nsdtout:\n%s\nstderr:\n%s",

@@ -26,25 +26,31 @@
 set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-NAME=slurm-mail-builder-opensuse15
 
-cd $DIR
-source ../common.sh
+source $DIR/common.sh
 
-rm -f ./slurm-mail*.rpm
+check_exe tar
 
-docker build -t ${NAME}:latest .
+cd $DIR/..
 
-tar cvfz files.tar.gz ../../*
+VERSION=`cat ./VERSION`
+TMP_DIR=`mktemp -d`
+TAR_FILE="slurm-mail-${VERSION}.tar.gz"
 
-docker run -h slurm-mail-buildhost -d --name ${NAME} ${NAME}
-docker cp files.tar.gz ${NAME}:/root/
-rm -f files.tar.gz
-docker exec ${NAME} /bin/bash -c "cd /root/slurm-mail && tar xvf ../files.tar.gz"
-docker exec ${NAME} /bin/bash -c "/root/slurm-mail/build/build-rpm.sh"
-rpm=`docker exec ${NAME} /bin/bash -c "ls -1 /usr/src/packages/RPMS/noarch/slurm-mail-*.noarch.rpm"`
-docker cp ${NAME}:$rpm .
+check_dir $TMP_DIR
 
-echo "Created: "`ls -1 slurm-mail*.rpm`
+TAR_DIR="$TMP_DIR/slurm-mail-${VERSION}"
 
-tidyup ${NAME}
+mkdir $TAR_DIR
+cp -a ./* ${TAR_DIR}/
+cd $TMP_DIR
+tar cfz $TAR_FILE \
+  --exclude .git \
+  --exclude .github \
+  --exclude bin \
+  --exclude build \
+  --exclude build-tools \
+  --exclude tests  \
+  slurm-mail-${VERSION}
+
+echo "${TMP_DIR}/${TAR_FILE}"

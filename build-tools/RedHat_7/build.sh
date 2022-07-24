@@ -26,29 +26,25 @@
 set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+NAME=slurm-mail-builder-rhel7
 
-source $DIR/common.sh
+cd $DIR
+source ../common.sh
 
-check_exe tar
+rm -f ./slurm-mail*.rpm
 
-cd $DIR/..
+docker build -t slurm-mail-builder-rhel7:latest .
 
-VERSION=`cat ./VERSION`
-TMP_DIR=`mktemp -d`
-TAR_FILE="slurm-mail-${VERSION}.tar.gz"
+tar cvfz files.tar.gz ../../*
 
-check_dir $TMP_DIR
+docker run -h slurm-mail-buildhost -d --name ${NAME} ${NAME}
+docker cp files.tar.gz ${NAME}:/root/
+rm -f files.tar.gz
+docker exec ${NAME} /bin/bash -c "cd /root/slurm-mail && tar xvf ../files.tar.gz"
+docker exec ${NAME} /bin/bash -c "/root/slurm-mail/build-tools/build-rpm.sh"
+rpm=`docker exec ${NAME} /bin/bash -c "ls -1 /root/rpmbuild/RPMS/noarch/slurm-mail*.rpm"`
+docker cp ${NAME}:$rpm .
 
-TAR_DIR="$TMP_DIR/slurm-mail-${VERSION}"
+echo "Created: "`ls -1 slurm-mail*.rpm`
 
-mkdir $TAR_DIR
-cp -a ./* ${TAR_DIR}/
-cd $TMP_DIR
-tar cfz $TAR_FILE \
-  --exclude .git \
-  --exclude .github \
-  --exclude build \
-  --exclude tests  \
-  slurm-mail-${VERSION}
-
-echo "${TMP_DIR}/${TAR_FILE}"
+tidyup ${NAME}
