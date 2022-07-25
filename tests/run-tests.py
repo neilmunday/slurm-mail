@@ -18,7 +18,7 @@ import os
 import re
 import sys
 import time
-import yaml
+import yaml # type: ignore
 
 import slurmmail
 from slurmmail.common import check_file, check_dir, die, run_command
@@ -160,18 +160,18 @@ if __name__ == "__main__":
         total += 1
         logging.info("running: %s: %s", test, fields["description"])
         logging.info("creating JCF...")
-        jcf_file = output_dir / "{0}.jcf".format(test)
-        with open(jcf_file, mode="w", encoding="utf-8") as f:
-            f.write("#!/bin/bash\n")
-            f.write("#SBATCH -J {0}\n".format(test))
-            f.write("#SBATCH -o {0}/%j.out\n".format(output_dir))
+        jcf_path = output_dir / "{0}.jcf".format(test)
+        with open(jcf_path, mode="w", encoding="utf-8") as jcf_file:
+            jcf_file.write("#!/bin/bash\n")
+            jcf_file.write("#SBATCH -J {0}\n".format(test))
+            jcf_file.write("#SBATCH -o {0}/%j.out\n".format(output_dir))
             if "options" in fields:
                 for sbatch_option, sbatch_value in fields["options"].items():
-                    f.write("#SBATCH --{0}={1}\n".format(sbatch_option, sbatch_value))
-            f.write(fields["commands"])
+                    jcf_file.write("#SBATCH --{0}={1}\n".format(sbatch_option, sbatch_value))
+            jcf_file.write(fields["commands"])
         # display generated JCF
-        with open(jcf_file, mode="r", encoding="utf-8") as f:
-            logging.debug("\n%s", f.read())
+        with open(jcf_path, mode="r", encoding="utf-8") as jcf_file:
+            logging.debug("\n%s", jcf_file.read())
         logging.info("submitting job...")
         rtn, stdout, stderr = run_command("sbatch {0}".format(jcf_file))
         if rtn != 0:
@@ -219,9 +219,9 @@ if __name__ == "__main__":
             logging.error("%s failed: spool files still present - deleting for next test", test)
             echo_log(send_log)
             dictionary["tests"][test]["pass"] = False
-            for f in spool_dir.glob("*.mail"):
-                logging.debug("deleting: %s", f)
-                os.remove(f)
+            for spool_file in spool_dir.glob("*.mail"):
+                logging.debug("deleting: %s", spool_file)
+                os.remove(str(spool_file))
             continue
         logging.info("spool files gone, checking log files")
         if not fields["send_errors"]:
