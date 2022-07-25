@@ -27,6 +27,6 @@ jobs:
         pip install mypy
         pip install aiosmtpd
         pip install PyYAML
-    - name: Analysing the code with pylint
+    - name: Analysing the code with mypy
       run: |
         mypy $(git ls-files '*.py')
