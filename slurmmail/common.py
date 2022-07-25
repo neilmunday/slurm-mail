@@ -35,7 +35,6 @@ import shlex
 import subprocess
 import sys
 
-from typing import Optional
 
 def check_dir(path: pathlib.Path):
     """
