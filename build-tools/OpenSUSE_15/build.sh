@@ -35,12 +35,14 @@ rm -f ./slurm-mail*.rpm
 
 docker build -t ${NAME}:latest .
 
-tar cvfz files.tar.gz ../../*
+tmp_file=`mktemp /tmp/XXXXXX.tar.gz`
+echo "Temporary tar file: $tmp_file"
+tar cvfz $tmp_file ../../*
 
 docker run -h slurm-mail-buildhost -d --name ${NAME} ${NAME}
-docker cp files.tar.gz ${NAME}:/root/
-rm -f files.tar.gz
-docker exec ${NAME} /bin/bash -c "cd /root/slurm-mail && tar xvf ../files.tar.gz"
+docker cp $tmp_file ${NAME}:$tmp_file
+rm -f $tmp_file
+docker exec ${NAME} /bin/bash -c "cd /root/slurm-mail && tar xvf $tmp_file"
 docker exec ${NAME} /bin/bash -c "/root/slurm-mail/build-tools/build-rpm.sh"
 rpm=`docker exec ${NAME} /bin/bash -c "ls -1 /usr/src/packages/RPMS/noarch/slurm-mail-*.noarch.rpm"`
 docker cp ${NAME}:$rpm .
