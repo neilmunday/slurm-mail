@@ -173,7 +173,7 @@ if __name__ == "__main__":
         with open(jcf_path, mode="r", encoding="utf-8") as jcf_file:
             logging.debug("\n%s", jcf_file.read())
         logging.info("submitting job...")
-        rtn, stdout, stderr = run_command("sbatch {0}".format(jcf_file))
+        rtn, stdout, stderr = run_command("sbatch {0}".format(jcf_path))
         if rtn != 0:
             logging.error(
                 "%s failed: could not submit job\nstdout:\n%s\nstderr:\n%s",
