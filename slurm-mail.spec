@@ -21,6 +21,7 @@ Source: %{name}-%{version}.tar.gz
 %{?el7:BuildRequires: python3}
 %{?el8:BuildRequires: python36}
 %{?sle_version:BuildRequires: python3}
+%{?sle_version:BuildRequires: python3-setuptools}
 
 %{?el7:Requires: python3}
 %{?el8:Requires: python36}
