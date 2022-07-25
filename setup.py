@@ -25,7 +25,7 @@
 Slurm-Mail's setup.py
 """
 
-import setuptools
+import setuptools # type: ignore
 setuptools.setup(
     author='Neil Munday',
     data_files=[
