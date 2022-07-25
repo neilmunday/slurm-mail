@@ -72,23 +72,21 @@ def die(msg: str):
     sys.exit(1)
 
 
-def get_file_contents(path: pathlib.Path) -> Optional[str]:
+def get_file_contents(path: pathlib.Path) -> str:
     """
     Helper function to read the contents of a file.
     """
-    contents = None
     with path.open() as f:
-        contents = f.read()
-    return contents
+        return f.read()
 
 
-def get_kbytes_from_str(value: str) -> float:
+def get_kbytes_from_str(value: str) -> int:
     # pylint: disable=too-many-return-statements
     if value in ["", "0"]:
         return 0
     units = value[-1:].upper()
     try:
-        kbytes = float(value[:-1])
+        kbytes = int(value[:-1])
     except Exception:
         logging.error("get_kbytes_from_str: failed convert %s", value)
         return 0
@@ -104,7 +102,7 @@ def get_kbytes_from_str(value: str) -> float:
     return 0
 
 
-def get_str_from_kbytes(value: int) -> str:
+def get_str_from_kbytes(value: float) -> str:
     for unit in ["Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"]:
         if abs(value) < 1024.0:
             return "{0:.2f}{1}B".format(value, unit)
@@ -122,7 +120,7 @@ def get_usec_from_str(time_str: str) -> int:
     match = timeRe.match(time_str)
     if not match:
         die("Could not parse: {0}".format(time_str))
-
+    assert match is not None
     usec = int(match.group("usec"))
     usec += int(match.group("secs")) * 1000000
     usec += int(match.group("mins")) * 1000000 * 60

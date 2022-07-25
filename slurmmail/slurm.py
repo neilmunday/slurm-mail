@@ -28,7 +28,7 @@ This module provides Slurm related classes.
 """
 
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import List, Optional
 
 from slurmmail.common import get_kbytes_from_str, get_str_from_kbytes
 
@@ -38,36 +38,35 @@ class Job:
     Helper object to store job data
     """
 
-    def __init__(self, datetime_format: str, job_id: int, array_id: Optional[str] = None):
-        self.__cpus = None
-        self.__cpu_efficiency = None
-        self.__cpu_time_usec = None # elapsed * cpu_total
-        #self.__cpu_wallclock = None
+    def __init__(self, datetime_format: str, job_id: int, array_id: Optional[int] = None):
+        self.__cpus = None # type: int
+        self.__cpu_efficiency = None # type: int
+        self.__cpu_time_usec = None # type: int
         self.__datetime_format = datetime_format
-        self.__end_ts = None
-        self.__start_ts = None
-        self.__state = None
-        self.__wallclock = None
+        self.__end_ts = None # type: int
+        self.__start_ts = None # type: int
+        self.__state = None # type: str
+        self.__wallclock = None # type: int
         self.__wc_accuracy = None
 
-        self.array_id = array_id
-        self.cluster = None
-        self.comment = None
-        self.elapsed = 0
-        self.exit_code = None
-        self.group = None
+        self.array_id = array_id # type: int
+        self.cluster = None # type: str
+        self.comment = None # type: str
+        self.elapsed = 0 # type: int
+        self.exit_code = None # type: int
+        self.group = None # type: str
         self.id = job_id
-        self.max_rss = None
-        self.name = None
-        self.nodelist = None
-        self.nodes = None
-        self.partition = None
-        self.requested_mem = None
+        self.max_rss = None # type: int
+        self.name = None # type: str
+        self.nodelist = None # type: List[str]
+        self.nodes = None # type: int
+        self.partition = None # type: str
+        self.requested_mem = None # type: int
         self.stderr = "?"
         self.stdout = "?"
-        self.used_cpu_usec = None
-        self.user = None
-        self.workdir = None
+        self.used_cpu_usec = None # type: int
+        self.user = None # type: str
+        self.workdir = None # type: str
 
     def __repr__(self) -> str:
         return "<Job object> ID: {0}".format(self.id)

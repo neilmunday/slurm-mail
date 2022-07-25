@@ -52,6 +52,7 @@ from datetime import timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from string import Template
+from typing import Dict
 
 from slurmmail import conf_dir, conf_file, tpl_dir
 from slurmmail.common import \
@@ -73,21 +74,21 @@ class ProcessSpoolFileOptions:
     """
 
     def __init__(self):
-        self.array_max_notifications = None
-        self.css = None
-        self.datetime_format = None
-        self.email_from_address = None
-        self.email_from_name = None
-        self.email_subject = None
-        self.mail_regex = None
-        self.validate_email = None
-        self.sacct_exe = None
-        self.scontrol_exe = None
-        self.smtp_port = None
-        self.smtp_server = None
-        self.tail_exe = None
-        self.tail_lines = None
-        self.templates = None
+        self.array_max_notifications = None # type: int
+        self.css = None # type: str
+        self.datetime_format = None # type: str
+        self.email_from_address = None # type: str
+        self.email_from_name = None # type: str
+        self.email_subject = None # type: str
+        self.mail_regex = None # type: str
+        self.validate_email = None # type: bool
+        self.sacct_exe = None # type: str
+        self.scontrol_exe = None # type: str
+        self.smtp_port = None # type: int
+        self.smtp_server = None # type: str
+        self.tail_exe = None # type: str
+        self.tail_lines = None # type: int
+        self.templates = None # type: Dict[str]
 
 def __process_spool_file(json_file: pathlib.Path, smtp_conn: smtplib.SMTP, options: ProcessSpoolFileOptions):
     # pylint: disable=too-many-branches,too-many-locals,too-many-statements,too-many-nested-blocks
@@ -176,7 +177,7 @@ def __process_spool_file(json_file: pathlib.Path, smtp_conn: smtplib.SMTP, optio
 
                 job_id = int(sacct_dict['JobIdRaw'])
                 if "_" in sacct_dict['JobId']:
-                    job = Job(options.datetime_format, job_id, sacct_dict['JobId'].split("_")[0])
+                    job = Job(options.datetime_format, job_id, int(sacct_dict['JobId'].split("_")[0]))
                 else:
                     job = Job(options.datetime_format, job_id)
 
@@ -241,8 +242,8 @@ def __process_spool_file(json_file: pathlib.Path, smtp_conn: smtplib.SMTP, optio
                     # for the first job in an array, scontrol will
                     # output details about all jobs so let's just
                     # use the first line
-                    for i in stdout.split("\n", maxsplit=1)[0].split(" "):
-                        x = i.split("=", 1)
+                    for scontrol_values in stdout.split("\n", maxsplit=1)[0].split(" "):
+                        x = scontrol_values.split("=", 1)
                         if len(x) == 2:
                             scontrol_dict[x[0]] = x[1]
                     # StdOut and StdError will not be present
@@ -299,7 +300,7 @@ def __process_spool_file(json_file: pathlib.Path, smtp_conn: smtplib.SMTP, optio
         body = ""
         if state == "Began":
             if job.is_array():
-                tpl = None
+                tpl = None # type: ignore
 
                 if array_summary:
                     tpl = Template(
@@ -374,10 +375,10 @@ def __process_spool_file(json_file: pathlib.Path, smtp_conn: smtplib.SMTP, optio
         elif state in ["Time reached 50%", "Time reached 80%", "Time reached 90%"]:
             reached = int(state[-3:-1])
             remaining = (1 - (reached / 100))  * job.wallclock
-            remaining = str(timedelta(seconds=remaining))
+            remaining_str = str(timedelta(seconds=remaining))
             tpl = Template(get_file_contents(options.templates['time']))
             body = tpl.substitute(
-                CSS=options.css, REACHED=reached,JOB_ID=job.id, REMAINING=remaining,
+                CSS=options.css, REACHED=reached,JOB_ID=job.id, REMAINING=remaining_str,
                 USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
                 CLUSTER=job.cluster, SIGNATURE=signature
             )
