@@ -1,4 +1,5 @@
-# pylint: disable=invalid-name,broad-except,line-too-long,consider-using-f-string,missing-function-docstring
+# pylint: disable=consider-using-f-string
+# pylint: disable=invalid-name,broad-except,line-too-long
 
 #
 #  This file is part of Slurm-Mail.
@@ -57,7 +58,9 @@ def check_file(f: pathlib.Path):
 
 
 def delete_spool_file(f: pathlib.Path):
-    # Remove spool file
+    """
+    Delete the given file.
+    """
     logging.info("Deleting: %s", f)
     f.unlink()
 
@@ -92,7 +95,7 @@ def get_kbytes_from_str(value: str) -> int:
         kbytes = int(float(value[:-1]))
     except Exception:
         logging.error(
-            "get_kbytes_from_str: input value: %s, numeric component: %s, units: %s",
+            "get_kbytes_from_str: input value: %s, numeric component: %s, units: %s",  # noqa
             value,
             value[:-1],
             units,
@@ -106,11 +109,18 @@ def get_kbytes_from_str(value: str) -> int:
         return 1048576 * kbytes
     if units == "T":
         return 1073741824 * kbytes
-    logging.error("get_kbytes_from_str: unknown unit '%s' for value '%s'", units, value)
+    logging.error(
+        "get_kbytes_from_str: unknown unit '%s' for value '%s'",
+        units, value
+    )
     return 0
 
 
 def get_str_from_kbytes(value: float) -> str:
+    """
+    Convert the given value in KiB to a human readable
+    format.
+    """
     for unit in ["Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"]:
         if abs(value) < 1024.0:
             return "{0:.2f}{1}B".format(value, unit)
@@ -123,7 +133,7 @@ def get_usec_from_str(time_str: str) -> int:
     Convert a Slurm elapsed time string into microseconds.
     """
     timeRe = re.compile(
-        r"((?P<days>\d+)-)?((?P<hours>\d+):)?(?P<mins>\d+):(?P<secs>\d+).(?P<usec>\d+)"
+        r"((?P<days>\d+)-)?((?P<hours>\d+):)?(?P<mins>\d+):(?P<secs>\d+).(?P<usec>\d+)"  # noqa
     )
     match = timeRe.match(time_str)
     if not match:
@@ -149,7 +159,11 @@ def run_command(cmd: str) -> tuple:
         shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE
     ) as process:
         stdout, stderr = process.communicate()
-        return (process.returncode, stdout.decode("utf-8"), stderr.decode("utf-8"))
+        return (
+            process.returncode,
+            stdout.decode("utf-8"),
+            stderr.decode("utf-8")
+        )
 
 
 def tail_file(f: str, num_lines: int, tail_exe: str) -> str:
