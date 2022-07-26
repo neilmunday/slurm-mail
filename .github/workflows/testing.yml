@@ -14,9 +14,10 @@ on:
       - '.github/workflows/testing.yml'
       - 'setup.py'
       - 'slurmmail/*.py'
-      - 'tests/*.py'
-      - 'tests/run.sh'
-      - 'tests/tests.yml'
+      - 'tests/integration/*.py'
+      - 'tests/integration/run.sh'
+      - 'tests/integration/tests.yml'
+      - 'tests/unit/*.py'
   workflow_dispatch:
 
 jobs:
