@@ -1,8 +1,8 @@
-# Tests
+# Integration Tests
 
 ## Introduction
 
-The tests directory contains an automated test harness for Slurm-Mail. It makes use of https://github.com/neilmunday/rocky8-slurm to create a container to run the tests under.
+The `tests/integration` directory contains an automated test harness for Slurm-Mail. It makes use of https://github.com/neilmunday/rocky8-slurm to create a container to run the integration tests under.
 
 ## Adding new Slurm version support
 
