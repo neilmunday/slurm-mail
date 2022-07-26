@@ -4,16 +4,16 @@ on:
   pull_request:
     paths:
       - '.github/workflows/testing.yml'
-      - 'bin/*.py'
       - 'setup.py'
+      - 'slurmmail/*.py'
       - 'tests/*.py'
       - 'tests/run.sh'
       - 'tests/tests.yml'
   push:
     paths:
       - '.github/workflows/testing.yml'
-      - 'bin/*.py'
       - 'setup.py'
+      - 'slurmmail/*.py'
       - 'tests/*.py'
       - 'tests/run.sh'
       - 'tests/tests.yml'
