@@ -80,14 +80,23 @@ def get_file_contents(path: pathlib.Path) -> str:
 
 
 def get_kbytes_from_str(value: str) -> int:
+    """
+    From the given Slurm memory usage input string
+    return the number of KiB as a numeric value.
+    """
     # pylint: disable=too-many-return-statements
     if value in ["", "0"]:
         return 0
     units = value[-1:].upper()
     try:
-        kbytes = int(value[:-1])
+        kbytes = int(float(value[:-1]))
     except Exception:
-        logging.error("get_kbytes_from_str: failed convert %s", value)
+        logging.error(
+            "get_kbytes_from_str: input value: %s, numeric component: %s, units: %s",
+            value,
+            value[:-1],
+            units,
+        )
         return 0
     if units == "K":
         return kbytes
