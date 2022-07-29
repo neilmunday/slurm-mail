@@ -14,7 +14,7 @@ from slurmmail.common import (
     tail_file,
 )
 
-DUMMY_PATH = pathlib.Path("/tmp/foo")
+DUMMY_PATH = pathlib.Path("/tmp")
 TAIL_EXE = "/usr/bin/tail"
 
 
