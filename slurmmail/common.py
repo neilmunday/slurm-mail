@@ -170,6 +170,10 @@ def tail_file(f: str, num_lines: int, tail_exe: str) -> str:
     """
     Returns the last N lines of the given file.
     """
+    if num_lines < 1:
+        err_msg = "slurm-mail: invalid number of lines to tail: {0}".format(num_lines)  # noqa
+        logging.error(err_msg)
+        return err_msg
     try:
         if not pathlib.Path(f).exists():
             err_msg = "slurm-mail: file {0} does not exist".format(f)
