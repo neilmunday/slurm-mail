@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-# pylint: disable=broad-except,consider-using-f-string,duplicate-code,invalid-name,redefined-outer-name
+# pylint: disable=broad-except,consider-using-f-string,duplicate-code
+# pylint: disable=invalid-name,redefined-outer-name
 
 #
 #  This file is part of Slurm-Mail.
@@ -32,7 +33,7 @@ Author: Neil Munday
 
 Runs a simple receive only mail server on the given host and port.
 
-Note: based on example from: https://aiosmtpd.readthedocs.io/en/latest/controller.html
+Note: based on example from: https://aiosmtpd.readthedocs.io/en/latest/controller.html  # noqa
 """
 
 import argparse
@@ -41,6 +42,7 @@ import logging
 import aiosmtpd.controller
 
 logging.getLogger("mail.log").setLevel(logging.WARNING)
+
 
 class TestHandler:
     """
@@ -66,17 +68,22 @@ class TestHandler:
         logging.info("Message from %s", envelope.mail_from)
         logging.info("Message for %s", envelope.rcpt_tos)
         logging.info("Message data")
-        for ln in envelope.content.decode("utf8", errors="replace").splitlines():
+        for ln in envelope.content.decode(
+            "utf8", errors="replace"
+        ).splitlines():
             logging.info(ln.strip())
         logging.info("End of message")
         return "250 Message accepted for delivery"
+
 
 async def amain(loop, ip, port):
     """
     Asyc main function.
     """
     try:
-        controller = aiosmtpd.controller.Controller(TestHandler(), hostname=ip, port=port)
+        controller = aiosmtpd.controller.Controller(
+            TestHandler(), hostname=ip, port=port
+        )
         controller.start()
         logging.info("mail server listening on %s:%d", ip, port)
     except PermissionError as e:
@@ -88,7 +95,8 @@ async def amain(loop, ip, port):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
-        description="A simple mail server for use when test Slurm Mail", add_help=True
+        description="A simple mail server for use when test Slurm Mail",
+        add_help=True
     )
     parser.add_argument(
         "-i", "--ip", default="127.0.0.1", dest="ip",

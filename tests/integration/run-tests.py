@@ -1,6 +1,30 @@
 #!/usr/bin/env python3
 
-# pylint: disable=broad-except,consider-using-f-string,invalid-name,redefined-outer-name
+# pylint: disable=broad-except,consider-using-f-string,invalid-name
+# pylint: disable=redefined-outer-name
+
+#
+#  This file is part of Slurm-Mail.
+#
+#  Slurm-Mail is a drop in replacement for Slurm's e-mails to give users
+#  much more information about their jobs compared to the standard Slurm
+#  e-mails.
+#
+#   Copyright (C) 2018-2022 Neil Munday (neil@mundayweb.com)
+#
+#  Slurm-Mail is free software: you can redistribute it and/or modify it
+#  under the terms of the GNU General Public License as published by the
+#  Free Software Foundation, either version 3 of the License, or (at
+#  your option) any later version.
+#
+#  Slurm-Mail is distributed in the hope that it will be useful, but
+#  WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#  General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with Slurm-Mail.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 """
 run-tests.py
@@ -18,10 +42,11 @@ import os
 import re
 import sys
 import time
-import yaml # type: ignore
+import yaml  # type: ignore
 
 import slurmmail
 from slurmmail.common import check_file, check_dir, die, run_command
+
 
 def echo_log(log_file: pathlib.Path):
     """
@@ -37,6 +62,7 @@ def echo_log(log_file: pathlib.Path):
     else:
         logging.warning("%s does not exist", log_file)
 
+
 def remove_logs():
     """
     Delete Slurm-Mail log files
@@ -51,6 +77,7 @@ def remove_logs():
         os.unlink(send_log)
     else:
         logging.debug("deleting %s does not exist", send_log)
+
 
 def wait_for_job():
     """
@@ -69,6 +96,7 @@ def wait_for_job():
             break
     if i == limit:
         die("jobs still running after {0}s".format(limit))
+
 
 if __name__ == "__main__":
 
@@ -167,7 +195,12 @@ if __name__ == "__main__":
             jcf_file.write("#SBATCH -o {0}/%j.out\n".format(output_dir))
             if "options" in fields:
                 for sbatch_option, sbatch_value in fields["options"].items():
-                    jcf_file.write("#SBATCH --{0}={1}\n".format(sbatch_option, sbatch_value))
+                    jcf_file.write(
+                        "#SBATCH --{0}={1}\n".format(
+                            sbatch_option,
+                            sbatch_value
+                        )
+                    )
             jcf_file.write(fields["commands"])
         # display generated JCF
         with open(jcf_path, mode="r", encoding="utf-8") as jcf_file:
@@ -188,18 +221,23 @@ if __name__ == "__main__":
         # Although the job has finished there is a chance
         # that slurmctld hasn't triggered slurm-spool-mail
         # just yet.
-        logging.info("waiting for %s spool files...", fields["spool_file_total"])
+        logging.info(
+            "waiting for %s spool files...",
+            fields["spool_file_total"]
+        )
         spoolOk = False
         WAIT_FOR = 25
         for i in range(0, WAIT_FOR):
-            if len(list(spool_dir.glob("*.mail"))) == fields["spool_file_total"]:
+            if len(list(spool_dir.glob("*.mail"))) == fields["spool_file_total"]:  # noqa
                 spoolOk = True
                 break
             time.sleep(1)
         if spoolOk:
             logging.info("%s: spool files created ok", test)
         else:
-            logging.error("%s failed: no spool files after %ss", test, WAIT_FOR)
+            logging.error(
+                "%s failed: no spool files after %ss", test, WAIT_FOR
+            )
             dictionary["tests"][test]["pass"] = False
             if spool_log.is_file():
                 echo_log(spool_log)
@@ -216,7 +254,10 @@ if __name__ == "__main__":
                 stderr
             )
         if len(list(spool_dir.glob("*.mail"))) != 0:
-            logging.error("%s failed: spool files still present - deleting for next test", test)
+            logging.error(
+                "%s failed: spool files still present - deleting for next test",  # noqa
+                test
+            )
             echo_log(send_log)
             dictionary["tests"][test]["pass"] = False
             for spool_file in spool_dir.glob("*.mail"):
@@ -237,8 +278,8 @@ if __name__ == "__main__":
 
             if not send_log_ok:
                 lines = ""
-                for l in send_log_output:
-                    lines += "---> {0}\n".format(l)
+                for line in send_log_output:
+                    lines += "---> {0}\n".format(line)
                 logging.error(
                     "%s failed: errors present in %s:\n%s",
                     test,
@@ -253,8 +294,8 @@ if __name__ == "__main__":
         logging.info("%s passed: OK", test)
         remove_logs()
 
-    #logging.info("Mail log:")
-    #echo_log(MAIL_LOG)
+    # logging.info("Mail log:")
+    # echo_log(MAIL_LOG)
     # display test results
     failed = total - passed
     logging.info("passed: %d, failed: %d", passed, failed)
