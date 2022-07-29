@@ -21,7 +21,28 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
+  unit_tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10"]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install mock
+          pip install pytest
+      - name: Run unit tests
+        run: |
+          pytest -v  tests/unit/test.py  
+
+  integration_tests:
+    needs: unit_tests
     runs-on: ubuntu-latest
     strategy:
       matrix:
