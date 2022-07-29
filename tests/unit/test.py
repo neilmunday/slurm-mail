@@ -61,11 +61,7 @@ class CommonTestCase(TestCase):
 
     @mock.patch("os.access")
     @mock.patch("pathlib.Path.is_dir")
-    def test_check_dir_not_writeable(
-        self,
-        pathlib_is_dir_mock,
-        os_access_mock
-    ):
+    def test_check_dir_not_writeable(self, pathlib_is_dir_mock, os_access_mock):
         pathlib_is_dir_mock.return_value = True
         os_access_mock.return_value = False
         with pytest.raises(SystemExit):
@@ -141,9 +137,7 @@ class CommonTestCase(TestCase):
     def test_tail_file_invalid_lines(self):
         for lines in [0, -1]:
             rslt = tail_file(str(DUMMY_PATH), lines, TAIL_EXE)
-            assert (
-                rslt == f"slurm-mail: invalid number of lines to tail: {lines}"
-            )
+            assert rslt == f"slurm-mail: invalid number of lines to tail: {lines}"
 
     @mock.patch("subprocess.Popen")
     @mock.patch("pathlib.Path.exists")
