@@ -27,6 +27,7 @@ jobs:
         pip install mypy
         pip install aiosmtpd
         pip install PyYAML
+        pip install types-mock
     - name: Analysing the code with mypy
       run: |
         mypy $(git ls-files '*.py')
