@@ -3,9 +3,11 @@ name: Pylint
 on:
   pull_request:
     paths:
+      - '.github/workflows/pylint.yml'
       - '**.py'
   push:
     paths:
+      - '.github/workflows/pylint.yml'
       - '**.py'
   workflow_dispatch:
 

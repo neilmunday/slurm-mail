@@ -3,9 +3,11 @@ name: mypy
 on:
   pull_request:
     paths:
+      - '.github/workflows/mypy.yml'
       - '**.py'
   push:
     paths:
+      - '.github/workflows/mypy.yml'
       - '**.py'
   workflow_dispatch:
 
