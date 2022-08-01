@@ -30,20 +30,27 @@ function check_dir {
   fi
 }
 
+function check_file {
+  if [ -f $1 ]; then
+    echo "$1 does not exist"
+    exit 1
+  fi
+}
+
 function check_exe {
-	if ! command -v $1 > /dev/null 2>&1 ; then
+  if ! command -v $1 > /dev/null 2>&1 ; then
     echo "$1 is not installed"
     exit 1
   fi
 }
 
 function tidyup {
-	echo "stopping container: $1"
-	docker container stop $1
-	echo "deleting container: $1"
-	docker container rm $1
-	docker container prune -f
-	#echo "deleting image..."
-	#docker image rm slurm-mail-builder
-	echo "tidy-up complete"
+  echo "stopping container: $1"
+  docker container stop $1
+  echo "deleting container: $1"
+  docker container rm $1
+  docker container prune -f
+  #echo "deleting image..."
+  #docker image rm slurm-mail-builder
+  echo "tidy-up complete"
 }
