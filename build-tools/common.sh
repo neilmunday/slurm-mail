@@ -31,7 +31,7 @@ function check_dir {
 }
 
 function check_file {
-  if [ -f $1 ]; then
+  if [ ! -f $1 ]; then
     echo "$1 does not exist"
     exit 1
   fi
