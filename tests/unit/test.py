@@ -1,5 +1,4 @@
-# pylint: disable=line-too-long,missing-class-docstring
-# pylint: disable=missing-function-docstring
+# pylint: disable=line-too-long,missing-function-docstring
 
 #
 #  This file is part of Slurm-Mail.
@@ -35,6 +34,8 @@ from unittest.mock import mock_open
 import mock
 import pytest  # type: ignore
 
+from slurmmail import DEFAULT_DATETIME_FORMAT
+
 from slurmmail.common import (
     check_dir,
     die,
@@ -46,11 +47,17 @@ from slurmmail.common import (
     tail_file,
 )
 
+from slurmmail.slurm import Job
+
 DUMMY_PATH = pathlib.Path("/tmp")
 TAIL_EXE = "/usr/bin/tail"
 
 
 class CommonTestCase(TestCase):
+    """
+    Test slurmmail.common functions.
+    """
+
     @mock.patch("os.access")
     @mock.patch("pathlib.Path.is_dir")
     def test_check_dir_not_dir(self, pathlib_is_dir_mock, os_access_mock):
@@ -158,3 +165,45 @@ class CommonTestCase(TestCase):
             rslt
             == f"slurm-mail encounted an error trying to read the last {lines} lines of {DUMMY_PATH}"  # noqa
         )
+
+
+class TestSlurmJob(TestCase):
+    """
+    Test slurmmail.slurm.Job
+    """
+
+    def test_is_not_array(self):
+        job = Job(DEFAULT_DATETIME_FORMAT, 1)
+        assert not job.is_array()
+
+    def test_is_array(self):
+        job = Job(DEFAULT_DATETIME_FORMAT, 1, 1)
+        assert job.is_array()
+
+    def test_save_cpus_none(self):
+        job = Job(DEFAULT_DATETIME_FORMAT, 1)
+        job.wallclock = 3600
+        job.used_cpu_usec = 60
+        with pytest.raises(Exception):
+            job.save()
+
+    def test_save_wallclock_none(self):
+        job = Job(DEFAULT_DATETIME_FORMAT, 1)
+        job.cpus = 1
+        job.used_cpu_usec = 60
+        with pytest.raises(Exception):
+            job.save()
+
+    def test_save_used_cpu_usec_none(self):
+        job = Job(DEFAULT_DATETIME_FORMAT, 1)
+        job.cpus = 1
+        job.wallclock = 3600
+        with pytest.raises(Exception):
+            job.save()
+
+    def test_save(self):
+        job = Job(DEFAULT_DATETIME_FORMAT, 1)
+        job.cpus = 1
+        job.used_cpu_usec = 60
+        job.wallclock = 3600
+        job.save()
