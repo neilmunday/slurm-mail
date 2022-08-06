@@ -26,7 +26,7 @@
 set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-NAME=slurm-mail-builder-rhel8
+NAME="slurm-mail-builder-rhel8-${RANDOM}"
 
 cd $DIR
 source ../common.sh
