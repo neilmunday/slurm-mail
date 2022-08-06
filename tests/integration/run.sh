@@ -31,9 +31,9 @@ function catch {
 
 function tidyup {
   echo "stopping container..."
-  docker container stop slurm-mail
+  docker container stop $1
   echo "deleting container..."
-  docker container rm slurm-mail
+  docker container rm $1
   echo "done"
 }
 
@@ -91,6 +91,8 @@ fi
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+NAME="slurm-mail-${SLURM_VER}"
+
 if [ $USE_RPM -eq 0 ]; then
   cd $DIR
   rm -f ./*.rpm
@@ -105,7 +107,7 @@ cd $DIR
 RPM=`ls -1 slurm-mail*.rpm`
 
 docker build --build-arg SLURM_MAIL_RPM=${RPM} --build-arg SLURM_VER=${SLURM_VER} -t neilmunday/slurm-mail:${SLURM_VER} .
-docker run -d -h compute --name slurm-mail neilmunday/slurm-mail:${SLURM_VER}
-docker exec slurm-mail /bin/bash -c "/root/testing/run-tests.py -i /root/testing/tests.yml -o /root/testing/output $OPTS"
+docker run -d -h compute --name $NAME neilmunday/slurm-mail:${SLURM_VER}
+docker exec $NAME /bin/bash -c "/root/testing/run-tests.py -i /root/testing/tests.yml -o /root/testing/output $OPTS"
 
-tidyup
+tidyup $NAME
