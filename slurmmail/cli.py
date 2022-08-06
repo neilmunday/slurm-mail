@@ -530,21 +530,41 @@ def send_mail_main():
     # Look for any new mail notifications in the spool dir
     for f in spool_dir.glob("*.mail"):
         logging.info("processing: %s", f)
-        try:
-            # check if connection is still alive
-            smtp_conn.noop()[0]
-        except Exception:
+        smtp_connection_ok = False
+        if smtp_conn is not None:
+            try:
+                # check if connection is still alive
+                smtp_conn.noop()[0]  # pylint: disable=expression-not-assigned
+                smtp_connection_ok = True
+            except Exception as e:
+                logging.warning(
+                    "SMTP connection failed:\n%s\nWill attempt to reconnect.", e
+                )
+                smtp_connection_ok = False
+
+        if not smtp_connection_ok:
             # start new connection if previous connection dies or not exists
             # check if ssl is being requested (usually port 465)
-            if smtp_use_ssl:
-                smtp_conn = smtplib.SMTP_SSL(host=options.smtp_server, port=options.smtp_port, timeout=60)
-            else:
-                smtp_conn = smtplib.SMTP(host=options.smtp_server, port=options.smtp_port, timeout=60)
+            try:
+                if smtp_use_ssl:
+                    smtp_conn = smtplib.SMTP_SSL(
+                        host=options.smtp_server,
+                        port=options.smtp_port,
+                        timeout=60
+                    )
+                else:
+                    smtp_conn = smtplib.SMTP(
+                        host=options.smtp_server,
+                        port=options.smtp_port,
+                        timeout=60
+                    )
 
-            if smtp_use_tls:
-                smtp_conn.starttls()
-            if smtp_username != "" and smtp_password != "":
-                smtp_conn.login(smtp_username, smtp_password)
+                if smtp_use_tls:
+                    smtp_conn.starttls()
+                if smtp_username != "" and smtp_password != "":
+                    smtp_conn.login(smtp_username, smtp_password)
+            except Exception as e:
+                die("Failed to create SMTP connection due to:\n{0}".format(e))
 
         try:
             __process_spool_file(f, smtp_conn, options)
