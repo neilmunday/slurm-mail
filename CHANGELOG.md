@@ -1,6 +1,18 @@
 Change Log
 ==========
 
+Version 4.0
+-----------
+
+Dat: 2022-08-06
+
+* Bug fix for issue #45 - Adjusted SMTP logic so that SMTP errors are logged to Slurm Mail's log.
+* Added unit tests.
+* Bug fix for `get_kbytes_from_str` function when parsing numeric values with fractional parts.
+* Added `mypy` testing workflow.
+* Added `setup.py` to handle installation.
+* Adjusted docker containers used for testing to have unique names to prevent name clashes when used with `act` for local workflow testing.
+
 Version 3.5
 -----------
 
