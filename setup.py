@@ -26,6 +26,23 @@ Slurm-Mail's setup.py
 """
 
 import setuptools # type: ignore
+
+ARCHITECTURE = 'any'
+EMAIL = 'neilmunday@users.noreply.github.com'
+DESCRIPTION = 'Provides enhanced e-mails for Slurm.'
+LONG_DESCRIPTION = 'Slurm-Mail is a drop in replacement for Slurm\'s e-mails ' + \
+    'to give users much more information about their jobs compared to the ' + \
+    'standard Slurm e-mails.'
+MAINTAINER = 'Neil Munday'
+NAME = 'slurmmail'
+VERSION = None
+
+with open('VERSION', 'r', encoding='utf-8') as f:
+    VERSION = f.readline().strip()
+
+if VERSION is None:
+    raise Exception("Could not determine version")
+
 setuptools.setup(
     author='Neil Munday',
     data_files=[
@@ -48,7 +65,7 @@ setuptools.setup(
             'etc/slurm-mail/templates/time.tpl'
         ])
     ],
-    description='Provides enhanced e-mails for Slurm.',
+    description=DESCRIPTION,
     entry_points = {
         'console_scripts': [
             'slurm-send-mail=slurmmail.cli:send_mail_main',
@@ -59,14 +76,12 @@ setuptools.setup(
         'setuptools'
     ],
     license='GPLv3',
-    long_description='Slurm-Mail is a drop in replacement for Slurm\'s e-mails ' +
-    'to give users much more information about their jobs compared to the ' +
-    'standard Slurm e-mails.',
-    maintainer='Neil Munday',
-    name='slurmmail',
-    packages=['slurmmail'],
-    platforms='any',
+    long_description=LONG_DESCRIPTION,
+    maintainer=MAINTAINER,
+    name=NAME,
+    packages=[NAME],
+    platforms=ARCHITECTURE,
     python_requires='>=3.6',
     url='https://github.com/neilmunday/Slurm-Mail',
-    version='4.0'
+    version=VERSION
 )
