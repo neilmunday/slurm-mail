@@ -26,27 +26,28 @@
 set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-NAME="slurm-mail-builder-rhel7-${RANDOM}"
+NAME="slurm-mail-builder-rhel7"
+CONTAINER_NAME="${NAME}-${RANDOM}"
 
 cd $DIR
 source ../common.sh
 
 rm -f ./slurm-mail*.rpm
 
-docker build -t slurm-mail-builder-rhel7:latest .
+docker build -t ${NAME}:latest .
 
 tmp_file=`mktemp /tmp/XXXXXX.tar.gz`
 echo "Temporary tar file: $tmp_file"
 tar cvfz $tmp_file ../../*
 
-docker run -h slurm-mail-buildhost -d --name ${NAME} ${NAME}
-docker cp $tmp_file ${NAME}:$tmp_file
+docker run -h slurm-mail-buildhost -d --name ${CONTAINER_NAME} ${NAME}
+docker cp $tmp_file ${CONTAINER_NAME}:$tmp_file
 rm -f $tmp_file
-docker exec ${NAME} /bin/bash -c "cd /root/slurm-mail && tar xvf $tmp_file"
-docker exec ${NAME} /bin/bash -c "/root/slurm-mail/build-tools/build-rpm.sh"
-rpm=`docker exec ${NAME} /bin/bash -c "ls -1 /root/rpmbuild/RPMS/noarch/slurm-mail*.rpm"`
-docker cp ${NAME}:$rpm .
+docker exec ${CONTAINER_NAME} /bin/bash -c "cd /root/slurm-mail && tar xvf $tmp_file"
+docker exec ${CONTAINER_NAME} /bin/bash -c "/root/slurm-mail/build-tools/build-rpm.sh"
+rpm=`docker exec ${CONTAINER_NAME} /bin/bash -c "ls -1 /root/rpmbuild/RPMS/noarch/slurm-mail*.rpm"`
+docker cp ${CONTAINER_NAME}:$rpm .
 
 echo "Created: "`ls -1 slurm-mail*.rpm`
 
-tidyup ${NAME}
+tidyup ${CONTAINER_NAME}
