@@ -33,7 +33,7 @@ check_exe tar
 
 cd $DIR/..
 
-VERSION=`cat ./VERSION`
+VERSION=`$DIR/get-property.py version`
 TMP_DIR=`mktemp -d`
 TAR_FILE="slurm-mail-${VERSION}.tar.gz"
 
