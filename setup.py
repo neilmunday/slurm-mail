@@ -27,21 +27,7 @@ Slurm-Mail's setup.py
 
 import setuptools # type: ignore
 
-ARCHITECTURE = 'any'
-EMAIL = 'neilmunday@users.noreply.github.com'
-DESCRIPTION = 'Provides enhanced e-mails for Slurm.'
-LONG_DESCRIPTION = 'Slurm-Mail is a drop in replacement for Slurm\'s e-mails ' + \
-    'to give users much more information about their jobs compared to the ' + \
-    'standard Slurm e-mails.'
-MAINTAINER = 'Neil Munday'
-NAME = 'slurmmail'
-VERSION = None
-
-with open('VERSION', 'r', encoding='utf-8') as f:
-    VERSION = f.readline().strip()
-
-if VERSION is None:
-    raise Exception("Could not determine version")
+from slurmmail import ARCHITECTURE, DESCRIPTION, LONG_DESCRIPTION, MAINTAINER, NAME, VERSION
 
 setuptools.setup(
     author='Neil Munday',
