@@ -326,7 +326,7 @@ def get_usec_from_str(time_str: str) -> int:
     Convert a Slurm elapsed time string into microseconds.
     """
     if "." not in time_str:
-        long_time_str = u"%s.0" % time_str
+        long_time_str = "%s.0" % time_str
     else:
         long_time_str = time_str
 
