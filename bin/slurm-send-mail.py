@@ -329,7 +329,7 @@ def get_usec_from_str(time_str: str) -> int:
         long_time_str = u"%s.0" % time_str
     else:
         long_time_str = time_str
-    
+
     timeRe = re.compile(
         r"((?P<days>\d+)-)?((?P<hours>\d+):)?(?P<mins>\d+):(?P<secs>\d+).(?P<usec>\d+)"
     )
