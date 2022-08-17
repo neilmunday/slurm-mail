@@ -5,15 +5,16 @@ on:
     paths:
       - '.github/workflows/testing.yml'
       - 'setup.py'
-      - 'slurmmail/*.py'
-      - 'tests/*.py'
-      - 'tests/run.sh'
-      - 'tests/tests.yml'
+      - 'src/slurmmail/*.py'
+      - 'tests/integration/*.py'
+      - 'tests/integration/run.sh'
+      - 'tests/integration/tests.yml'
+      - 'tests/unit/*.py'
   push:
     paths:
       - '.github/workflows/testing.yml'
       - 'setup.py'
-      - 'slurmmail/*.py'
+      - 'src/slurmmail/*.py'
       - 'tests/integration/*.py'
       - 'tests/integration/run.sh'
       - 'tests/integration/tests.yml'
