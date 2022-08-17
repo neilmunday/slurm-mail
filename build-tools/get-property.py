@@ -10,7 +10,7 @@ import argparse
 import pathlib
 import sys
 
-sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
+sys.path.append(str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 import slurmmail  # pylint: disable=wrong-import-position
 
 
