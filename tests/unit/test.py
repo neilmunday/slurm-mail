@@ -113,6 +113,8 @@ class CommonTestCase(TestCase):
     def test_get_usec_from_str(self):
         # 2 mins
         assert get_usec_from_str("2:0.0") == 1.2e8
+        # 2 mins, no usec
+        assert get_usec_from_str("2:0") == 1.2e8
         # 3 hours
         assert get_usec_from_str("3:0:0.0") == 1.08e10
         # 4 days 3 hours 2 mins
