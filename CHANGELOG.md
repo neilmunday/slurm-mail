@@ -12,6 +12,7 @@ Dat: 2022-08-06
 * Added `mypy` testing workflow.
 * Added `setup.py` to handle installation.
 * Adjusted docker containers used for testing to have unique names to prevent name clashes when used with `act` for local workflow testing.
+* Implemented fix for missing usec from Slurm strings in `get_usec_from_str` (pull request #47 from @jitkang).
 
 Version 3.5
 -----------
