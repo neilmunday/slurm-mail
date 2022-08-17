@@ -25,9 +25,13 @@
 Slurm-Mail's setup.py
 """
 
+import pathlib
+import sys
 import setuptools # type: ignore
 
-from slurmmail import ARCHITECTURE, DESCRIPTION, LONG_DESCRIPTION, MAINTAINER, NAME, VERSION
+sys.path.append(str(pathlib.Path(__file__).resolve().parents[0] / "src"))
+
+from slurmmail import ARCHITECTURE, DESCRIPTION, LONG_DESCRIPTION, MAINTAINER, NAME, VERSION  # pylint: disable=wrong-import-position
 
 setuptools.setup(
     author='Neil Munday',
@@ -65,7 +69,8 @@ setuptools.setup(
     long_description=LONG_DESCRIPTION,
     maintainer=MAINTAINER,
     name=NAME,
-    packages=[NAME],
+    packages=setuptools.find_packages(where="src"),
+    package_dir={"": "src"},
     platforms=ARCHITECTURE,
     python_requires='>=3.6',
     url='https://github.com/neilmunday/Slurm-Mail',
