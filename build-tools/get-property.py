@@ -58,6 +58,7 @@ if __name__ == "__main__":
             "long_description",
             "maintainer",
             "name",
+            "url",
             "version"
         ]
     )
@@ -81,6 +82,9 @@ if __name__ == "__main__":
 
     if args.property == "name":
         print_value(slurmmail.NAME)
+
+    if args.property == "url":
+        print_value(slurmmail.URL)
 
     if args.property == "version":
         print_value(slurmmail.VERSION)
