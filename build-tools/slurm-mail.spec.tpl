@@ -6,13 +6,13 @@
 %endif
 
 Name:       slurm-mail
-Version:    4.0
+Version:    $VERSION
 Release:    %{rel}%{?dist}
-Summary:    Provides enhanced e-mails for Slurm
-URL:        https://www.github.com/neilmunday/slurm-mail
+Summary:    $DESCRIPTION
+URL:        $URL
 Group:      System Environment/Base
 License:    GPL v3.0
-Packager:   Neil Munday
+Packager:   $MAINTAINER
 
 BuildArch:  noarch
 
@@ -31,7 +31,7 @@ Requires:   logrotate
 Requires:   slurm-slurmctld
 
 %description
-Slurm-Mail is a drop in replacement for Slurm's e-mails to give users much more information about their jobs compared to the standard Slurm e-mails.
+$LONG_DESCRIPTION
 
 %prep
 %setup -q

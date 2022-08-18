@@ -42,6 +42,9 @@ check_dir $TMP_DIR
 TAR_DIR="$TMP_DIR/slurm-mail-${VERSION}"
 
 mkdir $TAR_DIR
+
+$DIR/create-specfile.py -o $TAR_DIR/slurm-mail.spec
+
 cp -a ./* ${TAR_DIR}/
 cd $TMP_DIR
 tar cfz $TAR_FILE \
