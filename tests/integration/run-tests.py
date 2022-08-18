@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-# pylint: disable=broad-except,consider-using-f-string,invalid-name
-# pylint: disable=redefined-outer-name
+# pylint: disable=broad-except,consider-using-f-string,duplicate-code
+# pylint: disable=invalid-name,redefined-outer-name
 
 #
 #  This file is part of Slurm-Mail.
