@@ -30,15 +30,18 @@ function catch {
 }
 
 function tidyup {
-  echo "stopping container..."
-  docker container stop $1
-  echo "deleting container..."
-  docker container rm $1
-  echo "done"
+  if [ $KEEP_CONTAINER -eq 0 ]; then
+    echo "stopping container..."
+    docker container stop $1
+    echo "deleting container..."
+    docker container rm $1
+    echo "done"
+  fi
 }
 
 function usage {
   echo "Usage: $0 -s SLURM_VERSION [-r] [-t TEST_NAME] [-v]" 1>&2
+  echo "  -k                   keep the test container upon failure"
   echo "  -s SLURM_VERSION     version of Slurm to test against"
   echo "  -r                   don't build slurm-mail RPM - use existing file"
   echo "  -t TEST_NAME         only run this named test"
@@ -49,11 +52,15 @@ function usage {
 set -e
 trap 'catch $? $LINENO' EXIT
 
+KEEP_CONTAINER=0
 USE_RPM=0
 VERBOSE=0
 
-while getopts ":s:rt:v" options; do
+while getopts ":ks:rt:v" options; do
   case "${options}" in
+    k)
+      KEEP_CONTAINER=1
+      ;;
     r)
       USE_RPM=1
       ;;
