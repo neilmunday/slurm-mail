@@ -47,7 +47,6 @@ def check_dir(path: pathlib.Path):
     # can we write to the log directory?
     if not os.access(path, os.W_OK):
         die("Error: {0} is not writeable".format(path))
-    logging.debug("%s -> directory OK", path)
 
 
 def check_file(f: pathlib.Path):
@@ -56,7 +55,6 @@ def check_file(f: pathlib.Path):
     """
     if not f.is_file():
         die("{0} does not exist".format(f))
-    logging.debug("%s -> file exists OK", f)
 
 
 def delete_spool_file(f: pathlib.Path):
