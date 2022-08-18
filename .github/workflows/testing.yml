@@ -40,7 +40,7 @@ jobs:
           pip install pytest
       - name: Run unit tests
         run: |
-          pytest -v  tests/unit/test.py  
+          pytest -v
 
   integration_tests:
     needs: unit_tests
