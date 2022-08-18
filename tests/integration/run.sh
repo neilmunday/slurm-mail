@@ -25,7 +25,7 @@
 function catch {
   if [ "$1" != "0" ]; then
     #echo "Error $1 occurred on line $2" 1>&2
-    tidyup
+    tidyup $NAME
   fi
 }
 
