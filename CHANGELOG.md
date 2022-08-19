@@ -7,6 +7,7 @@ Version 3.6
 Date: 2022-08-19
 
 * Fixed CPU Time not parsed properly when the TotalCPU column does not contain usec (pull request #47 from @jitkang)
+* Added the ability to include the name of jobs in the subject of e-mails (pull request #48 from @langefa)
 
 Version 3.5
 -----------
