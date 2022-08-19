@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 3.6
+-----------
+
+Date: 2022-08-19
+
+* Fixed CPU Time not parsed properly when the TotalCPU column does not contain usec (pull request #47 from @jitkang)
+
 Version 3.5
 -----------
 
