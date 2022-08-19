@@ -291,6 +291,7 @@ To change the subject of the e-mails, change the `emailSubject` configuration op
 | Place holder | Value                   |
 | ------------ | ----------------------- |
 | $CLUSTER     | The name of the cluster |
+| $JOB_NAME    | The name of the job     |
 | $JOB_ID      | The Slurm ID of the job |
 | $STATE       | The state of the job    |
 
@@ -319,6 +320,7 @@ Thank you to the following people who have contributed code improvements, featur
 * David Murray (@dajamu): https://www.github.com/dajamu
 * drhey (@drhey): https://www.github.com/drhey
 * hakasapl (@hakasapl): https://www.github.com/hakasapl
+* langefa (@langefa): https://github.com/langefa
 * Mehran Khodabandeh (@mkhodabandeh): https://www.github.com/mkhodabandeh
 * sdx23 (@sdx23): https://www.github.com/sdx23
 * Woody Chang (@jitkang): https://github.com/jitkang
