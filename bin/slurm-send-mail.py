@@ -326,13 +326,15 @@ def get_usec_from_str(time_str: str) -> int:
     Convert a Slurm elapsed time string into microseconds.
     """
     timeRe = re.compile(
-        r"((?P<days>\d+)-)?((?P<hours>\d+):)?(?P<mins>\d+):(?P<secs>\d+).(?P<usec>\d+)"
+        r"((?P<days>\d+)-)?((?P<hours>\d+):)?(?P<mins>\d+):(?P<secs>\d+)(\.(?P<usec>\d+))?"
     )
     match = timeRe.match(time_str)
     if not match:
         die("Could not parse: {0}".format(time_str))
 
-    usec = int(match.group("usec"))
+    usec = 0
+    if match.group("usec"):
+        usec += int(match.group("usec"))
     usec += int(match.group("secs")) * 1000000
     usec += int(match.group("mins")) * 1000000 * 60
     if match.group("hours"):
