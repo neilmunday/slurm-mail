@@ -60,7 +60,7 @@ Note: pre-built RPMs for RHEL7, RHEL8, SLES 15 and OpenSUSE 15 compatible operat
 To create a Slurm-Mail RPM for your OS download the Slurm-Mail tar archive and then run:
 
 ```bash
-rpmbuild -tb slurm-mail-3.5.tar.gz
+rpmbuild -tb slurm-mail-3.6.tar.gz
 ```
 
 The Slurm-Mail RPM will install to `/opt/slurm-mail` and will also create the required cron job for Slurm-Mail to function as well as providing a `logrotate` configuration for handling Slurm-Mail's log files.
@@ -72,7 +72,7 @@ Take note of where `rpmbuild` created the generated RPM and then install with yo
 Download the latest release of Slurm-Mail and unpack it to a directory of your choosing on the server(s) running the Slurm controller daemon `slurmctld`, e.g. `/opt/slurm-mail`
 
 ```bash
-tar xfz slurm-mail-3.5.tar.gz
+tar xfz slurm-mail-3.6.tar.gz
 ```
 
 Create the spool and log directories for Slurm-Mail on your Slurm controller(s):
