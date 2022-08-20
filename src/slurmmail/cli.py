@@ -399,7 +399,7 @@ def __process_spool_file(json_file: pathlib.Path, smtp_conn: smtplib.SMTP, optio
 
         msg = MIMEMultipart("alternative")
         msg['subject'] = Template(options.email_subject).substitute(
-            CLUSTER=job.cluster, JOB_ID=job.id, STATE=state
+            CLUSTER=job.cluster, JOB_ID=job.id, JOB_NAME=job.name, STATE=state
         )
         msg['To'] = user_email
         msg['From'] = options.email_from_address
