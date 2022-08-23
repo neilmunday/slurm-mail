@@ -43,6 +43,7 @@ python3 setup.py build
 python3 setup.py install --single-version-externally-managed -O1 --root=$RPM_BUILD_ROOT --record=INSTALLED_FILES
 install -d -m 755 %{buildroot}/usr/share/doc/slurm-mail 
 install -m 644 CHANGELOG.md %{buildroot}/usr/share/doc/slurm-mail
+install -m 644 LICENSE %{buildroot}/usr/share/doc/slurm-mail
 install -m 644 README.md %{buildroot}/usr/share/doc/slurm-mail
 install -d -m 700 %{buildroot}/var/spool/slurm-mail
 install -d -m 700 %{buildroot}/var/log/slurm-mail
@@ -77,6 +78,7 @@ install -m 644 etc/logrotate.d/slurm-mail %{buildroot}/etc/logrotate.d/
 %config /etc/slurm-mail/templates/time.tpl
 #%defattr(-,root,root,0644)
 %doc /usr/share/doc/slurm-mail/CHANGELOG.md
+%doc /usr/share/doc/slurm-mail/LICENSE
 %doc /usr/share/doc/slurm-mail/README.md
 %dir %attr(0700,slurm,slurm) /var/log/slurm-mail
 %ghost /var/log/slurm-mail/slurm-send-mail.log
