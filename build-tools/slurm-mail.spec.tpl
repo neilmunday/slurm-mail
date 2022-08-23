@@ -50,7 +50,7 @@ install -d -m 700 %{buildroot}/var/log/slurm-mail
 touch %{buildroot}/var/log/slurm-mail/slurm-send-mail.log
 touch %{buildroot}/var/log/slurm-mail/slurm-spool-mail.log
 install -d -m 755 %{buildroot}/etc/cron.d
-echo "*    *    *    *    *    root    /usr/bin/slurm-send-mail.py" > %{buildroot}/etc/cron.d/slurm-mail
+echo "*    *    *    *    *    root    /usr/bin/slurm-send-mail" > %{buildroot}/etc/cron.d/slurm-mail
 install -d -m 755 %{buildroot}/etc/logrotate.d
 install -m 644 etc/logrotate.d/slurm-mail %{buildroot}/etc/logrotate.d/
 
