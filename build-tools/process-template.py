@@ -26,7 +26,8 @@
 #
 
 """
-Helper utility to create the RPM spec file for Slurm Mail.
+Helper utility to create files from templates using Slurm Mail values.
+Used for example to create RPM spec files.
 """
 
 import argparse
@@ -41,16 +42,39 @@ import slurmmail  # pylint: disable=wrong-import-position
 
 from slurmmail.common import check_file, die, get_file_contents  # pylint: disable=wrong-import-position
 
+def write_file(template_path: pathlib.Path, write_path: pathlib.Path):
+    """
+    Uses the given template to write to the given file.
+    """
+    check_file(template_path)
+    tpl = Template(get_file_contents(template_path))
+
+    with open(write_path, "w", encoding="utf-8") as f:
+        f.write(
+            tpl.safe_substitute(
+                DESCRIPTION=slurmmail.DESCRIPTION,
+                EMAIL=slurmmail.EMAIL,
+                LONG_DESCRIPTION=slurmmail.LONG_DESCRIPTION,
+                MAINTAINER=slurmmail.MAINTAINER,
+                URL=slurmmail.URL,
+                VERSION=slurmmail.VERSION
+            )
+        )
+    logging.debug("wrote: %s", output_path)
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
-        description="Utility to create RPM spec file for Slurm Mail", add_help=True
+        description="Utility to process template files with Slurm Mail values", add_help=True
     )
     parser.add_argument("-o", "--output", type=str, dest="output",
         help="the output path to write to", required=True
     )
     parser.add_argument("-f", "--force", dest="force", action="store_true")
     parser.add_argument("-v", "--verbose", dest="verbose", action="store_true")
+    parser.add_argument("-t", "--template", type=str, dest="template",
+        help="the template file to process", required=True
+    )
     args = parser.parse_args()
 
     log_date = "%Y/%m/%d %H:%M:%S"
@@ -60,35 +84,14 @@ if __name__ == "__main__":
         log_level = logging.DEBUG
     logging.basicConfig(format=log_format, datefmt=log_date, level=log_level)
 
-    template_file = pathlib.Path(__file__).resolve().parents[0] / "slurm-mail.spec.tpl"
-    check_file(template_file)
+    tpl_path = pathlib.Path(args.template)
 
-    output_file = pathlib.Path(args.output)
-    if output_file.exists():
+    output_path = pathlib.Path(args.output)
+    if output_path.exists():
         if not args.force:
-            die("{0} already exists - use --force to overwrite".format(output_file))
-        check_file(output_file)
+            die("{0} already exists - use --force to overwrite".format(output_path))
+        check_file(output_path)
 
-    tpl = Template(get_file_contents(template_file))
-    spec_file_contents = tpl.safe_substitute(
-        DESCRIPTION=slurmmail.DESCRIPTION,
-        LONG_DESCRIPTION=slurmmail.LONG_DESCRIPTION,
-        MAINTAINER=slurmmail.MAINTAINER,
-        URL=slurmmail.URL,
-        VERSION=slurmmail.VERSION
-    )
-
-    with open(output_file, "w", encoding="utf-8") as f:
-        f.write(
-            tpl.safe_substitute(
-                DESCRIPTION=slurmmail.DESCRIPTION,
-                LONG_DESCRIPTION=slurmmail.LONG_DESCRIPTION,
-                MAINTAINER=slurmmail.MAINTAINER,
-                URL=slurmmail.URL,
-                VERSION=slurmmail.VERSION
-            )
-        )
-
-    logging.debug("wrote: %s", output_file)
+    write_file(tpl_path, output_path)
 
     sys.exit(0)

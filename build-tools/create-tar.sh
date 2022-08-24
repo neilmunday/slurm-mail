@@ -43,7 +43,7 @@ TAR_DIR="$TMP_DIR/slurm-mail-${VERSION}"
 
 mkdir $TAR_DIR
 
-$DIR/create-specfile.py -o $TAR_DIR/slurm-mail.spec
+$DIR/process-template.py -o $TAR_DIR/slurm-mail.spec -t $DIR/slurm-mail.spec.tpl
 
 cp -a ./* ${TAR_DIR}/
 cd $TMP_DIR
