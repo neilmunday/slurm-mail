@@ -176,7 +176,7 @@ class TestSlurmJob(TestCase):
 
     @staticmethod
     def create_dummy_job():
-        return Job(DEFAULT_DATETIME_FORMAT, 1) 
+        return Job(DEFAULT_DATETIME_FORMAT, 1)
 
     def test_is_not_array(self):
         job = self.create_dummy_job()
