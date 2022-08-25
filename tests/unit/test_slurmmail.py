@@ -174,8 +174,12 @@ class TestSlurmJob(TestCase):
     Test slurmmail.slurm.Job
     """
 
+    @staticmethod
+    def create_dummy_job():
+        return Job(DEFAULT_DATETIME_FORMAT, 1) 
+
     def test_is_not_array(self):
-        job = Job(DEFAULT_DATETIME_FORMAT, 1)
+        job = self.create_dummy_job()
         assert not job.is_array()
 
     def test_is_array(self):
@@ -183,29 +187,30 @@ class TestSlurmJob(TestCase):
         assert job.is_array()
 
     def test_save_cpus_none(self):
-        job = Job(DEFAULT_DATETIME_FORMAT, 1)
+        job = self.create_dummy_job()
         job.wallclock = 3600
         job.used_cpu_usec = 60
         with pytest.raises(Exception):
             job.save()
 
     def test_save_wallclock_none(self):
-        job = Job(DEFAULT_DATETIME_FORMAT, 1)
+        job = self.create_dummy_job()
         job.cpus = 1
         job.used_cpu_usec = 60
         with pytest.raises(Exception):
             job.save()
 
     def test_save_used_cpu_usec_none(self):
-        job = Job(DEFAULT_DATETIME_FORMAT, 1)
+        job = self.create_dummy_job()
         job.cpus = 1
         job.wallclock = 3600
         with pytest.raises(Exception):
             job.save()
 
     def test_save(self):
-        job = Job(DEFAULT_DATETIME_FORMAT, 1)
+        job = self.create_dummy_job()
         job.cpus = 1
         job.used_cpu_usec = 60
         job.wallclock = 3600
         job.save()
+        
