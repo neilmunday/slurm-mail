@@ -213,4 +213,17 @@ class TestSlurmJob(TestCase):
         job.used_cpu_usec = 60
         job.wallclock = 3600
         job.save()
-        
+
+    def test_set_end_ts(self):
+        job = self.create_dummy_job()
+        job.end_ts = 1661469811
+        assert job.end_ts == 1661469811
+        with pytest.raises(ValueError):
+            job.end_ts = 'None'
+
+    def test_set_start_ts(self):
+        job = self.create_dummy_job()
+        job.start_ts = 1661469811
+        assert job.start_ts == 1661469811
+        with pytest.raises(ValueError):
+            job.start_ts = 'None'
