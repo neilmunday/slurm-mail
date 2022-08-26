@@ -463,8 +463,14 @@ def process_spool_file(json_file: pathlib.Path, smtp_conn: smtplib.SMTP):
                     logging.debug("Applying ReqMem workaround for Slurm versions < 21")
                     sacct_dict['ReqMem'] = sacct_dict['ReqMem'][:-1]
                 job.requested_mem_str = sacct_dict['ReqMem']
-                if sacct_dict['Start'] != 'Unknown':
+                try:
                     job.start_ts = sacct_dict['Start']
+                except ValueError:
+                    logging.warning(
+                        "job %s: could not parse '%s' for job start timestamp",
+                        job.id,
+                        sacct_dict['Start']
+                    )
                 job.used_cpu_usec = get_usec_from_str(sacct_dict['TotalCPU'])
                 job.user = sacct_dict['User']
                 job.workdir = sacct_dict['WorkDir']
@@ -476,8 +482,14 @@ def process_spool_file(json_file: pathlib.Path, smtp_conn: smtplib.SMTP):
 
                 if state in ["Ended", "Failed", "Time limit reached"]:
                     job.state = sacct_dict['State']
-                    if sacct_dict['End'] != 'Unknown':
+                    try:
                         job.end_ts = sacct_dict['End']
+                    except ValueError:
+                        logging.warning(
+                            "job %s: could not parse: '%s' for job end timestamp",
+                            job.id,
+                            sacct_dict['End']
+                        )
                     job.exit_code = sacct_dict['ExitCode']
                     if (
                         sacct_dict['MaxRSS'] != "" and
