@@ -4,7 +4,7 @@ Change Log
 Version 3.7
 -----------
 
-Date: TBC
+Date: 2022-08-26
 
 * Fixed Slurm dependency for OpenSUSE/SLES (issue #49)
 * Improved handling of jobs with no start/end timestamps (issue #50)
