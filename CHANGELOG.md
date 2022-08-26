@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+Version 3.7
+-----------
+
+Date: TBC
+
+* Fixed Slurm dependency for OpenSUSE/SLES (issue #49)
+* Improved handling of jobs with no start/end timestamps (issue #50)
+* Fixed logrotate config (pull request #51 from @sdx23)
+
 Version 3.6
 -----------
 
