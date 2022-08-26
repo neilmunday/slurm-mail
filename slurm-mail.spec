@@ -23,7 +23,9 @@ Source: %{name}-%{version}.tar.gz
 %{?sle_version:Requires: python3}
 Requires:   cronie
 Requires:   logrotate
-Requires:   slurm-slurmctld
+%{?el7:Requires: slurm-slurmctld}
+%{?el8:Requires: slurm-slurmctld}
+%{?sle_version:Requires: slurm}
 
 %description
 Slurm-Mail is a drop in replacement for Slurm's e-mails to give users much more information about their jobs compared to the standard Slurm e-mails.
