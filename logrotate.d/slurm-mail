@@ -1,7 +1,7 @@
-/var/log/slurm-mail/*
+/var/log/slurm-mail/*.log
 {
     missingok
     weekly
     compress
-    rotate 5 
+    rotate 5
 }
