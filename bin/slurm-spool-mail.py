@@ -116,7 +116,7 @@ if __name__ == "__main__":
         die("Incorrect number of command line arguments")
 
     try:
-        info = sys.argv[2].split(',')[0]
+        info = sys.argv[2].split(',', maxsplit=1)[0]
         logging.debug("info str: %s", info)
         match = None
         if "Array" in info:
