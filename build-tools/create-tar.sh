@@ -43,9 +43,22 @@ TAR_DIR="$TMP_DIR/slurm-mail-${VERSION}"
 
 mkdir $TAR_DIR
 
+# create RPM spec file
 $DIR/process-template.py -o $TAR_DIR/slurm-mail.spec -t $DIR/slurm-mail.spec.tpl
 
+# create Debian build files
+DEB_DIR=$TAR_DIR/debian
+mkdir -p $DEB_DIR
+install -m 644 $DIR/debian/compat $DEB_DIR/
+install -m 644 $DIR/debian/install $DEB_DIR/
+install -m 755 $DIR/debian/rules $DEB_DIR/
+install -m 755 $DIR/debian/slurm-mail.postinst $DEB_DIR/
+$DIR/process-template.py -o $DEB_DIR/control -t $DIR/debian/control.tpl
+$DIR/process-template.py -o $DEB_DIR/changelog -t $DIR/debian/changelog.tpl
+$DIR/process-template.py -o $DEB_DIR/copyright -t $DIR/debian/copyright.tpl
+
 cp -a ./* ${TAR_DIR}/
+
 cd $TMP_DIR
 tar cfz $TAR_FILE \
   --exclude .git \
@@ -53,6 +66,7 @@ tar cfz $TAR_FILE \
   --exclude bin \
   --exclude build \
   --exclude build-tools \
+  --exclude *__pycache__* \
   --exclude tests  \
   slurm-mail-${VERSION}
 
