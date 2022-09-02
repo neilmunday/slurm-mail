@@ -11,15 +11,15 @@ Repository: https://github.com/neilmunday/slurm-mail
 
 1. [Introduction](#introduction)
 2. [Requirements](#requirements)
-2. [RPM Installation](#rpm-installation)
-3. [Source Installation](#source-installation)
+2. [Installation](#installation)
 4. [Configuration](#configuration)
-5. [Upgrading from version 2.x to 3.x](#upgrading-from-version-2.x-to-3.x)
-6. [SMTP Settings](#smtp-settings)
-7. [Customising E-mails](#customising-e-mails)
-8. [Validating E-mails](#validating-e-mails)
-9. [Including Job Output in E-mails](#including-job-output-in-e-mails)
-10. [Contributors](#contributors)
+5. [SMTP Settings](#smtp-settings)
+6. [Customising E-mails](#customising-e-mails)
+7. [Validating E-mails](#validating-e-mails)
+8. [Including Job Output in E-mails](#including-job-output-in-e-mails)
+8. [Job Arrays](#job-arrays)
+10. [Upgrading from Slurm-Mail version 3 to 4](#upgrading-from-version-3-to-4)
+11. [Contributors](#contributors)
 
 ## Introduction
 
@@ -77,7 +77,7 @@ git clone https://github.com/neilmunday/slurm-mail
 slurm-mail/build-tools/build-rpm.sh
 ```
 
-The RPM will be written to `rpmbuild/RPMS/noarch`.
+The RPM will be written to `~/rpmbuild/RPMS/noarch`.
 
 ### Ubuntu 22
 
@@ -120,49 +120,7 @@ systemctl restart slurmctld
 
 Slurm-Mail will now log e-mail requests from Slurm users to the Slurm-Mail spool directory.
 
-## Upgrading from Slurm-Mail version 3 to 4
 
-Version 4.0 onwards **no longer installs** to the `/opt/slurm-mail`. Instead versions 4.0 onwards install using Python's `setuptools` module. If your current Slurm-Mail 3.x installation was installed by your operating system's package manager, then you can just upgrade your installation using your package manager (e.g. `yum`, `dnf`).
-
-If not, then proceed as follows:
-
-1. install Slurm-Mail 4 using one of the methods describe above - take note of where it was installed (e.g. `/usr/bin` and `/etc`).
-
-2. If you have not modified any template files you can skip this step.
-
-```bash
-cp /opt/slurm-mail/conf.d/templates/* /etc/slurm-mail/templates/
-```
-
-3. If you have not modified Slurm-Mail's `style.css` file you can skip this step.
-
-```bash
-cp /opt/slurm-mail/conf.d/style.css /etc/slurm-mail/
-```
-
-4. If you have not modified `slurm-mail.conf` you can skip this step.
-
-```
-cp /opt/slurm-mail/conf.d/slurm-mail.conf /etc/slurm-mail/
-```
-
-5. Updated your Slurm installation's `slurm.conf` file:
-
-```
-MailProg=/usr/bin/slurm-spool-mail.py
-```
-
-Now restart `slurmctld`:
-
-```bash
-systemctl restart slurmctld
-```
-
-6. If you are sure you will no longer need the old version:
-
-```
-rm -rf /opt/slurm-mail
-```
 
 ## SMTP Settings
 
@@ -238,6 +196,50 @@ Notes:
 ## Job Arrays
 
 Slurm-Mail will honour the behaviour of `--mail-type` option of `sbatch` for job arrays. If a user specifies `--mail-type=ARRAY_TASKS` then Slurm-Mail will send notification e-mails for all jobs in the array. If you want to limit the number of e-mails that will be sent in this scenario then change the `arrayMaxNotifications` parameter in `slurm-mail.conf` to a value greater than zero.
+
+## Upgrading from Slurm-Mail version 3 to 4
+
+Version 4.0 onwards **no longer installs** to the `/opt/slurm-mail`. Instead from version 4.0 onwards install using Python's `setuptools` module. If your current Slurm-Mail 3.x installation was installed by your operating system's package manager, then you can just upgrade your installation using your package manager (e.g. `yum`, `dnf`).
+
+If not, then proceed as follows:
+
+1. install Slurm-Mail 4 using one of the methods describe above - take note of where the scripts and config files are installed (e.g. `/usr/bin` and `/etc`).
+
+2. If you **have not** modified any template files you can skip this step.
+
+```bash
+cp /opt/slurm-mail/conf.d/templates/* /etc/slurm-mail/templates/
+```
+
+3. If you **have not** modified Slurm-Mail's `style.css` file you can skip this step.
+
+```bash
+cp /opt/slurm-mail/conf.d/style.css /etc/slurm-mail/
+```
+
+4. If you **have not** modified `slurm-mail.conf` you can skip this step.
+
+```
+cp /opt/slurm-mail/conf.d/slurm-mail.conf /etc/slurm-mail/
+```
+
+5. Update your Slurm installation's `slurm.conf` file:
+
+```
+MailProg=/usr/bin/slurm-spool-mail.py
+```
+
+Now restart `slurmctld`:
+
+```bash
+systemctl restart slurmctld
+```
+
+6. If you are sure you will no longer need the old version:
+
+```
+rm -rf /opt/slurm-mail
+```
 
 ## Contributors
 
