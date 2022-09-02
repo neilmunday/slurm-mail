@@ -1,0 +1,6 @@
+#!/usr/bin/bash
+
+set -e
+
+mkdir -p /var/log/slurm-mail
+chown slurm. /var/log/slurm-mail

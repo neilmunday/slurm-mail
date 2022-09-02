@@ -1,7 +1,7 @@
 Slurm-Mail
 ==========
 
-[![GitHub license](https://img.shields.io/github/license/neilmunday/slurm-mail)](https://github.com/neilmunday/slurm-mail/blob/main/LICENSE) [![GitHub stars](https://img.shields.io/github/stars/neilmunday/slurm-mail)](https://github.com/neilmunday/slurm-mail/stargazers) [![GitHub forks](https://img.shields.io/github/forks/neilmunday/slurm-mail)](https://github.com/neilmunday/slurm-mail/network) [![GitHub issues](https://img.shields.io/github/issues/neilmunday/slurm-mail)](https://github.com/neilmunday/slurm-mail/issues) ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/neilmunday/slurm-mail/testing?label=Tests) ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/neilmunday/slurm-mail/Pylint?label=PyLint)
+[![GitHub license](https://img.shields.io/github/license/neilmunday/slurm-mail)](https://github.com/neilmunday/slurm-mail/blob/main/LICENSE) [![GitHub stars](https://img.shields.io/github/stars/neilmunday/slurm-mail)](https://github.com/neilmunday/slurm-mail/stargazers) [![GitHub forks](https://img.shields.io/github/forks/neilmunday/slurm-mail)](https://github.com/neilmunday/slurm-mail/network) [![GitHub issues](https://img.shields.io/github/issues/neilmunday/slurm-mail)](https://github.com/neilmunday/slurm-mail/issues) ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/neilmunday/slurm-mail/testing?label=Tests) ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/neilmunday/slurm-mail/Pylint?label=PyLint) ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/neilmunday/slurm-mail/mypy?label=mypy)
 
 Author: Neil Munday (neil at mundayweb.com)
 
@@ -11,15 +11,15 @@ Repository: https://github.com/neilmunday/slurm-mail
 
 1. [Introduction](#introduction)
 2. [Requirements](#requirements)
-2. [RPM Installation](#rpm-installation)
-3. [Source Installation](#source-installation)
+2. [Installation](#installation)
 4. [Configuration](#configuration)
-5. [Upgrading from version 2.x to 3.x](#upgrading-from-version-2.x-to-3.x)
-6. [SMTP Settings](#smtp-settings)
-7. [Customising E-mails](#customising-e-mails)
-8. [Validating E-mails](#validating-e-mails)
-9. [Including Job Output in E-mails](#including-job-output-in-e-mails)
-10. [Contributors](#contributors)
+5. [SMTP Settings](#smtp-settings)
+6. [Customising E-mails](#customising-e-mails)
+7. [Validating E-mails](#validating-e-mails)
+8. [Including Job Output in E-mails](#including-job-output-in-e-mails)
+8. [Job Arrays](#job-arrays)
+10. [Upgrading from Slurm-Mail version 3 to 4](#upgrading-from-slurm-mail-version-3-to-4)
+11. [Contributors](#contributors)
 
 ## Introduction
 
@@ -49,61 +49,68 @@ You can also opt to include a number of lines from the end of the job's output f
 
 ## Requirements
 
+* cron
+* logrotate
 * Python 3
 * Slurm 21 or 22
 * A working e-mail server
 
-Note: earlier versions of Slurm may work but are not tested with this version of Slurm-Mail.
+**Note:** earlier versions of Slurm may work but are not tested with this release of Slurm-Mail.
 
-## RPM Installation
+## Installation
 
-Note: pre-built RPMs for RHEL7, RHEL8, SLES 15 and OpenSUSE 15 compatible operating systems are available at [Slurm-Mail releases](https://github.com/neilmunday/slurm-mail/releases).
+### RedHat and SUSE Based Operating Systems
 
-To create a Slurm-Mail RPM for your OS download the Slurm-Mail tar archive and then run:
+For each release of Slurm-Mail, RPMs for RedHat 7/8 and SUSE 15 based operating systems are provided at [releases](https://github.com/neilmunday/slurm-mail/releases).
 
-```bash
-rpmbuild -tb slurm-mail-3.7.tar.gz
-```
-
-The Slurm-Mail RPM will install to `/opt/slurm-mail` and will also create the required cron job for Slurm-Mail to function as well as providing a `logrotate` configuration for handling Slurm-Mail's log files.
-
-Take note of where `rpmbuild` created the generated RPM and then install with your package manager (e.g. `dnf`, `yum`, `zypper`).
-
-## Source Installation
-
-Download the latest release of Slurm-Mail and unpack it to a directory of your choosing on the server(s) running the Slurm controller daemon `slurmctld`, e.g. `/opt/slurm-mail`
+Once downloaded, install using your appropriate package manager, e.g. for Rocky Linux 8:
 
 ```bash
-tar xfz slurm-mail-3.7.tar.gz
+dnf localinstall ./slurm-mail-*.noarch.rpm
 ```
 
-Create the spool and log directories for Slurm-Mail on your Slurm controller(s):
+For other RedHat variants you can create a package for your OS like so:
 
 ```bash
-mkdir -p /var/spool/slurm-mail /var/log/slurm-mail
-chown slurm. /var/spool/slurm-mail /var/log/slurm-mail
-chmod 0700 /var/spool/slurm-mail /var/log/slurm-mail
+dnf -y install python36 rpm-build tar
+git clone https://github.com/neilmunday/slurm-mail
+slurm-mail/build-tools/build-rpm.sh
 ```
 
-Create a cron job to run `slurm-send-mail.py` periodically to send HTML e-mails to users. As Slurm-Mail uses `sacct` to gather additional job information and may perform additional processing, the sending of e-mails was split into a separate application to prevent adding any overhead to `slurmctld`.
+The RPM will be written to `~/rpmbuild/RPMS/noarch`.
 
-Example cron job, e.g.`/etc/cron.d/slurm-mail`:
+### Ubuntu 22
 
-```
-*    *    *    *    *    root    /opt/slurm-mail/bin/slurm-send-mail.py
-```
+A pre-built Ubuntu 22 package is provided at [releases](https://github.com/neilmunday/slurm-mail/releases).
 
-Set-up `logrotate`:
+For other Debian variants you can create a package for your OS like so:
 
 ```bash
-cp /opt/slurm-mail/logrotate.d/slurm-mail /etc/logrotate.d/
+sudo apt-get install -y fakeroot dh-python lintian lsb-release python3 python3-stdeb
+git clone https://github.com/neilmunday/slurm-mail
+slurm-mail/build-tools/build-deb.sh
 ```
+
+At the end of the execution the location of the built package will be written to stdout.
+
+### From source (as root)
+
+```bash
+git clone https://github.com/neilmunday/slurm-mail
+cd slurm-mail
+python setup.py install
+cp etc/logrotate.d/slurm-mail /etc/logrotate.d/
+cp etc/cron.d/slurm-mail /etc/cron.d/
+install -d -m 700 -o slurm -g slurm /var/log/slurm-mail
+```
+
+**Note:** Depending on your operating system's Python set-up, it is possible that `setuptools` might install to `/usr/local` rather than `/usr`.
 
 ## Configuration
 
-Edit `/opt/slurm-mail/conf.d/slurm-mail.conf` to suit your needs. For example, check that the location of `sacct` is correct. If you are installing from source check that the log and spool directories are set to your desired values.
+Edit `/etc/slurm-mail/slurm-mail.conf` to suit your needs. For example, check that the location of `sacct` is correct. If you are installing from source check that the log and spool directories are set to your desired values.
 
-Change the value of `MailProg` in your `slurm.conf` file to `/opt/slurm-mail/bin/slurm-spool-mail.py`. By default the Slurm config file will be located at `/etc/slurm/slurm.conf`.
+Change the value of `MailProg` in your `slurm.conf` file to `/usr/bin/slurm-spool-mail.py`. By default the Slurm config file will be located at `/etc/slurm/slurm.conf`.
 
 Restart `slurmctld`:
 
@@ -111,25 +118,15 @@ Restart `slurmctld`:
 systemctl restart slurmctld
 ```
 
-Slurm-Mail will now log e-mail requests from Slurm users to the Slurm-Mail spool directory.
+Slurm-Mail will now log e-mail requests from Slurm users to the Slurm-Mail spool directory `/var/spool/slurm-mail`.
 
-## Upgrading from version 2.x to 3.x
-
-Version 3.0 onwards uses a new location for the e-mail templates. Therefore for versions prior to this, please run the following commands:
-
-```bash
-cd /opt/slurm-mail/conf.d
-mkdir templates
-mv ./*.tpl templates/
-```
-
-After moving the templates please merge any of the changes from the latest 3.x release with your local copies.
+The cron job created during installation at `/etc/cron.d/slurm-mail` will execute once per minute to process the spool files, thus making sure that `slurmctld` is not blocked by processing e-mails.
 
 ## SMTP Settings
 
 By default Slurm-Mail will send e-mails to a mail server running on the same host as Slurm-Mail is installed on, i.e. `localhost`.
 
-You can edit the `smtp` configuration options in `conf.d/slurm-mail.conf`. For example, to send e-mails via Gmail's SMTP server set the following settings:
+You can edit the `smtp` configuration options in `/etc/slurm-mail/slurm-mail.conf`. For example, to send e-mails via Gmail's SMTP server set the following settings:
 
 ```
 smtpServer = smtp.gmail.com
@@ -147,7 +144,7 @@ For SMTP servers that use SSL rather than starttls please set `smtpUseSsl = yes`
 
 ### Templates
 
-Slurm-Mail uses Python's [string.Template](https://docs.python.org/3/library/string.html#template-strings) class to create the e-mails it sends. Under Slurm-Mail's `conf.d/templates` directory you will find the following files that you can edit to customise e-mails to your needs.
+Slurm-Mail uses Python's [string.Template](https://docs.python.org/3/library/string.html#template-strings) class to create the e-mails it sends. Under Slurm-Mail's `/etc/slurm-mail/templates` directory you will find the following files that you can edit to customise e-mails to your needs.
 
 | Filename                  | Template Purpose                                                  |
 | ------------------------- | ----------------------------------------------------------------- |
@@ -163,132 +160,19 @@ Slurm-Mail uses Python's [string.Template](https://docs.python.org/3/library/str
 | started-array.tpl         | Used for the first job in an array that has started.              |
 | time.tpl                  | Used when a job reaches a percentage of it's time limit.          |
 
-Each template has a number of variables which are are used during e-mail generation. The following sub sections detail which variables are available to which templates. You can use these to customise the templates to your individual requirements.
-
-#### ended-array.tpl, ended-array_summary.tpl
-
-| Variable      | Purpose                                                      |
-| ------------- | ------------------------------------------------------------ |
-| $ARRAY_JOB_ID | The ID of array job ID.                                      |
-| $CLUSTER      | The name of the cluster.                                     |
-| $END_TXT      | The state of the job at its end.                             |
-| $JOB_ID       | The job ID.                                                  |
-| $JOB_TABLE    | HTML table of job information created by `job_table.pl`      |
-| $JOB_OUTPUT   | Output from the job (if enabled) created by `job_output.tpl` |
-| $SIGNATURE    | E-mail signature                                             |
-| $USER         | The user's name.                                             |
-
-#### ended.tpl
-
-| Variable    | Purpose                                                      |
-| ----------- | ------------------------------------------------------------ |
-| $CLUSTER    | The name of the cluster.                                     |
-| $END_TXT    | The state of the job at its end.                             |
-| $JOB_ID     | The job ID.                                                  |
-| $JOB_TABLE  | HTML table of job information created by `job_table.pl`      |
-| $JOB_OUTPUT | Output from the job (if enabled) created by `job_output.tpl` |
-| $SIGNATURE  | E-mail signature                                             |
-| $USER       | The user's name.                                             |
-
-#### invalid-dependency.tpl, staged-out.tpl
-
-| Variable   | Purpose                                                 |
-| ---------- | ------------------------------------------------------- |
-| $CLUSTER   | The name of the cluster.                                |
-| $END_TXT   | The state of the job at its end.                        |
-| $JOB_ID    | The job ID.                                             |
-| $JOB_TABLE | HTML table of job information created by `job_table.pl` |
-| $SIGNATURE | E-mail signature                                        |
-| $USER      | The user's name.                                        |
-
-#### job-output.tpl
-
-| Variable      | Purpose                                                     |
-| ------------- | ----------------------------------------------------------- |
-| $JOB_OUTPUT   | The output of the job from `$OUTPUT_FILE` file.             | 
-| $OUTPUT_FILE  | The full path to the job's output file.                     |
-| $OUTPUT_LINES | The number of lines of job output included in the e-mail.   |
-
-#### job-table.tpl
-
-Note: some variables are only displayed in the e-mail if the job has ended.
-
-| Variable            | Purpose                                               |
-| ------------------- | ----------------------------------------------------- |
-| $COMMENT            | The job's comment.                                    |
-| $CPU_EFFICIENCY     | The CPU efficiency of the job.                        |
-| $CPU_TIME           | The CPU time used by the job.                         |
-| $MAX_MEMORY         | The maximum amount of RAM used by a node in the job.  |
-| $MEMORY             | The amount of RAM used by the job.                    |
-| $ELAPSED            | How long the job ran for.                             |
-| $END                | When the job ended as a date string.                  |
-| $END_TS             | When the job started as a Unix timestamp.             |
-| $EXIT_STATE         | The exit state of the job.                            |
-| $JOB_ID             | The job ID.                                           |
-| $JOB_NAME           | The name of the job.                                  |
-| $NODES              | The number of nodes used by the job.                  |
-| $NODE_LIST          | The list of nodes used by the job.                    |
-| $PARTITION          | The partition used by the job.                        |
-| $START              | When the job started as a date string.                |
-| $START_TS           | When the job started as a Unix timestamp.             |
-| $STDERR             | The standard error file of the job.                   |
-| $STDOUT             | The standard output file of the job.                  |
-| $WALLCLOCK          | The wall clock of the job as a formatted date string. |
-| $WALLCLOCK_ACCURACY | The wallclock accuracy of the job.                    |
-| $WORKDIR            | The work directory used by the job.                   |
-
-#### signature.tpl
-
-| Variable    | Purpose                                                   |
-| ------------| --------------------------------------------------------- |
-| $EMAIL_FROM | Who the e-mail is from (as defined in `slurm-mail.conf`). |
-
-#### started-array-summary.tpl, started-array.tpl
-
-| Variable      | Purpose                                                    |
-| ------------- | ---------------------------------------------------------- |
-| $ARRAY_JOB_ID | The ID of array job ID.                                    |
-| $CLUSTER      | The name of the cluster.                                   |
-| $JOB_ID       | The job ID.                                                |
-| $JOB_TABLE    | HTML table of job information created by `job_table.pl`    |
-| $SIGNATURE    | E-mail signature                                           |
-| $USER         | The user's name.                                           |
-
-#### started.tpl
-
-| Variable      | Purpose                                                    |
-| ------------- | ---------------------------------------------------------- |
-| $CLUSTER      | The name of the cluster.                                   |
-| $JOB_ID       | The job ID.                                                |
-| $JOB_TABLE    | HTML table of job information created by `job_table.pl`    |
-| $SIGNATURE    | E-mail signature                                           |
-| $USER         | The user's name.                                           |
-
-#### time.pl
-
-| Variable    | Purpose                                                      |
-| ----------- | ------------------------------------------------------------ |
-| $CLUSTER    | The name of the cluster.                                     |
-| $END_TXT    | The state of the job at its end.                             |
-| $JOB_ID     | The job ID.                                                  |
-| $JOB_TABLE  | HTML table of job information created by `job_table.pl`      |
-| $JOB_OUTPUT | Output from the job (if enabled) created by `job_output.tpl` |
-| $REACHED    | The percentage of wallclock that the job has got to.         |
-| $REMAINING  | The amount of time the job has left.                         |
-| $SIGNATURE  | E-mail signature                                             |
-| $USER       | The user's name.                                             |
+Each template has a number of variables which can be used in the generation of e-mails. Please see [TEMPLATES](TEMPLATES.md) for futher details.
 
 ### Styling
 
-You can adjust the font style, size, colours etc. by editing the Cascading Style Sheet (CSS) file `conf.d/style.css` used for generating the e-mails.
+You can adjust the font style, size, colours etc. by editing the Cascading Style Sheet (CSS) file `/etc/slurm-mail/style.css` used for generating the e-mails.
 
 ### Date/time format
 
-To change the date/time format used for job start and end times in the e-mails, change the `datetimeFormat` configuration option in `conf.d/slurm-mail.conf`. The format string used is the same as Python's [datetime.strftime function](https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior).
+To change the date/time format used for job start and end times in the e-mails, change the `datetimeFormat` configuration option in `/etc/slurm-mail/slurm-mail.conf`. The format string used is the same as Python's [datetime.strftime function](https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior).
 
 ### E-mail subject
 
-To change the subject of the e-mails, change the `emailSubject` configuration option in `conf.d/slurm-mail.conf`. You use the following place holders in the string:
+To change the subject of the e-mails, change the `emailSubject` configuration option in `/etc/slurm-mail`. You use the following place holders in the string:
 
 | Place holder | Value                   |
 | ------------ | ----------------------- |
@@ -299,11 +183,11 @@ To change the subject of the e-mails, change the `emailSubject` configuration op
 
 ## Validating E-mails
 
-By default Slurm-Mail will not perform any checks on the destination e-mail address (i.e the value supplied to `sbatch` via `--mail-user`). If you would like Slurm-Mail to only send e-mails for jobs that correspond to a valid e-mail address (e.g. user@some.domain) then you can set the `validateEmail` option in `conf.d/slurm-mail.conf` to `true`. E-mail addresses that failed this check will be logged in `/var/log/slurm-mail/slurm-send-mail.log` as an error.
+By default Slurm-Mail will not perform any checks on the destination e-mail address (i.e the value supplied to `sbatch` via `--mail-user`). If you would like Slurm-Mail to only send e-mails for jobs that correspond to a valid e-mail address (e.g. user@some.domain) then you can set the `validateEmail` option in `/etc/slurm-mail/slurm-mail.conf` to `true`. E-mail addresses that failed this check will be logged in `/var/log/slurm-mail/slurm-send-mail.log` as an error.
 
 ## Including Job Output in E-mails
 
-In `conf.d/slurm-mail.conf` you can set the `includeOutputLines` to the number of lines to include from the end of each job's standard out and standard error files.
+In `/etc/slurm-mail/slurm-mail.conf` you can set the `includeOutputLines` to the number of lines to include from the end of each job's standard out and standard error files.
 
 Notes:
 
@@ -313,6 +197,50 @@ Notes:
 ## Job Arrays
 
 Slurm-Mail will honour the behaviour of `--mail-type` option of `sbatch` for job arrays. If a user specifies `--mail-type=ARRAY_TASKS` then Slurm-Mail will send notification e-mails for all jobs in the array. If you want to limit the number of e-mails that will be sent in this scenario then change the `arrayMaxNotifications` parameter in `slurm-mail.conf` to a value greater than zero.
+
+## Upgrading from Slurm-Mail version 3 to 4
+
+Version 4.0 onwards **no longer installs** to the `/opt/slurm-mail`. Instead from version 4.0 onwards install using Python's `setuptools` module. If your current Slurm-Mail 3.x installation was installed by your operating system's package manager, then you can just upgrade your installation using your package manager (e.g. `yum`, `dnf`).
+
+If not, then proceed as follows:
+
+1. install Slurm-Mail 4 using one of the methods describe above - take note of where the scripts and config files are installed (e.g. `/usr/bin` and `/etc`).
+
+2. If you **have not** modified any template files you can skip this step.
+
+```bash
+cp /opt/slurm-mail/conf.d/templates/* /etc/slurm-mail/templates/
+```
+
+3. If you **have not** modified Slurm-Mail's `style.css` file you can skip this step.
+
+```bash
+cp /opt/slurm-mail/conf.d/style.css /etc/slurm-mail/
+```
+
+4. If you **have not** modified `slurm-mail.conf` you can skip this step.
+
+```
+cp /opt/slurm-mail/conf.d/slurm-mail.conf /etc/slurm-mail/
+```
+
+5. Update your Slurm installation's `slurm.conf` file:
+
+```
+MailProg=/usr/bin/slurm-spool-mail.py
+```
+
+Now restart `slurmctld`:
+
+```bash
+systemctl restart slurmctld
+```
+
+6. If you are sure you will no longer need the old version:
+
+```
+rm -rf /opt/slurm-mail
+```
 
 ## Contributors
 

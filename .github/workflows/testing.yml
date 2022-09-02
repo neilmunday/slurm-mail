@@ -4,27 +4,52 @@ on:
   pull_request:
     paths:
       - '.github/workflows/testing.yml'
-      - 'bin/*.py'
-      - 'tests/*.py'
-      - 'tests/run.sh'
-      - 'tests/tests.yml'
+      - 'setup.py'
+      - 'src/slurmmail/*.py'
+      - 'tests/integration/*.py'
+      - 'tests/integration/run.sh'
+      - 'tests/integration/tests.yml'
+      - 'tests/unit/*.py'
   push:
     paths:
       - '.github/workflows/testing.yml'
-      - 'bin/*.py'
-      - 'tests/*.py'
-      - 'tests/run.sh'
-      - 'tests/tests.yml'
+      - 'setup.py'
+      - 'src/slurmmail/*.py'
+      - 'tests/integration/*.py'
+      - 'tests/integration/run.sh'
+      - 'tests/integration/tests.yml'
+      - 'tests/unit/*.py'
   workflow_dispatch:
 
 jobs:
-  test:
+  unit_tests:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        slurm-version: ["21.08.8-2", "22.05.2"]
+        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10"]
     steps:
       - uses: actions/checkout@v3
-      - name: Run tests
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
         run: |
-          tests/run.sh -s "${{ matrix.slurm-version }}"
+          python -m pip install --upgrade pip
+          pip install mock
+          pip install pytest
+      - name: Run unit tests
+        run: |
+          pytest -v
+
+  integration_tests:
+    needs: unit_tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        slurm-version: ["20.11.9", "21.08.8-2", "22.05.3"]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run integration tests
+        run: |
+          tests/integration/run.sh -s "${{ matrix.slurm-version }}"

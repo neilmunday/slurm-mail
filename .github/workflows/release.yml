@@ -19,7 +19,7 @@ jobs:
         id: create_tar
         run: >-
           echo "::set-output name=TAR_PATH::$(
-            build/create-tar.sh
+            build-tools/create-tar.sh
           )"
       - name: Get tar file name
         id: tar_name
@@ -32,29 +32,36 @@ jobs:
       - name: Create md5sum for tar file
         run: md5sum ${{steps.tar_name.outputs.TAR_NAME}} | awk '{ print $1}' > ${{steps.tar_name.outputs.TAR_NAME}}.md5sum
       - name: Create OpenSUSE 15 RPM
-        run: build/OpenSUSE_15/build.sh
+        run: build-tools/OpenSUSE_15/build.sh
       - name: Create RHEL 7 RPM
-        run: build/RedHat_7/build.sh
+        run: build-tools/RedHat_7/build.sh
       - name: Create RHEL 8 RPM
-        run: build/RedHat_8/build.sh
-      - name: Get RPM names
-        id: rpm_paths
+        run: build-tools/RedHat_8/build.sh
+      - name: Create Ubuntu 22 package
+        run: build-tools/Ubuntu_22.04/build.sh
+      - name: Get package names
+        id: pkg_paths
         run: |
           echo "::set-output name=RHEL7_RPM::$(
-            ls -1 build/RedHat_7/slurm-mail*.rpm
+            ls -1 build-tools/RedHat_7/slurm-mail*.rpm
           )"
           echo "::set-output name=RHEL8_RPM::$(
-            ls -1 build/RedHat_8/slurm-mail*.rpm
+            ls -1 build-tools/RedHat_8/slurm-mail*.rpm
           )"
           echo "::set-output name=OPENSUSE15_RPM::$(
-            ls -1 build/OpenSUSE_15/slurm-mail*.rpm
+            ls -1 build-tools/OpenSUSE_15/slurm-mail*.rpm
+            )"
+          echo "::set-output name=UBUNTU22_DEB::$(
+            ls -1 build-tools/Ubuntu_22.04/slurm-mail*.deb
             )"
       - name: Create md5sum for OpenSUSE 15 RPM
-        run: md5sum ${{steps.rpm_paths.outputs.OPENSUSE15_RPM}} > ${{steps.rpm_paths.outputs.OPENSUSE15_RPM}}.md5sum
+        run: md5sum ${{steps.pkg_paths.outputs.OPENSUSE15_RPM}} > ${{steps.pkg_paths.outputs.OPENSUSE15_RPM}}.md5sum
       - name: Create md5sum for RHEL 7 RPM
-        run: md5sum ${{steps.rpm_paths.outputs.RHEL7_RPM}} > ${{steps.rpm_paths.outputs.RHEL7_RPM}}.md5sum
+        run: md5sum ${{steps.pkg_paths.outputs.RHEL7_RPM}} > ${{steps.pkg_paths.outputs.RHEL7_RPM}}.md5sum
       - name: Create md5sum for RHEL 8 RPM
-        run: md5sum ${{steps.rpm_paths.outputs.RHEL8_RPM}} > ${{steps.rpm_paths.outputs.RHEL8_RPM}}.md5sum
+        run: md5sum ${{steps.pkg_paths.outputs.RHEL8_RPM}} > ${{steps.pkg_paths.outputs.RHEL8_RPM}}.md5sum
+      - name: Create md5sum for Ubuntu 22 package
+        run: md5sum ${{steps.pkg_paths.outputs.UBUNTU22_DEB}} > ${{steps.pkg_paths.outputs.UBUNTU22_DEB}}.md5sum
       - name: GH Release
         uses: softprops/action-gh-release@v0.1.14
         if: startsWith(github.ref, 'refs/tags/')
@@ -62,11 +69,13 @@ jobs:
           files: |
             ${{steps.tar_name.outputs.TAR_NAME}}
             ${{steps.tar_name.outputs.TAR_NAME}}.md5sum
-            ${{steps.rpm_paths.outputs.OPENSUSE15_RPM}}
-            ${{steps.rpm_paths.outputs.OPENSUSE15_RPM}}.md5sum
-            ${{steps.rpm_paths.outputs.RHEL7_RPM}}
-            ${{steps.rpm_paths.outputs.RHEL7_RPM}}.md5sum
-            ${{steps.rpm_paths.outputs.RHEL8_RPM}}
-            ${{steps.rpm_paths.outputs.RHEL8_RPM}}.md5sum
+            ${{steps.pkg_paths.outputs.OPENSUSE15_RPM}}
+            ${{steps.pkg_paths.outputs.OPENSUSE15_RPM}}.md5sum
+            ${{steps.pkg_paths.outputs.RHEL7_RPM}}
+            ${{steps.pkg_paths.outputs.RHEL7_RPM}}.md5sum
+            ${{steps.pkg_paths.outputs.RHEL8_RPM}}
+            ${{steps.pkg_paths.outputs.RHEL8_RPM}}.md5sum
+            ${{steps.pkg_paths.outputs.UBUNTU22_DEB}}
+            ${{steps.pkg_paths.outputs.UBUNTU22_DEB}}.md5sum
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}

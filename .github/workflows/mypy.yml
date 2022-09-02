@@ -1,13 +1,13 @@
-name: Pylint
+name: mypy
 
 on:
   pull_request:
     paths:
-      - '.github/workflows/pylint.yml'
+      - '.github/workflows/mypy.yml'
       - '**.py'
   push:
     paths:
-      - '.github/workflows/pylint.yml'
+      - '.github/workflows/mypy.yml'
       - '**.py'
   workflow_dispatch:
 
@@ -26,16 +26,10 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install mock
-        pip install pylint
-        pip install pytest
+        pip install mypy
         pip install aiosmtpd
         pip install PyYAML
-    - name: Analysing the code with pylint
+        pip install types-mock
+    - name: Analysing the code with mypy
       run: |
-        pylint --disable=no-self-use $(git ls-files '*.py')
-      if: ${{ matrix.python-version == '3.6' }}
-    - name: Analysing the code with pylint
-      run: |
-        pylint $(git ls-files '*.py')
-      if: ${{ matrix.python-version != '3.6' }}
+        mypy $(git ls-files '*.py')
