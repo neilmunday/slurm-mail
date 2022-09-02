@@ -118,9 +118,9 @@ Restart `slurmctld`:
 systemctl restart slurmctld
 ```
 
-Slurm-Mail will now log e-mail requests from Slurm users to the Slurm-Mail spool directory.
+Slurm-Mail will now log e-mail requests from Slurm users to the Slurm-Mail spool directory `/var/spool/slurm-mail`.
 
-
+The cron job created during installation at `/etc/cron.d/slurm-mail` will execute once per minute to process the spool files, thus making sure that `slurmctld` is not blocked by processing e-mails.
 
 ## SMTP Settings
 
