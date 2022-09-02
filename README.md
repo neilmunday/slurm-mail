@@ -18,7 +18,7 @@ Repository: https://github.com/neilmunday/slurm-mail
 7. [Validating E-mails](#validating-e-mails)
 8. [Including Job Output in E-mails](#including-job-output-in-e-mails)
 8. [Job Arrays](#job-arrays)
-10. [Upgrading from Slurm-Mail version 3 to 4](#upgrading-from-version-3-to-4)
+10. [Upgrading from Slurm-Mail version 3 to 4](#upgrading-from-slurm-mail-version-3-to-4)
 11. [Contributors](#contributors)
 
 ## Introduction
