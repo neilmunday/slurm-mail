@@ -20,16 +20,20 @@ Source: %{name}-%{version}.tar.gz
 
 %{?el7:BuildRequires: python3}
 %{?el8:BuildRequires: python36}
+%{?el9:BuildRequires: python3}
+%{?el9:BuildRequires: python3-setuptools}
 %{?sle_version:BuildRequires: python3}
 %{?sle_version:BuildRequires: python3-setuptools}
 
 %{?el7:Requires: python3}
 %{?el8:Requires: python36}
+%{?el9:BuildRequires: python3}
 %{?sle_version:Requires: python3}
 Requires:   cronie
 Requires:   logrotate
 %{?el7:Requires: slurm-slurmctld}
 %{?el8:Requires: slurm-slurmctld}
+%{?el9:Requires: slurm-slurmctld}
 %{?sle_version:Requires: slurm}
 
 %description
