@@ -14,6 +14,8 @@ Date: 2022-09-02
 * Adjusted docker containers used for testing to have unique names to prevent name clashes when used with `act` for local workflow testing.
 * Implemented fix for missing usec from Slurm strings in `get_usec_from_str` (pull request #47 from @jitkang).
 * Changed RPM spec file to a template to aid creating spec files.
+* Added ability to create Ubuntu 22 package
+* Added ability to create RedHat/RockyLinux 9 package
 
 Version 3.7
 -----------
