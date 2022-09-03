@@ -51,7 +51,7 @@ You can also opt to include a number of lines from the end of the job's output f
 
 * cron
 * logrotate
-* Python 3
+* Python 3.6 or newer
 * Slurm 21 or 22
 * A working e-mail server
 
@@ -61,7 +61,7 @@ You can also opt to include a number of lines from the end of the job's output f
 
 ### RedHat and SUSE Based Operating Systems
 
-For each release of Slurm-Mail, RPMs for RedHat 7/8 and SUSE 15 based operating systems are provided at [releases](https://github.com/neilmunday/slurm-mail/releases).
+For each release of Slurm-Mail, RPMs for RedHat 7/8/9 and SUSE 15 based operating systems are provided at [releases](https://github.com/neilmunday/slurm-mail/releases).
 
 Once downloaded, install using your appropriate package manager, e.g. for Rocky Linux 8:
 
@@ -69,7 +69,7 @@ Once downloaded, install using your appropriate package manager, e.g. for Rocky 
 dnf localinstall ./slurm-mail-*.noarch.rpm
 ```
 
-For other RedHat variants you can create a package for your OS like so:
+For other operating systems that use RPM packages you can create a package for your OS like so:
 
 ```bash
 dnf -y install python36 rpm-build tar
