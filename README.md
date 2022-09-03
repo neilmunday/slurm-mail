@@ -104,13 +104,13 @@ cp etc/cron.d/slurm-mail /etc/cron.d/
 install -d -m 700 -o slurm -g slurm /var/log/slurm-mail
 ```
 
-**Note:** Depending on your operating system's Python set-up, it is possible that `setuptools` might install to `/usr/local` rather than `/usr`.
+**Note:** Depending on your operating system's Python set-up, it is possible that `setuptools` might install Slurm-Mail to `/usr/local` rather than `/usr`.
 
 ## Configuration
 
 Edit `/etc/slurm-mail/slurm-mail.conf` to suit your needs. For example, check that the location of `sacct` is correct. If you are installing from source check that the log and spool directories are set to your desired values.
 
-Change the value of `MailProg` in your `slurm.conf` file to `/usr/bin/slurm-spool-mail.py`. By default the Slurm config file will be located at `/etc/slurm/slurm.conf`.
+Change the value of `MailProg` in your `slurm.conf` file to `/usr/bin/slurm-spool-mail`. By default the Slurm config file will be located at `/etc/slurm/slurm.conf`.
 
 Restart `slurmctld`:
 
@@ -227,7 +227,7 @@ cp /opt/slurm-mail/conf.d/slurm-mail.conf /etc/slurm-mail/
 5. Update your Slurm installation's `slurm.conf` file:
 
 ```
-MailProg=/usr/bin/slurm-spool-mail.py
+MailProg=/usr/bin/slurm-spool-mail
 ```
 
 Now restart `slurmctld`:
@@ -236,7 +236,9 @@ Now restart `slurmctld`:
 systemctl restart slurmctld
 ```
 
-6. If you are sure you will no longer need the old version:
+6. Edit `/etc/cron.d/slurm-mail` and set the path of the executable to: `/usr/bin/slurm-send-mail`
+
+7. If you are sure you will no longer need the old version:
 
 ```
 rm -rf /opt/slurm-mail
