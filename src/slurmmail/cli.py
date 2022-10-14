@@ -650,6 +650,23 @@ def spool_mail_main():
             array_summary = False
 
         job_id = int(match.group("job_id"))
+        # If you wish to use an LDAP lookup, uncomment the below lines (from the import through to the unbind) and then comment out the 'email = sys.argv[3]' line
+        # You'll need an account to bind as, in this example it is slurm_mail_lookup
+        # You'll also need to install libsasl2-dev (or the equivalent for your distribution) to your system, and then pip3 install python-ldap
+        #import ldap
+        #l = ldap.initialize('ldap://ldap.example.com:389')
+        #binddn = "uid=slurm_mail_lookup,ou=Users,dc=example,dc=com"
+        #pw = "P@ssw0rd"
+        #basedn = "ou=Users,dc=example,dc=com"
+        #tempemail = sys.argv[3]
+        #searchFilter = "(&(uid=%s)(objectClass=posixAccount))" % tempemail
+        #searchAttribute = ["mail"]
+        #searchScope = ldap.SCOPE_SUBTREE
+        #l.protocol_version = ldap.VERSION3
+        #l.start_tls_s()
+        #res = l.search_s(basedn, searchScope, searchFilter, searchAttribute)
+        #email = (res[0][1]['mail'][0].decode("utf-8"))
+        #l.unbind_s()
         email = sys.argv[3]
         state = match.group("state")
         if state == "Reached time limit":
