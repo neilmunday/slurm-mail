@@ -252,6 +252,7 @@ Thank you to the following people who have contributed code improvements, featur
 * David Murray (@dajamu): https://www.github.com/dajamu
 * drhey (@drhey): https://www.github.com/drhey
 * hakasapl (@hakasapl): https://www.github.com/hakasapl
+* Jan-Christoph Klie (@jcklie): https://github.com/jcklie
 * langefa (@langefa): https://github.com/langefa
 * rzegson (@rzegson): https://github.com/rzegson
 * Mehran Khodabandeh (@mkhodabandeh): https://www.github.com/mkhodabandeh

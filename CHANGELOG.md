@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 4.1
+-----------
+
+Date: 2022-11
+
+* Bug fix for missing new line on Slurm-Mail cron file (issue #55 / pull request #56 from @jcklie)
+
 Version 4.0
 -----------
 
