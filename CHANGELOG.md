@@ -8,6 +8,7 @@ Date: 2022-11
 
 * Bug fix for missing new line on Slurm-Mail cron file (issue #55 / pull request #56 from @jcklie)
 * Bug fix for building RPM for new version when an older version of Slurm-Mail is already installed (issue #57 / pull request #59 from @jcklie)
+* Bug fix for parsing raw time limit from sacct (issue #58)
 * Added the ability for users to configure the e-mail regular expression in slurm-mail.conf (issue #54)
 
 Version 4.0

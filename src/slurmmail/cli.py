@@ -224,7 +224,15 @@ def __process_spool_file(json_file: pathlib.Path, smtp_conn: smtplib.SMTP, optio
                 if sacct_dict['TimeLimit'] == "UNLIMITED":
                     job.wallclock = 0
                 else:
-                    job.wallclock = int(sacct_dict['TimelimitRaw']) * 60
+                    try:
+                        job.wallclock = int(sacct_dict['TimelimitRaw']) * 60
+                    except ValueError:
+                        logging.warning(
+                            "job %s: could not parse: '%s' for job time limit",
+                            job.id,
+                            sacct_dict['TimelimitRaw']
+                        )
+                        job.wallclock = 0
 
                 if state in ["Ended", "Failed", "Time limit reached"]:
                     job.state = sacct_dict['State']
