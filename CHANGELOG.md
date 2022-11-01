@@ -7,6 +7,7 @@ Version 4.1
 Date: 2022-11
 
 * Bug fix for missing new line on Slurm-Mail cron file (issue #55 / pull request #56 from @jcklie)
+* Added the ability for users to configure the e-mail regular expression in slurm-mail.conf (issue #54)
 
 Version 4.0
 -----------

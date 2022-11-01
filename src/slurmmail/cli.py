@@ -446,7 +446,6 @@ def send_mail_main():
     os.environ['SLURM_TIME_FORMAT'] = "%s"
 
     options = ProcessSpoolFileOptions()
-    options.mail_regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
 
     check_dir(conf_dir)
     check_file(conf_file)
@@ -507,6 +506,12 @@ def send_mail_main():
         smtp_password = config.get(section, "smtpPassword")
         options.tail_exe = pathlib.Path(config.get(section, "tailExe"))
         options.tail_lines = config.getint(section, "includeOutputLines")
+
+        if config.has_option(section, "emailRegEx"):
+            options.mail_regex = config.get(section, "emailRegEx")
+        else:
+            # set default value
+            options.mail_regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
     except Exception as e:
         die("Error: {0}".format(e))
 
