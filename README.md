@@ -185,6 +185,8 @@ To change the subject of the e-mails, change the `emailSubject` configuration op
 
 By default Slurm-Mail will not perform any checks on the destination e-mail address (i.e the value supplied to `sbatch` via `--mail-user`). If you would like Slurm-Mail to only send e-mails for jobs that correspond to a valid e-mail address (e.g. user@some.domain) then you can set the `validateEmail` option in `/etc/slurm-mail/slurm-mail.conf` to `true`. E-mail addresses that failed this check will be logged in `/var/log/slurm-mail/slurm-send-mail.log` as an error.
 
+The regular expression used to validate e-mail addresses can be configured by adjusting the `emailRegEx` value in `/etc/slurm-mail/slurm-mail.conf`.
+
 ## Including Job Output in E-mails
 
 In `/etc/slurm-mail/slurm-mail.conf` you can set the `includeOutputLines` to the number of lines to include from the end of each job's standard out and standard error files.
