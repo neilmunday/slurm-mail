@@ -37,7 +37,7 @@ import sys
 
 from string import Template
 
-sys.path.append(str(pathlib.Path(__file__).resolve().parents[1] / "src"))
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 import slurmmail  # pylint: disable=wrong-import-position
 
 from slurmmail.common import check_file, die, get_file_contents  # pylint: disable=wrong-import-position
