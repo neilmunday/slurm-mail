@@ -44,21 +44,21 @@ jobs:
       - name: Get package names
         id: pkg_paths
         run: |
-          echo "::set-output name=RHEL7_RPM::$(
+          echo "RHEL7_RPM=$(
             ls -1 build-tools/RedHat_7/slurm-mail*.rpm
-          )"
-          echo "::set-output name=RHEL8_RPM::$(
+          )" >> $GITHUB_ENV
+          echo "RHEL8_RPM=$(
             ls -1 build-tools/RedHat_8/slurm-mail*.rpm
-          )"
-          echo "::set-output name=RHEL9_RPM::$(
+          )" >> $GITHUB_ENV
+          echo "RHEL9_RPM=$(
             ls -1 build-tools/RedHat_9/slurm-mail*.rpm
-          )"
-          echo "::set-output name=OPENSUSE15_RPM::$(
+          )" >> $GITHUB_ENV
+          echo "OPENSUSE15_RPM=$(
             ls -1 build-tools/OpenSUSE_15/slurm-mail*.rpm
-          )"
-          echo "::set-output name=UBUNTU22_DEB::$(
+          )" >> $GITHUB_ENV
+          echo "UBUNTU22_DEB=$(
             ls -1 build-tools/Ubuntu_22.04/slurm-mail*.deb
-          )"
+          )" >> $GITHUB_ENV
       - name: Create md5sum for OpenSUSE 15 RPM
         run: md5sum ${{steps.pkg_paths.outputs.OPENSUSE15_RPM}} > ${{steps.pkg_paths.outputs.OPENSUSE15_RPM}}.md5sum
       - name: Create md5sum for RHEL 7 RPM
