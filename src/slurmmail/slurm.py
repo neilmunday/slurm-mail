@@ -126,9 +126,9 @@ class Job:
 
     @property
     def start(self) -> str:
-        if self.start_ts:
-            return datetime.fromtimestamp(self.start_ts).strftime(self.__datetime_format)
-        return "N/A"
+        if self.start_ts is None:
+            return "N/A"
+        return datetime.fromtimestamp(self.start_ts).strftime(self.__datetime_format)
 
     @property
     def start_ts(self) -> int:
