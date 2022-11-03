@@ -156,7 +156,7 @@ def run_command(cmd: str) -> tuple:
     Execute the given command and return a tuple that contains the
     return code, std out and std err output.
     """
-    logging.debug("Running %s", cmd)
+    logging.debug("Running \"%s\"", cmd)
     with subprocess.Popen(
         shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE
     ) as process:
