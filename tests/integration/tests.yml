@@ -67,3 +67,18 @@ tests:
     send_errors: false
     spool_errors: false
     spool_file_total: 2
+  test6:
+    commands: |
+      srun hostname
+    description: cancel pending job
+    job_fail: false
+    options:
+      begin: now+1hour
+      mail-type: ALL
+      time: "01:00"
+    post_submit: |
+      sleep 10
+      scancel -u root
+    send_errors: false
+    spool_errors: false
+    spool_file_total: 1
