@@ -216,6 +216,23 @@ if __name__ == "__main__":
             )
             dictionary["tests"][test]["pass"] = False
             continue
+        # are there any post submit commands?
+        if "post_submit" in fields:
+            logging.info("%s running post submit commands", test)
+            for cmd in fields["post_submit"].split("\n"):
+                cmd = cmd.strip()
+                if cmd != "":
+                    rtn, stdout, stderr = run_command(cmd)
+                    if rtn != 0:
+                        logging.error(
+                            "%s post_submit failed: %s\nstdout:\n%s\nstderr:\n%s",
+                            test,
+                            cmd,
+                            stdout,
+                            stderr
+                        )
+                        dictionary["tests"][test]["pass"] = False
+                        continue
         logging.info("waiting for job to finish...")
         wait_for_job()
         # Although the job has finished there is a chance
@@ -294,8 +311,8 @@ if __name__ == "__main__":
         logging.info("%s passed: OK", test)
         remove_logs()
 
-    # logging.info("Mail log:")
-    # echo_log(MAIL_LOG)
+    logging.info("Mail log:")
+    echo_log(MAIL_LOG)
     # display test results
     failed = total - passed
     logging.info("passed: %d, failed: %d", passed, failed)
