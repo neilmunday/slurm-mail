@@ -88,6 +88,10 @@ class Job:
         self.__cpus = int(cpus)
 
     @property
+    def did_start(self):
+        return self.start_ts is not None
+
+    @property
     def end(self) -> str:
         if self.end_ts is None:
             return "N/A"
@@ -199,7 +203,7 @@ class Job:
                 "A job's used CPU time must be set first"
             )
         #self.__cpu_wallclock = self.__wallclock * self.cpus
-        if self.__start_ts is not None and self.__end_ts is not None:
+        if self.did_start and self.__end_ts is not None:
             self.elapsed = (self.__end_ts - self.__start_ts)
             if self.wallclock > 0:
                 self.__wc_accuracy = (
