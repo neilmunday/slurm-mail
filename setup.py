@@ -47,6 +47,7 @@ setuptools.setup(
             'etc/slurm-mail/templates/invalid-dependency.tpl',
             'etc/slurm-mail/templates/job-output.tpl',
             'etc/slurm-mail/templates/job-table.tpl',
+            'etc/slurm-mail/templates/never-ran.tpl',
             'etc/slurm-mail/templates/signature.tpl',
             'etc/slurm-mail/templates/staged-out.tpl',
             'etc/slurm-mail/templates/started-array-summary.tpl',

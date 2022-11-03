@@ -76,6 +76,7 @@ install -m 644 etc/logrotate.d/slurm-mail %{buildroot}/etc/logrotate.d/
 %config /etc/slurm-mail/templates/invalid-dependency.tpl
 %config /etc/slurm-mail/templates/job-output.tpl
 %config /etc/slurm-mail/templates/job-table.tpl
+%config /etc/slurm-mail/templates/never-ran.tpl
 %config /etc/slurm-mail/templates/signature.tpl
 %config /etc/slurm-mail/templates/staged-out.tpl
 %config /etc/slurm-mail/templates/started-array-summary.tpl
