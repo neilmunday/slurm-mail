@@ -10,7 +10,10 @@ Date: 2022-11
 * Bug fix for building RPM for new version when an older version of Slurm-Mail is already installed (issue #57 / pull request #59 from @jcklie).
 * Bug fix for parsing raw time limit from sacct (issue #58).
 * Bug fix for Job class when start time is not set (issue #62).
+* Bug fix for handling jobs that are cancelled whilst pending (issue #63).
+* Added new "never-ran" e-mail template (issue #63).
 * Added the ability for users to configure the e-mail regular expression in slurm-mail.conf (issue #54).
+* Added support for optionally running commands after submitting jobs when running integration tests.
 * Updated GitHub workflows to remove use of `set-output` following [deprecation](https://github.blog/changelog/2022-10-11-github-actions-deprecating-save-state-and-set-output-commands).
 
 Version 4.0

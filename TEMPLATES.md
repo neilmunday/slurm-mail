@@ -74,6 +74,16 @@ Note: some variables are only displayed in the e-mail if the job has ended.
 | $WALLCLOCK_ACCURACY | The wallclock accuracy of the job.                    |
 | $WORKDIR            | The work directory used by the job.                   |
 
+## never-ran.tpl
+
+| Variable    | Purpose                                                      |
+| ----------- | ------------------------------------------------------------ |
+| $CLUSTER    | The name of the cluster.                                     |
+| $JOB_ID     | The job ID.                                                  |
+| $JOB_TABLE  | HTML table of job information created by `job_table.pl`      |
+| $SIGNATURE  | E-mail signature                                             |
+| $USER       | The user's name.                                             |
+
 ## signature.tpl
 
 | Variable    | Purpose                                                   |

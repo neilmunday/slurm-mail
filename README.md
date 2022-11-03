@@ -152,7 +152,8 @@ Slurm-Mail uses Python's [string.Template](https://docs.python.org/3/library/str
 | ended-array_summary       | Used when all jobs in an array have finished.                     |
 | ended.tpl                 | Used for jobs that have finished.                                 |
 | invalid-dependency.tpl    | Used when a job has an invalid dependency.                        |
-| job_table.tpl             | Used to create the job info table in e-mails.                     |
+| job-table.tpl             | Used to create the job info table in e-mails.                     |
+| never-ran.tpl             | Used for jobs that never ran.                                     |
 | signature.tpl             | Used to create the e-mail signature.                              |
 | staged-out.tpl            | Used when a job's burst buffer stage has completed.               |
 | started.tpl               | Used for jobs that have started.                                  |
