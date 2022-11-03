@@ -42,8 +42,9 @@ function tidyup {
 function usage {
   echo "Usage: $0 -s SLURM_VERSION [-r] [-t TEST_NAME] [-v]" 1>&2
   echo "  -k                   keep the test container upon failure"
-  echo "  -s SLURM_VERSION     version of Slurm to test against"
+  echo "  -m                   show e-mail log"
   echo "  -r                   don't build slurm-mail RPM - use existing file"
+  echo "  -s SLURM_VERSION     version of Slurm to test against"
   echo "  -t TEST_NAME         only run this named test"
   echo "  -v                   turn on debugging"
   exit 0
@@ -53,13 +54,17 @@ set -e
 trap 'catch $? $LINENO' EXIT
 
 KEEP_CONTAINER=0
+MAIL_LOG=0
 USE_RPM=0
 VERBOSE=0
 
-while getopts ":ks:rt:v" options; do
+while getopts ":kms:rt:v" options; do
   case "${options}" in
     k)
       KEEP_CONTAINER=1
+      ;;
+    m)
+      MAIL_LOG=1
       ;;
     r)
       USE_RPM=1
@@ -94,6 +99,10 @@ fi
 
 if [ $VERBOSE -eq 1 ]; then
   OPTS="$OPTS -v"
+fi
+
+if [ $MAIL_LOG -eq 1 ]; then
+  OPTS="$OPTS -m"
 fi
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"

@@ -112,6 +112,10 @@ if __name__ == "__main__":
         dest="input", required=True,
     )
     parser.add_argument(
+        "-m", "--mail-log", help="Display mail log", dest="mail_log",
+        action="store_true"
+    )
+    parser.add_argument(
         "-o", "--output", help="Output directory", dest="output",
         required=True
     )
@@ -311,8 +315,9 @@ if __name__ == "__main__":
         logging.info("%s passed: OK", test)
         remove_logs()
 
-    logging.info("Mail log:")
-    echo_log(MAIL_LOG)
+    if args.mail_log:
+        logging.info("Mail log:")
+        echo_log(MAIL_LOG)
     # display test results
     failed = total - passed
     logging.info("passed: %d, failed: %d", passed, failed)
