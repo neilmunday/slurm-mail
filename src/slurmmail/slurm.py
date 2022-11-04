@@ -89,7 +89,7 @@ class Job:
 
     @property
     def did_start(self):
-        return self.start_ts is not None
+        return self.used_cpu_usec > 0
 
     @property
     def end(self) -> str:
