@@ -227,3 +227,13 @@ class TestSlurmJob(TestCase):
         assert job.start_ts == 1661469811
         with pytest.raises(ValueError):
             job.start_ts = 'None'
+
+    def test_set_state(self):
+        job = self.create_dummy_job()
+        job.state = "TIMEOUT"
+        assert job.state == "WALLCLOCK EXCEEDED"
+
+    def test_wc_string(self):
+        job = self.create_dummy_job()
+        job.wallclock = 0
+        assert job.wc_string.upper() == "UNLIMITED"
