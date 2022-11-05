@@ -37,6 +37,7 @@ README.md              -> Set-up info
 
 import argparse
 import configparser
+import email.utils
 import grp
 import json
 import logging
@@ -441,6 +442,8 @@ def __process_spool_file(json_file: pathlib.Path, smtp_conn: smtplib.SMTP, optio
         )
         msg['To'] = user_email
         msg['From'] = options.email_from_address
+        msg['Date'] = email.utils.formatdate(localtime=True)
+        msg['Message-ID'] = email.utils.make_msgid()
         msg.attach(MIMEText(body, "html"))
         logging.info(
             "Sending e-mail to: %s using %s for job %s (%s) "
@@ -682,7 +685,7 @@ def spool_mail_main():
             array_summary = False
 
         job_id = int(match.group("job_id"))
-        email = sys.argv[3]
+        email_to = sys.argv[3]
         state = match.group("state")
         if state == "Reached time limit":
             state = "Time limit reached"
@@ -693,12 +696,12 @@ def spool_mail_main():
         logging.debug("Job ID: %d", job_id)
         logging.debug("State: %s", state)
         logging.debug("Array Summary: %s", array_summary)
-        logging.debug("E-mail to: %s", email)
+        logging.debug("E-mail to: %s", email_to)
 
         data = {
             "job_id": job_id,
             "state": state,
-            "email": email,
+            "email": email_to,
             "array_summary": array_summary
         }
 
