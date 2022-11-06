@@ -15,6 +15,7 @@ Date: 2022-11
 * Added the ability for users to configure the e-mail regular expression in slurm-mail.conf (issue #54).
 * Added support for optionally running commands after submitting jobs when running integration tests.
 * Added `Date` and `Message-ID` e-mail headers (issue #64).
+* Added the ability to run Slurm-Mail with [MailHog](https://hub.docker.com/r/mailhog/mailhog/) for e-mail testing/demos.
 * Updated GitHub workflows to remove use of `set-output` following [deprecation](https://github.blog/changelog/2022-10-11-github-actions-deprecating-save-state-and-set-output-commands).
 
 Version 4.0

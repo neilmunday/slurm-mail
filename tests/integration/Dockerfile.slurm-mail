@@ -2,6 +2,9 @@ ARG SLURM_VER
 
 FROM ghcr.io/neilmunday/rocky8-slurm:$SLURM_VER
 
+ARG SMTP_SERVER=localhost
+ARG SMTP_PORT=25
+ARG DISABLE_CRON=0
 ARG SLURM_MAIL_RPM
 
 RUN dnf install -y chrony cronie python36 python3-pyyaml && \
@@ -22,6 +25,9 @@ COPY $SLURM_MAIL_RPM /root/
 RUN dnf localinstall -y /root/$SLURM_MAIL_RPM && \
     sed -i "s/includeOutputLines = 0/includeOutputLines = 20/" /etc/slurm-mail/slurm-mail.conf && \
     sed -i "s/verbose = false/verbose = true/" /etc/slurm-mail/slurm-mail.conf && \
-    rm /etc/cron.d/slurm-mail
+    sed -i "s/smtpServer = localhost/smtpServer = $SMTP_SERVER/" /etc/slurm-mail/slurm-mail.conf && \
+    sed -i "s/smtpPort = 25/smtpPort = $SMTP_PORT/" /etc/slurm-mail/slurm-mail.conf
+
+RUN if [ "$DISABLE_CRON" = 1 ]; then rm /etc/cron.d/slurm-mail; fi
 
 CMD ["tail -f /dev/null"]

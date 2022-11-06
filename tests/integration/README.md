@@ -29,6 +29,9 @@ A test is defined like so:
     options:
       mail-type: ALL
       time: "01:00"
+    # optionally specify any commands to run after job submission
+    post_submit: |
+      echo "I was run"
     # are errors expected in the slurm-send-mail log?
     send_errors: false
     # are errors expected in the slurm-spool-mail log?
@@ -72,3 +75,23 @@ Enable verbose logging:
 ```
 
 > **_Tip:_** As `run.sh` will build a Slurm-Mail RPM you can use the `-r` flag on subsequent invocations to skip building the RPM and thus save time.
+
+## Testing e-mails
+
+If you want to see how the e-mails will look in an e-mail client you can use the provided Docker compose file to start-up a Slurm-Mail container together with a [MailHog](https://hub.docker.com/r/mailhog/mailhog/) container.
+
+A helper `compose-up.sh` script is provided in this directory for ease of use.
+
+Usage:
+
+```bash
+./compose-up.sh -s SLURM_VERSION [-r]
+```
+
+If the Slurm-Mail RPM has already been built and exists in this directory you can use `-r` option to skip building the RPM.
+
+```bash
+./compose-up.sh -s 22.05.5
+```
+
+Once the containers are up and running you can access the [MailHog](https://hub.docker.com/r/mailhog/mailhog/) web GUI at http://localhost:8025

@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  slurm-mail:
+    build:
+      args:
+        DISABLE_CRON: 0
+        SMTP_PORT: "1025"
+        SMTP_SERVER: "mailhog"
+      dockerfile: Dockerfile.slurm-mail
+    container_name: slurm-mail
+    image: slurm-mail
+  mailhog:
+    container_name: mailhog
+    image: mailhog/mailhog
+    ports:
+      - 8025:8025 # web ui

@@ -17,9 +17,10 @@ Repository: https://github.com/neilmunday/slurm-mail
 6. [Customising E-mails](#customising-e-mails)
 7. [Validating E-mails](#validating-e-mails)
 8. [Including Job Output in E-mails](#including-job-output-in-e-mails)
-8. [Job Arrays](#job-arrays)
-10. [Upgrading from Slurm-Mail version 3 to 4](#upgrading-from-slurm-mail-version-3-to-4)
-11. [Contributors](#contributors)
+9. [Job Arrays](#job-arrays)
+10. [Testing](#testing)
+11. [Upgrading from Slurm-Mail version 3 to 4](#upgrading-from-slurm-mail-version-3-to-4)
+12. [Contributors](#contributors)
 
 ## Introduction
 
@@ -200,6 +201,10 @@ Notes:
 ## Job Arrays
 
 Slurm-Mail will honour the behaviour of `--mail-type` option of `sbatch` for job arrays. If a user specifies `--mail-type=ARRAY_TASKS` then Slurm-Mail will send notification e-mails for all jobs in the array. If you want to limit the number of e-mails that will be sent in this scenario then change the `arrayMaxNotifications` parameter in `slurm-mail.conf` to a value greater than zero.
+
+# Testing
+
+Please see the `testing` directory which also contains a Docker compose file which allows to experiment with a demo of Slurm-Mail complete with [MailHog](https://hub.docker.com/r/mailhog/mailhog/) as a working mail server and webmail client.
 
 ## Upgrading from Slurm-Mail version 3 to 4
 
