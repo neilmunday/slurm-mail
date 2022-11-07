@@ -31,6 +31,8 @@ function usage {
   exit 0
 }
 
+USE_RPM=0
+
 while getopts ":s:r" options; do
   case "${options}" in
     r)
