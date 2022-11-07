@@ -74,6 +74,10 @@ class Job:
     # properties and setters
 
     @property
+    def cancelled(self) -> bool:
+        return self.state is not None and "CANCELLED" in self.state
+
+    @property
     def cpu_efficiency(self) -> str:
         if self.__cpu_efficiency:
             return "{0:.2f}%".format(self.__cpu_efficiency)
@@ -88,7 +92,7 @@ class Job:
         self.__cpus = int(cpus)
 
     @property
-    def did_start(self):
+    def did_start(self) -> bool:
         return self.used_cpu_usec > 0
 
     @property
@@ -155,7 +159,7 @@ class Job:
 
     @property
     def used_cpu_str(self) -> str:
-        if self.used_cpu_usec:
+        if self.used_cpu_usec is not None:
             return str(timedelta(seconds=self.used_cpu_usec / 1000000))
         return None
 

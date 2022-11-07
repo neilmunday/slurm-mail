@@ -106,6 +106,8 @@ def __process_spool_file(json_file: pathlib.Path, smtp_conn: smtplib.SMTP, optio
     state = data["state"]
     array_summary = data["array_summary"]
 
+    logging.debug("spool file content: %s", data)
+
     if options.validate_email and not re.fullmatch(options.mail_regex, user_email):
         # not a valid email address
         logging.error("Email address not valid: %s", user_email)
@@ -431,7 +433,7 @@ def __process_spool_file(json_file: pathlib.Path, smtp_conn: smtplib.SMTP, optio
                 USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
             )
 
-        if not job.did_start or (job.state is not None and "CANCELLED" in job.state):
+        if job.cancelled:
             subject_state = "cancelled"
         else:
             subject_state = state
