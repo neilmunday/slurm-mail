@@ -199,7 +199,7 @@ class Job:
                 "A job's used CPU time must be set first"
             )
         #self.__cpu_wallclock = self.__wallclock * self.cpus
-        if self.__end_ts:
+        if self.__start_ts and self.__end_ts:
             self.elapsed = (self.__end_ts - self.__start_ts)
             if self.wallclock > 0:
                 self.__wc_accuracy = (
