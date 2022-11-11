@@ -183,7 +183,7 @@ def tail_file(f: str, num_lines: int, tail_exe: str) -> str:
             return err_msg
 
         rtn, stdout, _ = run_command(
-            "{0} -{1} {2}".format(tail_exe, num_lines, f)
+            "{0} -{1} '{2}'".format(tail_exe, num_lines, f)
         )
         if rtn != 0:
             err_msg = (

@@ -91,6 +91,23 @@ class ProcessSpoolFileOptions:
         self.tail_lines = None # type: int
         self.templates = None # type: Dict[str]
 
+def get_scontrol_values(input: str) -> Dict[str, str]:
+    # add double quotes around values
+    equalsRe = re.compile(r"( ?[\w/:]+=)")
+    for s in equalsRe.findall(input):
+        if s.startswith(" "):
+            input = input.replace(s, f'" {s}"')
+        else:
+            input = input.replace(s, f'{s}"')
+    input += '"'
+
+    output = {}
+    # extract keys and values
+    extractRe = re.compile(r'(?P<key>[\w/:]+)="(?P<value>.*?)"')
+    for key, value in extractRe.findall(input):
+        output[key] = value
+    return output
+
 def __process_spool_file(json_file: pathlib.Path, smtp_conn: smtplib.SMTP, options: ProcessSpoolFileOptions):
     # pylint: disable=too-many-branches,too-many-locals,too-many-statements,too-many-nested-blocks
     # data is JSON encoded as of version 2.6
@@ -265,14 +282,12 @@ def __process_spool_file(json_file: pathlib.Path, smtp_conn: smtplib.SMTP, optio
                     cmd = "{0} -o show job={1}".format(options.scontrol_exe, job_id)
                     rc, stdout, stderr = run_command(cmd)
                     if rc == 0:
-                        scontrol_dict = {}
                         # for the first job in an array, scontrol will
                         # output details about all jobs so let's just
                         # use the first line
-                        for scontrol_values in stdout.split("\n", maxsplit=1)[0].split(" "):
-                            x = scontrol_values.split("=", 1)
-                            if len(x) == 2:
-                                scontrol_dict[x[0]] = x[1]
+                        scontrol_dict = get_scontrol_values(
+                            stdout.split("\n", maxsplit=1)[0]
+                        )
                         # StdOut and StdError will not be present
                         # for interactive jobs
                         if "StdErr" in scontrol_dict:
