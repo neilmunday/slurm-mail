@@ -91,20 +91,26 @@ class ProcessSpoolFileOptions:
         self.tail_lines = None # type: int
         self.templates = None # type: Dict[str]
 
-def get_scontrol_values(input: str) -> Dict[str, str]:
+def get_scontrol_values(input_str: str) -> Dict[str, str]:
+    """
+    Helper method to extract keys and values from the output
+    of scontrol.
+
+    Returns a dictionary of key/value pairs.
+    """
     # add double quotes around values
     equalsRe = re.compile(r"( ?[\w/:]+=)")
-    for s in equalsRe.findall(input):
+    for s in equalsRe.findall(input_str):
         if s.startswith(" "):
-            input = input.replace(s, f'" {s}"')
+            input_str = input_str.replace(s, f'" {s}"')
         else:
-            input = input.replace(s, f'{s}"')
-    input += '"'
+            input_str = input_str.replace(s, f'{s}"')
+    input_str += '"'
 
     output = {}
     # extract keys and values
     extractRe = re.compile(r'(?P<key>[\w/:]+)="(?P<value>.*?)"')
-    for key, value in extractRe.findall(input):
+    for key, value in extractRe.findall(input_str):
         output[key] = value
     return output
 
