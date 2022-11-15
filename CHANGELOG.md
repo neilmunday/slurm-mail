@@ -9,6 +9,7 @@ Date: 2022-11
 * Bug fix for missing new line in Slurm-Mail cron file (issue #55 / pull request #56 from @jcklie).
 * Bug fix for building RPM for new version when an older version of Slurm-Mail is already installed (issue #57 / pull request #59 from @jcklie).
 * Bug fix for parsing raw time limit from sacct (issue #58).
+* Bug fix for handling invalid Slurm filename patterns (issue #61).
 * Bug fix for Job class when start time is not set (issue #62).
 * Bug fixes for handling jobs that are cancelled whilst pending (issues #63 and #65).
 * Bug fix for handling scontrol values that have spaces in them (issue #67).
