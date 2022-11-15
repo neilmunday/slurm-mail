@@ -174,12 +174,12 @@ class TestCheckJobOuputFilePath:
     """
 
     def test_allowed_patterns(self):
-        for s in ['%A', '%a', '%j', '%u', '%x']:
-            assert(check_job_output_file_path(f"output_{s}.out"))
+        for pattern in ['%A', '%a', '%j', '%u', '%x']:
+            assert check_job_output_file_path(f"output_{pattern}.out")
 
     def test_invalid_patterns(self):
-        for s in ['%J', '%N', '%n', '%s', '%t']:
-            assert(not check_job_output_file_path(f"output_{s}.out"))
+        for pattern in ['%J', '%N', '%n', '%s', '%t']:
+            assert not check_job_output_file_path(f"output_{pattern}.out")
 
 class TestSlurmJob(TestCase):
     """
