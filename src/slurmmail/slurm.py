@@ -27,10 +27,27 @@
 This module provides Slurm related classes.
 """
 
+import re
+
 from datetime import datetime, timedelta
 from typing import List, Optional
 
 from slurmmail.common import get_kbytes_from_str, get_str_from_kbytes
+
+def check_job_output_file_path(path: str) -> bool:
+    """
+    Check if the given path contains any Slurm filename
+    characters that will not be expanded by scontrol.
+    """
+    supported_values = ['%A', '%a', '%j', '%u', '%x']
+    path_re = re.compile(r"(?P<sub>%[\w])")
+    matches = path_re.findall(path)
+    if matches is None or len(matches) == 0:
+        return True
+    for match in matches:
+        if match not in supported_values:
+            return False
+    return True
 
 class Job:
     # pylint: disable=too-many-instance-attributes

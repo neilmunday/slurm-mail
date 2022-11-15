@@ -66,7 +66,7 @@ from slurmmail.common import \
     get_usec_from_str, \
     run_command, \
     tail_file
-from slurmmail.slurm import Job
+from slurmmail.slurm import check_job_output_file_path, Job
 
 class ProcessSpoolFileOptions:
     # pylint: disable=too-few-public-methods,too-many-instance-attributes
@@ -375,7 +375,11 @@ def __process_spool_file(json_file: pathlib.Path, smtp_conn: smtplib.SMTP, optio
             if job.did_start:
                 end_txt = state.lower()
                 job_output = ""
-                if options.tail_lines > 0 and job.stdout not in ["?", "N/A"]:
+
+                if options.tail_lines > 0 and \
+                    job.stdout not in ["?", "N/A"] and \
+                    check_job_output_file_path(job.stdout):
+
                     tpl = Template(get_file_contents(options.templates['job_output']))
 
                     # Drop privileges prior to tailing output

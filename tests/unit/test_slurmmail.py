@@ -47,7 +47,7 @@ from slurmmail.common import (
     tail_file,
 )
 
-from slurmmail.slurm import Job
+from slurmmail.slurm import check_job_output_file_path, Job
 
 DUMMY_PATH = pathlib.Path("/tmp")
 TAIL_EXE = "/usr/bin/tail"
@@ -168,6 +168,18 @@ class CommonTestCase(TestCase):
             == f"slurm-mail encounted an error trying to read the last {lines} lines of {DUMMY_PATH}"  # noqa
         )
 
+class TestCheckJobOuputFilePath:
+    """
+    Test slurmmail.slurm.check_job_output_file_path
+    """
+
+    def test_allowed_patterns(self):
+        for s in ['%A', '%a', '%j', '%u', '%x']:
+            assert(check_job_output_file_path(f"output_{s}.out"))
+
+    def test_invalid_patterns(self):
+        for s in ['%J', '%N', '%n', '%s', '%t']:
+            assert(not check_job_output_file_path(f"output_{s}.out"))
 
 class TestSlurmJob(TestCase):
     """
