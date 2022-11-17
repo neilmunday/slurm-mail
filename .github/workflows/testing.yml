@@ -47,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        slurm-version: ["21.08.8-2", "22.05.5"]
+        slurm-version: ["21.08.8-2", "22.05.6"]
     steps:
       - uses: actions/checkout@v3
       - name: Run integration tests
