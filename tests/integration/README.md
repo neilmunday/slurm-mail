@@ -56,22 +56,22 @@ Once the container is up and running the `run.sh` script executes `run-tests.py`
 
 A summary of how many tests passed and failed is printed at the end of the tests.
 
-Excute all tests against Slurm 22.05.0:
+Excute all tests against Slurm 22.05.6:
 
 ```bash
-./run.sh -s 22.05.0
+./run.sh -s 22.05.6
 ```
 
 Execute a particular test:
 
 ```bash
-./run.sh -s 22.05.0 -t test2
+./run.sh -s 22.05.6 -t test2
 ```
 
 Enable verbose logging:
 
 ```bash
-./run.sh -s 22.05.0 -v
+./run.sh -s 22.05.6 -v
 ```
 
 > **_Tip:_** As `run.sh` will build a Slurm-Mail RPM you can use the `-r` flag on subsequent invocations to skip building the RPM and thus save time.
@@ -91,7 +91,7 @@ Usage:
 If the Slurm-Mail RPM has already been built and exists in this directory you can use `-r` option to skip building the RPM.
 
 ```bash
-./compose-up.sh -s 22.05.5
+./compose-up.sh -s 22.05.6
 ```
 
 Once the containers are up and running you can access the [MailHog](https://hub.docker.com/r/mailhog/mailhog/) web GUI at http://localhost:8025
