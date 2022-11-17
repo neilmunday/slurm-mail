@@ -11,7 +11,7 @@ Repository: https://github.com/neilmunday/slurm-mail
 
 1. [Introduction](#introduction)
 2. [Requirements](#requirements)
-2. [Installation](#installation)
+3. [Installation](#installation)
 4. [Configuration](#configuration)
 5. [SMTP Settings](#smtp-settings)
 6. [Customising E-mails](#customising-e-mails)
@@ -197,6 +197,7 @@ Notes:
 
 * if the user has decided to use the same file for both standard output and standard error then there will be only one section of job output in the job completion e-mails.
 * Job output can only be included if the process that is running `slurm-send-mail.py` is able to read the user's output files.
+* Due to the way `scontrol` reports filenames that use Slurm's [filename patterns](https://slurm.schedmd.com/sbatch.html#SECTION_%3CB%3Efilename-pattern%3C/B%3E) only these patterns are supported when including job output in e-mails: `%A`, `%a`, `%j`, `%u`, and `%x`.
 
 ## Job Arrays
 

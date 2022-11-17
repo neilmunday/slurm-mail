@@ -4,7 +4,7 @@ Change Log
 Version 4.1
 -----------
 
-Date: 2022-11
+Date: 2022-11-17
 
 * Bug fix for missing new line in Slurm-Mail cron file (issue #55 / pull request #56 from @jcklie).
 * Bug fix for building RPM for new version when an older version of Slurm-Mail is already installed (issue #57 / pull request #59 from @jcklie).
