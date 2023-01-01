@@ -44,7 +44,7 @@ jobs:
 
   integration_tests:
     needs: unit_tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         slurm-version: ["21.08.8-2", "22.05.7"]
