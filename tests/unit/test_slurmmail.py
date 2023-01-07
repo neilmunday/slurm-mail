@@ -231,14 +231,14 @@ class TestSlurmJob(TestCase):
         job.end_ts = 1661469811
         assert job.end_ts == 1661469811
         with pytest.raises(ValueError):
-            job.end_ts = 'None'
+            job.end_ts = 'None' # type: ignore
 
     def test_set_start_ts(self):
         job = self.create_dummy_job()
         job.start_ts = 1661469811
         assert job.start_ts == 1661469811
         with pytest.raises(ValueError):
-            job.start_ts = 'None'
+            job.start_ts = 'None' # type: ignore
 
     def test_set_state(self):
         job = self.create_dummy_job()
