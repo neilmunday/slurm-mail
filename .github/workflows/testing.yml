@@ -38,6 +38,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install mock
           pip install pytest
+          pip install pytest-cov
       - name: Run unit tests
         run: |
           pytest -v

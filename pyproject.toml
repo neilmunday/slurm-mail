@@ -1,6 +1,10 @@
 [tool.pytest.ini_options]
+addopts = "--cov-report term-missing --cov-branch --cov-report xml --cov-report term --cov=slurmmail -vv --strict-markers -rfE"
 minversion = "6.0"
 pythonpath = "src"
 testpaths = [
     "tests/unit"
 ]
+
+[tool.coverage.run]
+relative_files = true
