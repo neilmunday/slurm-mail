@@ -47,7 +47,7 @@ from slurmmail.common import (
     tail_file,
 )
 
-from slurmmail.cli import get_scontrol_values, spool_mail_main, ProcessSpoolFileOptions
+from slurmmail.cli import get_scontrol_values, ProcessSpoolFileOptions
 from slurmmail.slurm import check_job_output_file_path, Job
 
 DUMMY_PATH = pathlib.Path("/tmp")
@@ -251,11 +251,17 @@ class TestSlurmJob(TestCase):
         assert job.wc_string.upper() == "UNLIMITED"
 
 class TestProcessSpoolFileOptions(TestCase):
+    """
+    Test ProcessSpoolFileOptions class.
+    """
 
-    def test_create_ProcessSpoolFileOptions(self):
+    def test_create_ProcessSpoolFileOptions(self): # pylint: disable=invalid-name
         ProcessSpoolFileOptions()
 
 class TestCli(TestCase):
+    """
+    Test slurmmail.cli
+    """
 
     def test_get_scontrol_values(self):
         scontrol_output = "JobId=1 JobName=test UserId=root(0) GroupId=root(0) MCS_label=N/A Priority=4294901759 Nice=0 Account=root QOS=normal JobState=COMPLETED Reason=None Dependency=(null) Requeue=1 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0 RunTime=00:00:03 TimeLimit=UNLIMITED TimeMin=N/A SubmitTime=2023-01-08T16:01:33 EligibleTime=2023-01-08T16:01:33 AccrueTime=2023-01-08T16:01:33 StartTime=2023-01-08T16:01:33 EndTime=2023-01-08T16:01:36 Deadline=N/A SuspendTime=None SecsPreSuspend=0 LastSchedEval=2023-01-08T16:01:33 Scheduler=Main Partition=all AllocNode:Sid=631cc24917ee:218 ReqNodeList=(null) ExcNodeList=(null) NodeList=node01 BatchHost=node01 NumNodes=1 NumCPUs=1 NumTasks=1 CPUs/Task=1 ReqB:S:C:T=0:0:*:* TRES=cpu=1,node=1,billing=1 Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=* MinCPUsNode=1 MinMemoryNode=0 MinTmpDiskNode=0 Features=(null) DelayBoot=00:00:00 OverSubscribe=OK Contiguous=0 Licenses=(null) Network=(null) Command=/root/test.jcf WorkDir=/root StdErr=/root/slurm-1.out StdIn=/dev/null StdOut=/root/slurm-1.out Power="
