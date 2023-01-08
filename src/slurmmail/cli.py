@@ -230,7 +230,7 @@ def __process_spool_file(
                     # need to multiply by job.cpus
                     try:
                         sacct_dict['ReqMem'] = "{0}{1}".format(
-                            float(sacct_dict['ReqMem'][:-2]) * job.cpus,
+                            float(sacct_dict['ReqMem'][:-2]) * job.cpus, # type: ignore
                             sacct_dict['ReqMem'][-2:-1]
                         )
                     except ValueError:
