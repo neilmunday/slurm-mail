@@ -30,6 +30,7 @@ jobs:
         pip install aiosmtpd
         pip install PyYAML
         pip install types-mock
+        pip install typing-extensions
     - name: Analysing the code with mypy
       run: |
         mypy $(git ls-files '*.py')

@@ -40,6 +40,7 @@ jobs:
           pip install mock
           pip install pytest
           pip install pytest-cov
+          pip install typing-extensions
 
       - name: Run unit tests
         env:
