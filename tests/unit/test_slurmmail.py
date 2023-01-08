@@ -52,7 +52,6 @@ from slurmmail.slurm import check_job_output_file_path, Job
 DUMMY_PATH = pathlib.Path("/tmp")
 TAIL_EXE = "/usr/bin/tail"
 
-
 class CommonTestCase(TestCase):
     """
     Test slurmmail.common functions.
@@ -140,12 +139,12 @@ class CommonTestCase(TestCase):
     @mock.patch("pathlib.Path.exists")
     def test_tail_file_not_exists(self, path_exists_mock):
         path_exists_mock.return_value = False
-        rslt = tail_file(str(DUMMY_PATH), 10, TAIL_EXE)
+        rslt = tail_file(str(DUMMY_PATH), 10, pathlib.Path(TAIL_EXE))
         assert rslt == f"slurm-mail: file {DUMMY_PATH} does not exist"
 
     def test_tail_file_invalid_lines(self):
         for lines in [0, -1]:
-            rslt = tail_file(str(DUMMY_PATH), lines, TAIL_EXE)
+            rslt = tail_file(str(DUMMY_PATH), lines, pathlib.Path(TAIL_EXE))
             assert rslt == f"slurm-mail: invalid number of lines to tail: {lines}"
 
     @mock.patch("subprocess.Popen")
@@ -162,10 +161,10 @@ class CommonTestCase(TestCase):
         }
         process_mock.configure_mock(**attrs)
         popen_mock.return_value.__enter__.return_value = process_mock
-        rslt = tail_file(str(DUMMY_PATH), lines, TAIL_EXE)
+        rslt = tail_file(str(DUMMY_PATH), lines, pathlib.Path(TAIL_EXE))
         assert (
             rslt
-            == f"slurm-mail encounted an error trying to read the last {lines} lines of {DUMMY_PATH}"  # noqa
+            == f"slurm-mail: error trying to read the last {lines} lines of {DUMMY_PATH}"  # noqa
         )
 
 class TestCheckJobOuputFilePath:
