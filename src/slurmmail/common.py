@@ -168,12 +168,15 @@ def run_command(cmd: str) -> tuple:
         )
 
 
-def tail_file(f: str, num_lines: int, tail_exe: str) -> str:
+def tail_file(f: str, num_lines: int, tail_exe: pathlib.Path) -> str:
     """
     Returns the last N lines of the given file.
     """
     if num_lines < 1:
-        err_msg = "slurm-mail: invalid number of lines to tail: {0}".format(num_lines)  # noqa
+        err_msg = (
+            "slurm-mail: invalid number of lines "
+            "to tail: {0}".format(num_lines)
+        )
         logging.error(err_msg)
         return err_msg
     try:
@@ -187,7 +190,7 @@ def tail_file(f: str, num_lines: int, tail_exe: str) -> str:
         )
         if rtn != 0:
             err_msg = (
-                "slurm-mail encounted an error trying to read "
+                "slurm-mail: error trying to read "
                 "the last {0} lines of {1}".format(num_lines, f)
             )
             logging.error(err_msg)

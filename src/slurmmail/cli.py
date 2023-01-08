@@ -1,4 +1,4 @@
-# pylint: disable=invalid-name,broad-except,line-too-long,consider-using-f-string
+# pylint: disable=invalid-name,broad-except,consider-using-f-string
 
 #
 #  This file is part of Slurm-Mail.
@@ -53,7 +53,7 @@ from datetime import timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from string import Template
-from typing import Dict
+from typing import Dict, Optional
 
 from slurmmail import conf_dir, conf_file, tpl_dir
 from slurmmail.common import \
@@ -75,21 +75,21 @@ class ProcessSpoolFileOptions:
     """
 
     def __init__(self):
-        self.array_max_notifications = None # type: int
-        self.css = None # type: str
-        self.datetime_format = None # type: str
-        self.email_from_address = None # type: str
-        self.email_from_name = None # type: str
-        self.email_subject = None # type: str
-        self.mail_regex = None # type: str
-        self.validate_email = None # type: bool
-        self.sacct_exe = None # type: str
-        self.scontrol_exe = None # type: str
-        self.smtp_port = None # type: int
-        self.smtp_server = None # type: str
-        self.tail_exe = None # type: str
-        self.tail_lines = None # type: int
-        self.templates = None # type: Dict[str]
+        self.array_max_notifications: int
+        self.css: Optional[str] = None
+        self.datetime_format: str
+        self.email_from_address: str
+        self.email_from_name: Optional[str] = None
+        self.email_subject: str
+        self.mail_regex: str
+        self.validate_email: Optional[bool] = None
+        self.sacct_exe: pathlib.Path
+        self.scontrol_exe: pathlib.Path
+        self.smtp_port: Optional[int] = None
+        self.smtp_server: str
+        self.tail_exe: pathlib.Path
+        self.tail_lines: int
+        self.templates: Dict[str, pathlib.Path]
 
 def get_scontrol_values(input_str: str) -> Dict[str, str]:
     """
@@ -114,7 +114,10 @@ def get_scontrol_values(input_str: str) -> Dict[str, str]:
         output[key] = value
     return output
 
-def __process_spool_file(json_file: pathlib.Path, smtp_conn: smtplib.SMTP, options: ProcessSpoolFileOptions):
+def __process_spool_file(
+    json_file: pathlib.Path, smtp_conn: smtplib.SMTP,
+    options: ProcessSpoolFileOptions
+):
     # pylint: disable=too-many-branches,too-many-locals,too-many-statements,too-many-nested-blocks
     # data is JSON encoded as of version 2.6
     with json_file.open() as spool_file:
@@ -203,13 +206,17 @@ def __process_spool_file(json_file: pathlib.Path, smtp_conn: smtplib.SMTP, optio
 
                 job_id = int(sacct_dict['JobIdRaw'])
                 if "_" in sacct_dict['JobId']:
-                    job = Job(options.datetime_format, job_id, int(sacct_dict['JobId'].split("_")[0]))
+                    job = Job(
+                        options.datetime_format,
+                        job_id,
+                        int(sacct_dict['JobId'].split("_")[0])
+                    )
                 else:
                     job = Job(options.datetime_format, job_id)
 
                 job.cluster = sacct_dict['Cluster']
                 job.comment = sacct_dict['Comment']
-                job.cpus = sacct_dict['NCPUS']
+                job.cpus = int(sacct_dict['NCPUS'])
                 job.group = sacct_dict['Group']
                 job.name = sacct_dict['JobName']
                 job.nodelist = sacct_dict['NodeList']
@@ -218,7 +225,7 @@ def __process_spool_file(json_file: pathlib.Path, smtp_conn: smtplib.SMTP, optio
                 # for Slurm < 21, the ReqMem value will have 'n' or 'c'
                 # appended depending on whether the user has requested per node
                 # see issue #38
-                if sacct_dict['ReqMem'][-1:] == "c":
+                if sacct_dict['ReqMem'][-1:] == "c" and job.cpus is not None:
                     logging.debug("Applying ReqMem workaround for Slurm versions < 21")
                     # need to multiply by job.cpus
                     try:
@@ -475,7 +482,7 @@ def __process_spool_file(json_file: pathlib.Path, smtp_conn: smtplib.SMTP, optio
         logging.info(
             "Sending e-mail to: %s using %s for job %s (%s) "
             "via SMTP server %s:%s",
-            job.user, user_email, job_id, state, options.smtp_server, options.smtp_port
+            job.user, user_email, job.id, state, options.smtp_server, options.smtp_port
         )
 
         smtp_conn.sendmail(options.email_from_address, user_email.split(","), msg.as_string())
@@ -616,7 +623,7 @@ def send_mail_main():
                 )
                 smtp_connection_ok = False
 
-        if not smtp_connection_ok:
+        if not smtp_connection_ok or smtp_conn is None:
             # start new connection if previous connection dies or not exists
             # check if ssl is being requested (usually port 465)
             try:
@@ -696,7 +703,7 @@ def spool_mail_main():
         match = None
         if "Array" in info:
             match = re.search(
-                r"Slurm ((?P<array_summary>Array Summary)|Array Task) Job_id=[0-9]+_([0-9]+|\*) \((?P<job_id>[0-9]+)\).*?(?P<state>(Began|Ended|Failed|Requeued|Invalid dependency|Reached time limit|Reached (?P<limit>[0-9]+)% of time limit|Staged Out))",
+                r"Slurm ((?P<array_summary>Array Summary)|Array Task) Job_id=[0-9]+_([0-9]+|\*) \((?P<job_id>[0-9]+)\).*?(?P<state>(Began|Ended|Failed|Requeued|Invalid dependency|Reached time limit|Reached (?P<limit>[0-9]+)% of time limit|Staged Out))", # pylint: disable=line-too-long
                 info
             )
             if not match:
@@ -704,7 +711,7 @@ def spool_mail_main():
             array_summary = (match.group("array_summary") is not None)
         else:
             match = re.search(
-                r"Slurm Job_id=(?P<job_id>[0-9]+).*?(?P<state>(Began|Ended|Failed|Requeued|Invalid dependency|Reached time limit|Reached (?P<limit>[0-9]+)% of time limit|Staged Out))",
+                r"Slurm Job_id=(?P<job_id>[0-9]+).*?(?P<state>(Began|Ended|Failed|Requeued|Invalid dependency|Reached time limit|Reached (?P<limit>[0-9]+)% of time limit|Staged Out))", # pylint: disable=line-too-long
                 info
             )
             if not match:
