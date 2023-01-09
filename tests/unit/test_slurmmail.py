@@ -47,7 +47,7 @@ from slurmmail.common import (
     tail_file,
 )
 
-from slurmmail.cli import get_scontrol_values, ProcessSpoolFileOptions
+from slurmmail.cli import get_scontrol_values, ProcessSpoolFileOptions, spool_mail_main
 from slurmmail.slurm import check_job_output_file_path, Job
 
 DUMMY_PATH = pathlib.Path("/tmp")
@@ -255,12 +255,12 @@ class TestProcessSpoolFileOptions(TestCase):
     Test ProcessSpoolFileOptions class.
     """
 
-    def test_create_ProcessSpoolFileOptions(self): # pylint: disable=invalid-name
+    def test_create(self):
         ProcessSpoolFileOptions()
 
 class TestCli(TestCase):
     """
-    Test slurmmail.cli
+    Test slurmmail.cli helper functions
     """
 
     def test_get_scontrol_values(self):
@@ -272,3 +272,174 @@ class TestCli(TestCase):
         assert scontrol_dict["JobName"] == "test"
         assert "JobId" in scontrol_dict
         assert scontrol_dict["JobId"] == "1"
+
+class TestSpoolMailMain(TestCase):
+    """
+    Test spool_mail_main.
+    """
+
+    CONF_DIR = pathlib.Path(__file__).parents[2] / "etc/slurm-mail"
+    CONF_FILE = CONF_DIR / "slurm-mail.conf"
+
+    @mock.patch("slurmmail.cli.conf_file", CONF_FILE)
+    @mock.patch("sys.argv", [])
+    @mock.patch("slurmmail.cli.check_dir")
+    def test_incorrect_args(self, _):
+        with pytest.raises(SystemExit):
+            spool_mail_main()
+
+    @mock.patch("slurmmail.cli.conf_file", CONF_FILE)
+    @mock.patch("sys.argv", [
+        "spool_mail_main",
+        "-s",
+        "Slurm Job_id=1000 Began",
+        "test@example.com"
+    ])
+    @mock.patch("configparser.RawConfigParser.read")
+    def test_config_file_error(self, config_parser_mock):
+        config_parser_mock.side_effect = Exception("Failed to read config file")
+        with pytest.raises(SystemExit):
+            spool_mail_main()
+
+    @mock.patch("slurmmail.cli.conf_file", CONF_FILE)
+    @mock.patch("sys.argv", [
+        "spool_mail_main",
+        "-s",
+        "Slurm Job_id=1000 Began",
+        "test@example.com"
+    ])
+    @mock.patch("configparser.RawConfigParser.has_section")
+    def test_config_file_missing_section(self, config_parser_mock):
+        config_parser_mock.return_value = False
+        with pytest.raises(SystemExit):
+            spool_mail_main()
+
+    @mock.patch("slurmmail.cli.conf_file", CONF_FILE)
+    @mock.patch("sys.argv", [
+        "spool_mail_main",
+        "-s",
+        "Slurm Job_id=1000 Began",
+        "test@example.com"
+    ])
+    @mock.patch("json.dump")
+    @mock.patch("pathlib.Path.open", new_callable=mock_open)
+    @mock.patch("slurmmail.cli.check_dir")
+    @mock.patch("configparser.RawConfigParser.getboolean")
+    def test_config_file_verbose_logging(self, config_parser_mock, _, open_mock, json_dump_mock):
+        config_parser_mock.return_value = True
+        spool_mail_main()
+        open_mock.assert_called_once_with(mode="w", encoding="utf-8")
+        json_dump_mock.assert_called_once()
+
+    @mock.patch("slurmmail.cli.conf_file", CONF_FILE)
+    @mock.patch("sys.argv", [
+        "spool_mail_main",
+        "-s",
+        "Slurm Job_id=1000 Foo",
+        "test@example.com"
+    ])
+    @mock.patch("slurmmail.cli.check_dir")
+    def test_bad_slurm_info(self, _):
+        with pytest.raises(SystemExit):
+            spool_mail_main()
+
+    @mock.patch("slurmmail.cli.conf_file", CONF_FILE)
+    @mock.patch("sys.argv", [
+        "spool_mail_main",
+        "-s",
+        "Slurm Job_id=1000 Began",
+        "test@example.com"
+    ])
+    @mock.patch("json.dump")
+    @mock.patch("pathlib.Path.open", new_callable=mock_open)
+    @mock.patch("slurmmail.cli.check_dir")
+    def test_job_began(self, _, open_mock, json_dump_mock):
+        spool_mail_main()
+        open_mock.assert_called_once_with(mode="w", encoding="utf-8")
+        json_dump_mock.assert_called_once()
+
+    @mock.patch("slurmmail.cli.conf_file", CONF_FILE)
+    @mock.patch("sys.argv", [
+        "spool_mail_main",
+        "-s",
+        "Slurm Job_id=1000 Began",
+        "test@example.com"
+    ])
+    @mock.patch("pathlib.Path.open", new_callable=mock_open)
+    @mock.patch("slurmmail.cli.check_dir")
+    def test_write_error(self, _, open_mock):
+        open_mock.side_effect = Exception("Failed to write to file")
+        spool_mail_main()
+        open_mock.assert_called_once_with(mode="w", encoding="utf-8")
+
+    @mock.patch("slurmmail.cli.conf_file", CONF_FILE)
+    @mock.patch("sys.argv", [
+        "spool_mail_main",
+        "-s",
+        "Slurm Job_id=1000 Ended",
+        "test@example.com"
+    ])
+    @mock.patch("json.dump")
+    @mock.patch("pathlib.Path.open", new_callable=mock_open)
+    @mock.patch("slurmmail.cli.check_dir")
+    def test_job_ended(self, _, open_mock, json_dump_mock):
+        spool_mail_main()
+        open_mock.assert_called_once_with(mode="w", encoding="utf-8")
+        json_dump_mock.assert_called_once()
+
+    @mock.patch("slurmmail.cli.conf_file", CONF_FILE)
+    @mock.patch("sys.argv", [
+        "spool_mail_main",
+        "-s",
+        "Slurm Job_id=1000 Reached time limit",
+        "test@example.com"
+    ])
+    @mock.patch("json.dump")
+    @mock.patch("pathlib.Path.open", new_callable=mock_open)
+    @mock.patch("slurmmail.cli.check_dir")
+    def test_job_reached_time_limit(self, _, open_mock, json_dump_mock):
+        spool_mail_main()
+        open_mock.assert_called_once_with(mode="w", encoding="utf-8")
+        json_dump_mock.assert_called_once()
+
+    @mock.patch("slurmmail.cli.conf_file", CONF_FILE)
+    @mock.patch("sys.argv", [
+        "spool_mail_main",
+        "-s",
+        "Slurm Job_id=1000 Reached 50% of time limit",
+        "test@example.com"
+    ])
+    @mock.patch("json.dump")
+    @mock.patch("pathlib.Path.open", new_callable=mock_open)
+    @mock.patch("slurmmail.cli.check_dir")
+    def test_job_reached_percent_time_limit(self, _, open_mock, json_dump_mock):
+        spool_mail_main()
+        open_mock.assert_called_once_with(mode="w", encoding="utf-8")
+        json_dump_mock.assert_called_once()
+
+    @mock.patch("slurmmail.cli.conf_file", CONF_FILE)
+    @mock.patch("sys.argv", [
+        "spool_mail_main",
+        "-s",
+        "Slurm Array Task Job_id=1000_1 (1000) Foo",
+        "test@example.com"
+    ])
+    @mock.patch("slurmmail.cli.check_dir")
+    def test_bad_slurm_array_info(self, _):
+        with pytest.raises(SystemExit):
+            spool_mail_main()
+
+    @mock.patch("slurmmail.cli.conf_file", CONF_FILE)
+    @mock.patch("sys.argv", [
+        "spool_mail_main",
+        "-s",
+        "Slurm Array Task Job_id=1000_1 (1000) Began",
+        "test@example.com"
+    ])
+    @mock.patch("json.dump")
+    @mock.patch("pathlib.Path.open", new_callable=mock_open)
+    @mock.patch("slurmmail.cli.check_dir")
+    def test_job_array_began(self, _, open_mock, json_dump_mock):
+        spool_mail_main()
+        open_mock.assert_called_once_with(mode="w", encoding="utf-8")
+        json_dump_mock.assert_called_once()
