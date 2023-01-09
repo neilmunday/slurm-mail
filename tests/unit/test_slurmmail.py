@@ -38,6 +38,8 @@ from slurmmail import DEFAULT_DATETIME_FORMAT
 
 from slurmmail.common import (
     check_dir,
+    check_file,
+    delete_spool_file,
     die,
     get_file_contents,
     get_kbytes_from_str,
@@ -57,6 +59,12 @@ class CommonTestCase(TestCase):
     """
     Test slurmmail.common functions.
     """
+
+    @mock.patch("pathlib.Path.is_file")
+    def test_check_file(self, path_mock):
+        path_mock.return_value = False
+        with pytest.raises(SystemExit):
+            check_file(pathlib.Path("/foo/bar"))
 
     @mock.patch("os.access")
     @mock.patch("pathlib.Path.is_dir")
@@ -83,6 +91,11 @@ class CommonTestCase(TestCase):
         check_dir(DUMMY_PATH)
         die_mock.assert_not_called()
 
+    @mock.patch("pathlib.Path.unlink")
+    def test_delete_file(self, path_mock):
+        delete_spool_file(pathlib.Path("/foo/bar"))
+        path_mock.assert_called_once()
+
     def test_die(self):
         with pytest.raises(SystemExit):
             die("testing")
@@ -95,12 +108,14 @@ class CommonTestCase(TestCase):
         assert rtn == "data"
 
     def test_get_kbytes_from_str(self):
+        assert get_kbytes_from_str("100K") == 100
         assert get_kbytes_from_str("100.0M") == (102400)
         assert get_kbytes_from_str("100.0G") == (104857600)
         assert get_kbytes_from_str("10.0T") == (10737418240)
         assert get_kbytes_from_str("0") == 0
         assert get_kbytes_from_str("") == 0
         assert get_kbytes_from_str("foo") == 0
+        assert get_kbytes_from_str("1X") == 0
 
     def test_get_str_from_kbytes(self):
         assert get_str_from_kbytes(1023) == "1023.00KiB"
@@ -109,6 +124,9 @@ class CommonTestCase(TestCase):
         assert get_str_from_kbytes(1048576) == "1.00GiB"
         assert get_str_from_kbytes(1073741824) == "1.00TiB"
         assert get_str_from_kbytes(1099511627776) == "1.00PiB"
+        assert get_str_from_kbytes(1125899906842624) == "1.00EiB"
+        assert get_str_from_kbytes(1152921504606846976) == "1.00ZiB"
+        assert get_str_from_kbytes(1180591620717411303424) == "1.00YiB"
 
     def test_get_usec_from_str(self):
         # 2 mins
@@ -119,6 +137,10 @@ class CommonTestCase(TestCase):
         assert get_usec_from_str("3:0:0.0") == 1.08e10
         # 4 days 3 hours 2 mins
         assert get_usec_from_str("4-3:2:0.0") == 3.5652e11
+
+    def test_get_usec_from_str_exception(self):
+        with pytest.raises(SystemExit):
+            get_usec_from_str("2")
 
     @mock.patch("subprocess.Popen")
     def test_run_command(self, popen_mock):
@@ -137,6 +159,24 @@ class CommonTestCase(TestCase):
         assert stdout_rslt == stdout
         assert stderr_rslt == stderr
 
+    @mock.patch("subprocess.Popen")
+    @mock.patch("pathlib.Path.exists")
+    def test_tail_file(self, path_exists_mock, popen_mock):
+        path_exists_mock.return_value = True
+        stdout = ""
+        for i in range(11):
+            stdout += f"line {i + 1}\n"
+        stderr = "error"
+        process_mock = mock.Mock()
+        attrs = {
+            "communicate.return_value": (stdout.encode(), stderr.encode()),
+            "returncode": 0,
+        }
+        process_mock.configure_mock(**attrs)
+        popen_mock.return_value.__enter__.return_value = process_mock
+        rslt = tail_file(str(DUMMY_PATH), 10, pathlib.Path(TAIL_EXE))
+        assert rslt == stdout
+
     @mock.patch("pathlib.Path.exists")
     def test_tail_file_not_exists(self, path_exists_mock):
         path_exists_mock.return_value = False
@@ -147,6 +187,14 @@ class CommonTestCase(TestCase):
         for lines in [0, -1]:
             rslt = tail_file(str(DUMMY_PATH), lines, pathlib.Path(TAIL_EXE))
             assert rslt == f"slurm-mail: invalid number of lines to tail: {lines}"
+
+    @mock.patch("pathlib.Path.exists")
+    def test_tail_file_exception(self, path_exists_mock):
+        err_msg = "Dummy Error"
+        path_exists_mock.return_value = True
+        path_exists_mock.side_effect = Exception(err_msg)
+        rslt = tail_file(str(DUMMY_PATH), 10, pathlib.Path(TAIL_EXE))
+        assert rslt == f"Unable to return contents of file: {err_msg}"
 
     @mock.patch("subprocess.Popen")
     @mock.patch("pathlib.Path.exists")
