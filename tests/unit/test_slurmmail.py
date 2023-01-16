@@ -1,4 +1,4 @@
-# pylint: disable=line-too-long,missing-function-docstring
+# pylint: disable=line-too-long,missing-function-docstring,too-many-public-methods
 
 #
 #  This file is part of Slurm-Mail.
@@ -222,7 +222,7 @@ class TestCheckJobOuputFilePath:
     """
 
     def test_no_pattern(self):
-        assert check_job_output_file_path(f"output.out")
+        assert check_job_output_file_path("output.out")
 
     def test_allowed_patterns(self):
         for pattern in ['%A', '%a', '%j', '%u', '%x']:
@@ -271,7 +271,7 @@ class TestSlurmJob(TestCase):
         assert self._job.cpu_efficiency == "?"
 
     def test_did_not_start(self):
-        assert self._job.did_start == False
+        assert self._job.did_start is False
 
     def test_end_time(self):
         self._job.end_ts = 1673470800   # Wed 11 Jan 21:00:00 GMT 2023
@@ -303,7 +303,7 @@ class TestSlurmJob(TestCase):
         assert self._job.start == "N/A"
 
     def test_no_used_cpu_str(self):
-        assert self._job.used_cpu_str == None
+        assert self._job.used_cpu_str is None
 
     def test_no_wc_accuracy(self):
         assert self._job.wc_accuracy == "N/A"
@@ -317,7 +317,7 @@ class TestSlurmJob(TestCase):
         self._job.requested_mem_str = "2G"
         assert self._job.requested_mem == 2097152
         self._job.requested_mem_str = "?"
-        assert self._job.requested_mem == None
+        assert self._job.requested_mem is None
 
     def test_save_cpus_none(self):
         self._job.wallclock = 3600
@@ -346,7 +346,7 @@ class TestSlurmJob(TestCase):
     def test_separate_output(self):
         self._job.stdout = "stdout"
         self._job.stderr = "stderr"
-        assert self._job.separate_output() == False
+        assert self._job.separate_output() is False
 
     def test_set_end_ts(self):
         self._job.end_ts = 1661469811
@@ -400,7 +400,7 @@ class TestSlurmJob(TestCase):
 
     def test_wc_string(self):
         with pytest.raises(Exception):
-            self._job.wc_string
+            self._job.wc_string # pylint: disable=pointless-statement
         self._job.wallclock = 0
         assert self._job.wc_string.upper() == "UNLIMITED"
         self._job.wallclock = 86400
