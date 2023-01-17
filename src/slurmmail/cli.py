@@ -81,7 +81,7 @@ class ProcessSpoolFileOptions:
         self.email_from_address: str
         self.email_from_name: Optional[str] = None
         self.email_subject: str
-        self.mail_regex: str
+        self.mail_regex: str = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
         self.validate_email: Optional[bool] = None
         self.sacct_exe: pathlib.Path
         self.scontrol_exe: pathlib.Path
@@ -580,9 +580,6 @@ def send_mail_main():
 
         if config.has_option(section, "emailRegEx"):
             options.mail_regex = config.get(section, "emailRegEx")
-        else:
-            # set default value
-            options.mail_regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
     except Exception as e:
         die("Error: {0}".format(e))
 
