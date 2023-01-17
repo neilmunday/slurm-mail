@@ -121,11 +121,18 @@ def __process_spool_file(
     # pylint: disable=too-many-branches,too-many-locals,too-many-statements,too-many-nested-blocks
     # data is JSON encoded as of version 2.6
     with json_file.open() as spool_file:
-        data = json.load(spool_file)
+        try:
+            data = json.load(spool_file)
+        except Exception:
+            logging.error("Could not parse JSON from: %s", json_file)
+            delete_spool_file(json_file)
+            return
 
     for f in ["job_id", "email", "state", "array_summary"]:
         if f not in data:
-            die("Could not find {0} in {1}".format(f, json_file))
+            logging.error("Could not find %s in %s", f, json_file)
+            delete_spool_file(json_file)
+            return
 
     first_job_id = int(data["job_id"])
     user_email = data["email"]
