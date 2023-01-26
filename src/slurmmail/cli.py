@@ -302,6 +302,7 @@ def __process_spool_file(
                     cmd = "{0} -o show job={1}".format(options.scontrol_exe, job_id)
                     rc, stdout, stderr = run_command(cmd)
                     if rc == 0:
+                        logging.debug(stdout)
                         # for the first job in an array, scontrol will
                         # output details about all jobs so let's just
                         # use the first line
