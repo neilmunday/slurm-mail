@@ -31,6 +31,7 @@ import configparser
 import pathlib
 from os import access
 import smtplib
+from typing import Dict, Union
 from unittest import TestCase
 from unittest.mock import mock_open
 
@@ -443,16 +444,11 @@ class MockRawConfigParser(configparser.RawConfigParser):
     Mock RawConfigParser class.
     """
 
-    __mock_values = {}
-    #__mock_has_no_section = []
-
-    #@staticmethod
-    #def add_mock_has_no_section(section: str) -> None:
-    #    if section not in MockRawConfigParser.__mock_has_no_section:
-    #        MockRawConfigParser.__mock_has_no_section.append(section)
+    __mock_values: Dict[str, Dict[str, Union[str, int, bool, None]]] = {}
+    _UNSET = object()
 
     @staticmethod
-    def add_mock_value(section: str, option: str, value) -> None:
+    def add_mock_value(section: str, option: str, value: Union[str, int, bool, None]) -> None:
         if section not in MockRawConfigParser.__mock_values:
             MockRawConfigParser.__mock_values[section] = {}
         MockRawConfigParser.__mock_values[section][option] = value
@@ -460,11 +456,12 @@ class MockRawConfigParser(configparser.RawConfigParser):
     @staticmethod
     def reset_mock() -> None:
         MockRawConfigParser.__mock_values = {}
-        #MockRawConfigParser.__mock_has_no_section = []
 
-    def getboolean(self, section: str, option: str) -> bool: # pylint: disable=arguments-differ
+    def getboolean(self, section: str, option: str, *, raw=False,
+        vars=None, fallback=_UNSET, **kwargs  # pylint: disable=redefined-builtin
+    ) -> bool:
         if section in MockRawConfigParser.__mock_values and option in MockRawConfigParser.__mock_values[section]:
-            return MockRawConfigParser.__mock_values[section][option]
+            return bool(MockRawConfigParser.__mock_values[section][option])
         return super().getboolean(section, option)
 
     def has_option(self, section: str, option: str) -> bool:
