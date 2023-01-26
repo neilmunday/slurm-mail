@@ -389,6 +389,8 @@ def __process_spool_file(
         elif state in ["Ended", "Failed", "Requeued", "Time limit reached"]:
             if job.did_start:
                 end_txt = state.lower()
+                if end_txt == "time limit reached":
+                    end_txt = "reached its time limit"
                 job_output = ""
 
                 if options.tail_lines > 0 and \
