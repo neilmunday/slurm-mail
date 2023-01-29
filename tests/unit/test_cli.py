@@ -33,7 +33,7 @@ from os import access
 import smtplib
 from typing import Dict, Union
 from unittest import TestCase
-from unittest.mock import mock_open
+from unittest.mock import MagicMock, mock_open
 
 import mock
 import pytest  # type: ignore
@@ -73,6 +73,7 @@ class MockRawConfigParser(configparser.RawConfigParser):
     """
     Mock RawConfigParser class.
     """
+    # pylint: disable=redefined-builtin
 
     __mock_values: Dict[str, Dict[str, Union[str, int, bool, None]]] = {}
     _UNSET = object()
@@ -87,8 +88,15 @@ class MockRawConfigParser(configparser.RawConfigParser):
     def reset_mock() -> None:
         MockRawConfigParser.__mock_values = {}
 
+    def get(self, section: str, option: str, *, raw=False, # type: ignore
+        vars=None, fallback=_UNSET
+    ) -> str:
+        if section in MockRawConfigParser.__mock_values and option in MockRawConfigParser.__mock_values[section]:
+            return str(MockRawConfigParser.__mock_values[section][option])
+        return super().get(section, option)
+
     def getboolean(self, section: str, option: str, *, raw=False,
-        vars=None, fallback=_UNSET, **kwargs  # pylint: disable=redefined-builtin
+        vars=None, fallback=_UNSET, **kwargs
     ) -> bool:
         if section in MockRawConfigParser.__mock_values and option in MockRawConfigParser.__mock_values[section]:
             return bool(MockRawConfigParser.__mock_values[section][option])
@@ -463,6 +471,7 @@ class TestSendMailMain(TestCase):
         glob_mock.return_value = []
         slurmmail.cli.send_mail_main()
 
+    @mock.patch("smtplib.SMTP")
     @mock.patch("slurmmail.cli.__process_spool_file")
     @mock.patch("slurmmail.cli.conf_file", CONF_FILE)
     @mock.patch("slurmmail.cli.conf_dir", CONF_DIR)
@@ -471,7 +480,7 @@ class TestSendMailMain(TestCase):
     @mock.patch("os.access")
     @mock.patch("slurmmail.cli.check_file")
     @mock.patch('configparser.RawConfigParser')
-    def test_spool_files_present(self, mock_config_parser, check_file_mock, os_access_mock, glob_mock, proccess_file_mock): # pylint: disable=too-many-arguments
+    def test_spool_files_present_smtp_ok(self, mock_config_parser, check_file_mock, os_access_mock, glob_mock, proccess_file_mock, smtp_mock): # pylint: disable=too-many-arguments
         mock_config_parser.side_effect = MockRawConfigParser
         MockRawConfigParser.add_mock_value("slurm-send-mail", "logFile", None)
         check_file_mock.return_value = True
@@ -479,6 +488,105 @@ class TestSendMailMain(TestCase):
         glob_mock.return_value = ["1_1673384400.mail", "2_1673384500.mail"]
         slurmmail.cli.send_mail_main()
         assert proccess_file_mock.call_count == len(glob_mock.return_value)
+        smtp_mock.assert_called_once()
+
+    @mock.patch("smtplib.SMTP")
+    @mock.patch("slurmmail.cli.__process_spool_file")
+    @mock.patch("slurmmail.cli.conf_file", CONF_FILE)
+    @mock.patch("slurmmail.cli.conf_dir", CONF_DIR)
+    @mock.patch("slurmmail.cli.tpl_dir", TEMPLATES_DIR)
+    @mock.patch("pathlib.Path.glob")
+    @mock.patch("os.access")
+    @mock.patch("slurmmail.cli.check_file")
+    @mock.patch('configparser.RawConfigParser')
+    def test_spool_files_present_smtp_noop_exception(self, mock_config_parser, check_file_mock, os_access_mock, glob_mock, proccess_file_mock, smtp_mock): # pylint: disable=too-many-arguments
+        smtp_noop_mock = MagicMock()
+        smtp_noop_mock.side_effect = Exception("SMTP error")
+        smtp_instance_mock = MagicMock()
+        smtp_instance_mock.noop = smtp_noop_mock
+        smtp_mock.return_value = smtp_instance_mock
+        mock_config_parser.side_effect = MockRawConfigParser
+        MockRawConfigParser.add_mock_value("slurm-send-mail", "logFile", None)
+        check_file_mock.return_value = True
+        os_access_mock.return_value = True
+        glob_mock.return_value = ["1_1673384400.mail", "2_1673384500.mail"]
+        slurmmail.cli.send_mail_main()
+        assert proccess_file_mock.call_count == len(glob_mock.return_value)
+        # smtplib.SMTP will be called for each file due to noop exceptions
+        assert smtp_mock.call_count == len(glob_mock.return_value)
+
+    @mock.patch("smtplib.SMTP_SSL")
+    @mock.patch("smtplib.SMTP")
+    @mock.patch("slurmmail.cli.__process_spool_file")
+    @mock.patch("slurmmail.cli.conf_file", CONF_FILE)
+    @mock.patch("slurmmail.cli.conf_dir", CONF_DIR)
+    @mock.patch("slurmmail.cli.tpl_dir", TEMPLATES_DIR)
+    @mock.patch("pathlib.Path.glob")
+    @mock.patch("os.access")
+    @mock.patch("slurmmail.cli.check_file")
+    @mock.patch('configparser.RawConfigParser')
+    def test_spool_files_present_use_ssl(self, mock_config_parser, check_file_mock, os_access_mock, glob_mock, proccess_file_mock, smtp_mock, smtp_ssl_mock): # pylint: disable=too-many-arguments
+        mock_config_parser.side_effect = MockRawConfigParser
+        MockRawConfigParser.add_mock_value("slurm-send-mail", "logFile", None)
+        MockRawConfigParser.add_mock_value("slurm-send-mail", "smtpUseSsl", "yes")
+        check_file_mock.return_value = True
+        os_access_mock.return_value = True
+        glob_mock.return_value = ["1_1673384400.mail", "2_1673384500.mail"]
+        slurmmail.cli.send_mail_main()
+        assert proccess_file_mock.call_count == len(glob_mock.return_value)
+        smtp_ssl_mock.assert_called_once()
+        smtp_mock.assert_not_called()
+
+    @mock.patch("smtplib.SMTP")
+    @mock.patch("slurmmail.cli.__process_spool_file")
+    @mock.patch("slurmmail.cli.conf_file", CONF_FILE)
+    @mock.patch("slurmmail.cli.conf_dir", CONF_DIR)
+    @mock.patch("slurmmail.cli.tpl_dir", TEMPLATES_DIR)
+    @mock.patch("pathlib.Path.glob")
+    @mock.patch("os.access")
+    @mock.patch("slurmmail.cli.check_file")
+    @mock.patch('configparser.RawConfigParser')
+    def test_spool_files_present_use_starttls(self, mock_config_parser, check_file_mock, os_access_mock, glob_mock, proccess_file_mock, smtp_mock): # pylint: disable=too-many-arguments
+        smtp_mock.return_value = MagicMock()
+        smtp_instance = smtp_mock.return_value
+        smtp_instance.starttls = MagicMock()
+        mock_config_parser.side_effect = MockRawConfigParser
+        MockRawConfigParser.add_mock_value("slurm-send-mail", "logFile", None)
+        MockRawConfigParser.add_mock_value("slurm-send-mail", "smtpUseTls", "yes")
+        check_file_mock.return_value = True
+        os_access_mock.return_value = True
+        glob_mock.return_value = ["1_1673384400.mail", "2_1673384500.mail"]
+        slurmmail.cli.send_mail_main()
+        assert proccess_file_mock.call_count == len(glob_mock.return_value)
+        smtp_mock.assert_called_once()
+        smtp_instance.starttls.assert_called_once()
+
+    @mock.patch("smtplib.SMTP")
+    @mock.patch("slurmmail.cli.__process_spool_file")
+    @mock.patch("slurmmail.cli.conf_file", CONF_FILE)
+    @mock.patch("slurmmail.cli.conf_dir", CONF_DIR)
+    @mock.patch("slurmmail.cli.tpl_dir", TEMPLATES_DIR)
+    @mock.patch("pathlib.Path.glob")
+    @mock.patch("os.access")
+    @mock.patch("slurmmail.cli.check_file")
+    @mock.patch('configparser.RawConfigParser')
+    def test_spool_files_present_use_smtp_login(self, mock_config_parser, check_file_mock, os_access_mock, glob_mock, proccess_file_mock, smtp_mock): # pylint: disable=too-many-arguments
+        smtp_username = "jdoe"
+        smtp_password = "password"
+        smtp_mock.return_value = MagicMock()
+        smtp_instance = smtp_mock.return_value
+        smtp_instance.login = MagicMock()
+        mock_config_parser.side_effect = MockRawConfigParser
+        MockRawConfigParser.add_mock_value("slurm-send-mail", "logFile", None)
+        MockRawConfigParser.add_mock_value("slurm-send-mail", "smtpUserName", smtp_username)
+        MockRawConfigParser.add_mock_value("slurm-send-mail", "smtpPassword", smtp_password)
+        check_file_mock.return_value = True
+        os_access_mock.return_value = True
+        glob_mock.return_value = ["1_1673384400.mail", "2_1673384500.mail"]
+        slurmmail.cli.send_mail_main()
+        assert proccess_file_mock.call_count == len(glob_mock.return_value)
+        smtp_mock.assert_called_once()
+        smtp_instance.login.assert_called_once_with(smtp_username, smtp_password)
 
 class TestSpoolMailMain(TestCase):
     """
