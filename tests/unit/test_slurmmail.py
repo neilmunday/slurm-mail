@@ -621,6 +621,115 @@ class TestProcessSpoolFile(TestCase):
         assert sendmail_mock.call_args[0][0] == self.__options.email_from_address
         assert sendmail_mock.call_args[0][1] == ["root"]
 
+    @mock.patch("logging.error")
+    @mock.patch("smtplib.SMTP.sendmail")
+    @mock.patch("slurmmail.cli.delete_spool_file")
+    @mock.patch("slurmmail.cli.run_command")
+    @mock.patch(
+        "pathlib.Path.open",
+        new_callable=mock_open,
+        read_data="""{
+            "job_id": 2,
+            "email": "root",
+            "state": "Ended",
+            "array_summary": false
+            }
+            """
+    )
+    def test_job_ended_scontrol_failure(self, _, run_command_mock, delete_spool_file_mock, sendmail_mock, logging_error_mock):
+        sacct_output = "2|root|root|all|1674340451|1674340571|COMPLETED|500M||1|00:00.010|1|/root|00:02:00|0:0||test|node01|01:00:00|60|2|test.jcf\n"
+        sacct_output += "2.batch||||1674340451|1674340571|COMPLETED||4880K|1|00:00.010|1||00:02:00|0:0||test|node01|||2.batch|batch"
+        run_command_mock.side_effect = [(0, sacct_output, ""), (1, "error", "error")]
+        slurmmail.cli.__dict__["__process_spool_file"](pathlib.Path("/tmp/foo"), smtplib.SMTP(), self.__options)
+        assert run_command_mock.call_count == 2
+        logging_error_mock.assert_called()
+        delete_spool_file_mock.assert_called_once()
+        sendmail_mock.assert_called_once()
+        assert sendmail_mock.call_args[0][0] == self.__options.email_from_address
+        assert sendmail_mock.call_args[0][1] == ["root"]
+
+    @mock.patch("smtplib.SMTP.sendmail")
+    @mock.patch("slurmmail.cli.delete_spool_file")
+    @mock.patch("slurmmail.cli.run_command")
+    @mock.patch(
+        "pathlib.Path.open",
+        new_callable=mock_open,
+        read_data="""{
+            "job_id": 2,
+            "email": "root",
+            "state": "Ended",
+            "array_summary": false
+            }
+            """
+    )
+    def test_job_ended_unlimited_wallclock(self, _, run_command_mock, delete_spool_file_mock, sendmail_mock):
+        sacct_output = "2|root|root|all|1674340451|1674340571|COMPLETED|500M||1|00:00.010|1|/root|00:02:00|0:0||test|node01|UNLIMITED||2|test.jcf\n"
+        sacct_output += "2.batch||||1674340451|1674340571|COMPLETED||4880K|1|00:00.010|1||00:02:00|0:0||test|node01|||2.batch|batch"
+        scontrol_output = "JobId=2 JobName=test.jcf UserId=root(0) GroupId=root(0) MCS_label=N/A Priority=4294901758 Nice=0 Account=root QOS=normal JobState=COMPLETED Reason=None Dependency=(null) Requeue=1 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0 RunTime=00:02:00 TimeLimit=01:00:00 TimeMin=N/A SubmitTime=2023-01-21T22:34:11 EligibleTime=2023-01-21T22:34:11 AccrueTime=2023-01-21T22:34:11 StartTime=2023-01-21T22:34:11 EndTime=2023-01-21T22:36:11 Deadline=N/A SuspendTime=None SecsPreSuspend=0 LastSchedEval=2023-01-21T22:34:11 Scheduler=Main Partition=all AllocNode:Sid=ac2c384f02af:204 ReqNodeList=(null) ExcNodeList=(null) NodeList=node01 BatchHost=node01 NumNodes=1 NumCPUs=1 NumTasks=1 CPUs/Task=1 ReqB:S:C:T=0:0:*:* TRES=cpu=1,node=1,billing=1 Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=* MinCPUsNode=1 MinMemoryNode=0 MinTmpDiskNode=0 Features=(null) DelayBoot=00:00:00 OverSubscribe=OK Contiguous=0 Licenses=(null) Network=(null) Command=/root/test.jcf WorkDir=/root StdErr=/root/slurm-2.out StdIn=/dev/null StdOut=/root/slurm-2.out Power= MailUser=root MailType=INVALID_DEPEND,BEGIN,END,FAIL,REQUEUE,STAGE_OUT"
+        run_command_mock.side_effect = [(0, sacct_output, ""), (0, scontrol_output, "")]
+        slurmmail.cli.__dict__["__process_spool_file"](pathlib.Path("/tmp/foo"), smtplib.SMTP(), self.__options)
+        assert run_command_mock.call_count == 2
+        delete_spool_file_mock.assert_called_once()
+        sendmail_mock.assert_called_once()
+        assert sendmail_mock.call_args[0][0] == self.__options.email_from_address
+        assert sendmail_mock.call_args[0][1] == ["root"]
+
+    @mock.patch("logging.warning")
+    @mock.patch("smtplib.SMTP.sendmail")
+    @mock.patch("slurmmail.cli.delete_spool_file")
+    @mock.patch("slurmmail.cli.run_command")
+    @mock.patch(
+        "pathlib.Path.open",
+        new_callable=mock_open,
+        read_data="""{
+            "job_id": 2,
+            "email": "root",
+            "state": "Ended",
+            "array_summary": false
+            }
+            """
+    )
+    def test_job_ended_bad_wallclock(self, _, run_command_mock, delete_spool_file_mock, sendmail_mock, logging_warning_mock):
+        sacct_output = "2|root|root|all|1674340451|1674340571|COMPLETED|500M||1|00:00.010|1|/root|00:02:00|0:0||test|node01|01:00:00|bad_wc|2|test.jcf\n"
+        sacct_output += "2.batch||||1674340451|1674340571|COMPLETED||4880K|1|00:00.010|1||00:02:00|0:0||test|node01|||2.batch|batch"
+        scontrol_output = "JobId=2 JobName=test.jcf UserId=root(0) GroupId=root(0) MCS_label=N/A Priority=4294901758 Nice=0 Account=root QOS=normal JobState=COMPLETED Reason=None Dependency=(null) Requeue=1 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0 RunTime=00:02:00 TimeLimit=01:00:00 TimeMin=N/A SubmitTime=2023-01-21T22:34:11 EligibleTime=2023-01-21T22:34:11 AccrueTime=2023-01-21T22:34:11 StartTime=2023-01-21T22:34:11 EndTime=2023-01-21T22:36:11 Deadline=N/A SuspendTime=None SecsPreSuspend=0 LastSchedEval=2023-01-21T22:34:11 Scheduler=Main Partition=all AllocNode:Sid=ac2c384f02af:204 ReqNodeList=(null) ExcNodeList=(null) NodeList=node01 BatchHost=node01 NumNodes=1 NumCPUs=1 NumTasks=1 CPUs/Task=1 ReqB:S:C:T=0:0:*:* TRES=cpu=1,node=1,billing=1 Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=* MinCPUsNode=1 MinMemoryNode=0 MinTmpDiskNode=0 Features=(null) DelayBoot=00:00:00 OverSubscribe=OK Contiguous=0 Licenses=(null) Network=(null) Command=/root/test.jcf WorkDir=/root StdErr=/root/slurm-2.out StdIn=/dev/null StdOut=/root/slurm-2.out Power= MailUser=root MailType=INVALID_DEPEND,BEGIN,END,FAIL,REQUEUE,STAGE_OUT"
+        run_command_mock.side_effect = [(0, sacct_output, ""), (0, scontrol_output, "")]
+        slurmmail.cli.__dict__["__process_spool_file"](pathlib.Path("/tmp/foo"), smtplib.SMTP(), self.__options)
+        assert run_command_mock.call_count == 2
+        logging_warning_mock.assert_called_once()
+        delete_spool_file_mock.assert_called_once()
+        sendmail_mock.assert_called_once()
+        assert sendmail_mock.call_args[0][0] == self.__options.email_from_address
+        assert sendmail_mock.call_args[0][1] == ["root"]
+
+    @mock.patch("logging.warning")
+    @mock.patch("smtplib.SMTP.sendmail")
+    @mock.patch("slurmmail.cli.delete_spool_file")
+    @mock.patch("slurmmail.cli.run_command")
+    @mock.patch(
+        "pathlib.Path.open",
+        new_callable=mock_open,
+        read_data="""{
+            "job_id": 2,
+            "email": "root",
+            "state": "Ended",
+            "array_summary": false
+            }
+            """
+    )
+    def test_job_ended_bad_end_ts(self, _, run_command_mock, delete_spool_file_mock, sendmail_mock, logging_warning_mock):
+        sacct_output = "2|root|root|all|1674340451|bad_ts|COMPLETED|500M||1|00:00.010|1|/root|00:02:00|0:0||test|node01|01:00:00|60|2|test.jcf\n"
+        sacct_output += "2.batch||||1674340451|bad_ts|COMPLETED||4880K|1|00:00.010|1||00:02:00|0:0||test|node01|||2.batch|batch"
+        scontrol_output = "JobId=2 JobName=test.jcf UserId=root(0) GroupId=root(0) MCS_label=N/A Priority=4294901758 Nice=0 Account=root QOS=normal JobState=COMPLETED Reason=None Dependency=(null) Requeue=1 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0 RunTime=00:02:00 TimeLimit=01:00:00 TimeMin=N/A SubmitTime=2023-01-21T22:34:11 EligibleTime=2023-01-21T22:34:11 AccrueTime=2023-01-21T22:34:11 StartTime=2023-01-21T22:34:11 EndTime=2023-01-21T22:36:11 Deadline=N/A SuspendTime=None SecsPreSuspend=0 LastSchedEval=2023-01-21T22:34:11 Scheduler=Main Partition=all AllocNode:Sid=ac2c384f02af:204 ReqNodeList=(null) ExcNodeList=(null) NodeList=node01 BatchHost=node01 NumNodes=1 NumCPUs=1 NumTasks=1 CPUs/Task=1 ReqB:S:C:T=0:0:*:* TRES=cpu=1,node=1,billing=1 Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=* MinCPUsNode=1 MinMemoryNode=0 MinTmpDiskNode=0 Features=(null) DelayBoot=00:00:00 OverSubscribe=OK Contiguous=0 Licenses=(null) Network=(null) Command=/root/test.jcf WorkDir=/root StdErr=/root/slurm-2.out StdIn=/dev/null StdOut=/root/slurm-2.out Power= MailUser=root MailType=INVALID_DEPEND,BEGIN,END,FAIL,REQUEUE,STAGE_OUT"
+        run_command_mock.side_effect = [(0, sacct_output, ""), (0, scontrol_output, "")]
+        slurmmail.cli.__dict__["__process_spool_file"](pathlib.Path("/tmp/foo"), smtplib.SMTP(), self.__options)
+        assert run_command_mock.call_count == 2
+        logging_warning_mock.assert_called_once()
+        delete_spool_file_mock.assert_called_once()
+        sendmail_mock.assert_called_once()
+        assert sendmail_mock.call_args[0][0] == self.__options.email_from_address
+        assert sendmail_mock.call_args[0][1] == ["root"]
+
     @mock.patch("smtplib.SMTP.sendmail")
     @mock.patch("slurmmail.cli.delete_spool_file")
     @mock.patch("slurmmail.cli.run_command")
@@ -723,6 +832,23 @@ class TestSendMailMain(TestCase):
         os_access_mock.return_value = True
         glob_mock.return_value = []
         slurmmail.cli.send_mail_main()
+
+    @mock.patch("slurmmail.cli.__process_spool_file")
+    @mock.patch("slurmmail.cli.conf_file", CONF_FILE)
+    @mock.patch("slurmmail.cli.conf_dir", CONF_DIR)
+    @mock.patch("slurmmail.cli.tpl_dir", TEMPLATES_DIR)
+    @mock.patch("pathlib.Path.glob")
+    @mock.patch("os.access")
+    @mock.patch("slurmmail.cli.check_file")
+    @mock.patch('configparser.RawConfigParser')
+    def test_spool_files_present(self, mock_config_parser, check_file_mock, os_access_mock, glob_mock, proccess_file_mock): # pylint: disable=too-many-arguments
+        mock_config_parser.side_effect = MockRawConfigParser
+        MockRawConfigParser.add_mock_value("slurm-send-mail", "logFile", None)
+        check_file_mock.return_value = True
+        os_access_mock.return_value = True
+        glob_mock.return_value = ["1_1673384400.mail", "2_1673384500.mail"]
+        slurmmail.cli.send_mail_main()
+        assert proccess_file_mock.call_count == len(glob_mock.return_value)
 
 class TestSpoolMailMain(TestCase):
     """
