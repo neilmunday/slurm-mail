@@ -59,7 +59,7 @@ class JobException(Exception):
         """
         Create a new JobException
         """
-        super().__init__(msg)
+        super().__init__(msg) # pylint: disable=useless-super-delegation
 
 class Job:
     # pylint: disable=too-many-instance-attributes
