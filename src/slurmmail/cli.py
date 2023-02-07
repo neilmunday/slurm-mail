@@ -705,7 +705,7 @@ def spool_mail_main():
         die("Incorrect number of command line arguments")
 
     try:
-        info = sys.argv[2].split(',')[0]
+        info = sys.argv[2].split(',', maxsplit=1)[0]
         logging.debug("info str: %s", info)
         match = None
         if "Array" in info:
@@ -715,7 +715,7 @@ def spool_mail_main():
             )
             if not match:
                 die("Failed to parse Slurm info.")
-            array_summary = (match.group("array_summary") is not None)
+            array_summary = match.group("array_summary") is not None
         else:
             match = re.search(
                 r"Slurm Job_id=(?P<job_id>[0-9]+).*?(?P<state>(Began|Ended|Failed|Requeued|Invalid dependency|Reached time limit|Reached (?P<limit>[0-9]+)% of time limit|Staged Out))", # pylint: disable=line-too-long
