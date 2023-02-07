@@ -4,9 +4,9 @@ Change Log
 Version 4.2
 -----------
 
-Date: 2023-01-26
+Date: 2023-02-07
 
-* Test coverage reporting GitHub workflow added.
+* GitHub workflow added for recording unit test coverage added.
 * Added more unit tests to increase coverage of tests (issue #70).
 * Corrected text in e-mails for jobs that have reached their time limit (issue #69).
 
