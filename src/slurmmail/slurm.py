@@ -7,7 +7,7 @@
 #  much more information about their jobs compared to the standard Slurm
 #  e-mails.
 #
-#   Copyright (C) 2018-2022 Neil Munday (neil@mundayweb.com)
+#   Copyright (C) 2018-2023 Neil Munday (neil@mundayweb.com)
 #
 #  Slurm-Mail is free software: you can redistribute it and/or modify it
 #  under the terms of the GNU General Public License as published by the
@@ -49,6 +49,19 @@ def check_job_output_file_path(path: str) -> bool:
             return False
     return True
 
+class JobException(Exception):
+    """
+    JobException class.
+    Raised by Job instances.
+    """
+
+    def __init__(self, msg):
+        # pylint: disable=useless-super-delegation
+        """
+        Create a new JobException
+        """
+        super().__init__(msg)
+
 class Job:
     # pylint: disable=too-many-instance-attributes
     """
@@ -56,34 +69,34 @@ class Job:
     """
 
     def __init__(self, datetime_format: str, job_id: int, array_id: Optional[int] = None):
-        self.__cpus = None # type: int
-        self.__cpu_efficiency = None # type: int
-        self.__cpu_time_usec = None # type: int
-        self.__datetime_format = datetime_format
-        self.__end_ts = None # type: int
-        self.__start_ts = None # type: int
-        self.__state = None # type: str
-        self.__wallclock = None # type: int
-        self.__wc_accuracy = None
+        self.__cpus: Optional[int] = None
+        self.__cpu_efficiency: Optional[float] = None
+        self.__cpu_time_usec: Optional[int] = None
+        self.__datetime_format: str = datetime_format
+        self.__end_ts: Optional[int] = None
+        self.__start_ts: Optional[int] = None
+        self.__state: Optional[str] = None
+        self.__wallclock: Optional[int] = None
+        self.__wc_accuracy: Optional[float] = None
 
-        self.array_id = array_id # type: int
-        self.cluster = None # type: str
-        self.comment = None # type: str
-        self.elapsed = 0 # type: int
-        self.exit_code = None # type: int
-        self.group = None # type: str
-        self.id = job_id
-        self.max_rss = None # type: int
-        self.name = None # type: str
-        self.nodelist = None # type: List[str]
-        self.nodes = None # type: int
-        self.partition = None # type: str
-        self.requested_mem = None # type: int
-        self.stderr = "?"
-        self.stdout = "?"
-        self.used_cpu_usec = None # type: int
-        self.user = None # type: str
-        self.workdir = None # type: str
+        self.array_id: Optional[int] = array_id
+        self.cluster: Optional[str] = None
+        self.comment: Optional[str] = None
+        self.elapsed: Optional[int] = 0
+        self.exit_code: Optional[int] = None
+        self.group: Optional[str] = None
+        self.id: int = job_id
+        self.max_rss: Optional[int] = None
+        self.name: Optional[str] = None
+        self.nodelist: Optional[List[str]] = None
+        self.nodes: Optional[int] = None
+        self.partition: Optional[str] = None
+        self.requested_mem: Optional[int] = None
+        self.stderr: str = "?"
+        self.stdout: str = "?"
+        self.used_cpu_usec: Optional[int] = None
+        self.user: Optional[str] = None
+        self.workdir: Optional[str] = None
 
     def __repr__(self) -> str:
         return "<Job object> ID: {0}".format(self.id)
@@ -101,7 +114,7 @@ class Job:
         return "?"
 
     @property
-    def cpus(self) -> int:
+    def cpus(self) -> Optional[int]:
         return self.__cpus
 
     @cpus.setter
@@ -110,6 +123,8 @@ class Job:
 
     @property
     def did_start(self) -> bool:
+        if self.used_cpu_usec is None:
+            return False
         return self.used_cpu_usec > 0
 
     @property
@@ -119,7 +134,7 @@ class Job:
         return datetime.fromtimestamp(self.end_ts).strftime(self.__datetime_format)
 
     @property
-    def end_ts(self) -> int:
+    def end_ts(self) -> Optional[int]:
         return self.__end_ts
 
     @end_ts.setter
@@ -156,7 +171,7 @@ class Job:
         return datetime.fromtimestamp(self.start_ts).strftime(self.__datetime_format)
 
     @property
-    def start_ts(self) -> int:
+    def start_ts(self) -> Optional[int]:
         return self.__start_ts
 
     @start_ts.setter
@@ -164,7 +179,7 @@ class Job:
         self.__start_ts = int(ts)
 
     @property
-    def state(self) -> str:
+    def state(self) -> Optional[str]:
         return self.__state
 
     @state.setter
@@ -175,13 +190,13 @@ class Job:
             self.__state = s
 
     @property
-    def used_cpu_str(self) -> str:
+    def used_cpu_str(self) -> Optional[str]:
         if self.used_cpu_usec is not None:
             return str(timedelta(seconds=self.used_cpu_usec / 1000000))
         return None
 
     @property
-    def wallclock(self) -> int:
+    def wallclock(self) -> Optional[int]:
         return self.__wallclock
 
     @wallclock.setter
@@ -196,6 +211,8 @@ class Job:
 
     @property
     def wc_string(self) -> str:
+        if self.wallclock is None:
+            raise JobException("Wallclock is None")
         if self.wallclock == 0:
             return "Unlimited"
         return str(timedelta(seconds=self.wallclock))
@@ -212,29 +229,29 @@ class Job:
         can be caclulated.
         """
         if self.cpus is None:
-            raise Exception(
+            raise JobException(
                 "A job's CPU count must be set first"
             )
         if self.wallclock is None:
-            raise Exception(
+            raise JobException(
                 "A job's wallclock must be set first"
             )
         if self.used_cpu_usec is None:
-            raise Exception(
+            raise JobException(
                 "A job's used CPU time must be set first"
             )
         #self.__cpu_wallclock = self.__wallclock * self.cpus
-        if self.did_start and self.__end_ts is not None:
-            self.elapsed = (self.__end_ts - self.__start_ts)
+        if self.did_start and self.__start_ts is not None and self.__end_ts is not None:
+            self.elapsed = self.__end_ts - self.__start_ts
             if self.wallclock > 0:
                 self.__wc_accuracy = (
                     (float(self.elapsed) / float(self.wallclock)) * 100.0
                 )
-            if self.elapsed > 0:
+            if self.elapsed is not None and self.elapsed > 0 and self.__cpus is not None:
                 self.__cpu_time_usec = self.elapsed * self.__cpus * 1000000
                 self.__cpu_efficiency = (
-                        float(self.used_cpu_usec) / float(self.__cpu_time_usec)
-                    ) * 100.0
+                    float(self.used_cpu_usec) / float(self.__cpu_time_usec)
+                ) * 100.0
 
     def separate_output(self) -> bool:
         return self.stderr == self.stdout

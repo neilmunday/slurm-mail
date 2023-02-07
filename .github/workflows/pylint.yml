@@ -31,6 +31,7 @@ jobs:
         pip install pytest
         pip install aiosmtpd
         pip install PyYAML
+        pip install typing-extensions
     - name: Analysing the code with pylint
       run: |
         pylint --disable=no-self-use $(git ls-files '*.py')

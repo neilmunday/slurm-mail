@@ -5,7 +5,7 @@
 #  much more information about their jobs compared to the standard Slurm
 #  e-mails.
 #
-#   Copyright (C) 2018-2022 Neil Munday (neil@mundayweb.com)
+#   Copyright (C) 2018-2023 Neil Munday (neil@mundayweb.com)
 #
 #  Slurm-Mail is free software: you can redistribute it and/or modify it
 #  under the terms of the GNU General Public License as published by the
@@ -43,5 +43,5 @@ LONG_DESCRIPTION = 'Slurm-Mail is a drop in replacement for Slurm\'s e-mails ' +
     'standard Slurm e-mails.'
 MAINTAINER = 'Neil Munday'
 NAME = 'slurmmail'
-VERSION = '4.1'
+VERSION = '4.2'
 URL = 'https://www.github.com/neilmunday/slurm-mail'

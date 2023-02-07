@@ -95,3 +95,9 @@ If the Slurm-Mail RPM has already been built and exists in this directory you ca
 ```
 
 Once the containers are up and running you can access the [MailHog](https://hub.docker.com/r/mailhog/mailhog/) web GUI at http://localhost:8025
+
+To submit jobs you can run the following command to launch an interactive bash shell:
+
+```bash
+docker exec -it slurm-mail /usr/bin/bash -i
+```

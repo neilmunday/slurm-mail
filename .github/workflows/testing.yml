@@ -40,6 +40,7 @@ jobs:
           pip install mock
           pip install pytest
           pip install pytest-cov
+          pip install typing-extensions
 
       - name: Run unit tests
         env:
@@ -48,7 +49,7 @@ jobs:
           pytest -v
 
       - name: Store coverage file
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: coverage
           path: .coverage.${{ matrix.python_version }}
@@ -58,9 +59,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: unit_tests
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         id: download
         with:
           name: 'coverage'
@@ -73,7 +74,7 @@ jobs:
           MERGE_COVERAGE_FILES: true
 
       - name: Store Pull Request comment to be posted
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: steps.coverage_comment.outputs.COMMENT_FILE_WRITTEN == 'true'
         with:
           name: python-coverage-comment-action
@@ -84,7 +85,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        slurm-version: ["21.08.8-2", "22.05.7"]
+        slurm-version: ["21.08.8-2", "22.05.8"]
     steps:
       - uses: actions/checkout@v3
       - name: Run integration tests

@@ -1,4 +1,4 @@
-# pylint: disable=line-too-long,missing-function-docstring
+# pylint: disable=line-too-long,missing-function-docstring,too-many-public-methods
 
 #
 #  This file is part of Slurm-Mail.
@@ -7,7 +7,7 @@
 #  much more information about their jobs compared to the standard Slurm
 #  e-mails.
 #
-#   Copyright (C) 2018-2022 Neil Munday (neil@mundayweb.com)
+#   Copyright (C) 2018-2023 Neil Munday (neil@mundayweb.com)
 #
 #  Slurm-Mail is free software: you can redistribute it and/or modify it
 #  under the terms of the GNU General Public License as published by the
@@ -24,20 +24,20 @@
 #
 
 """
-Unit tests for Slurm-Mail.
+Unit tests for slurmmail.common
 """
-
 import pathlib
 from unittest import TestCase
 from unittest.mock import mock_open
 
 import mock
-import pytest  # type: ignore
 
-from slurmmail import DEFAULT_DATETIME_FORMAT
+import pytest  # type: ignore
 
 from slurmmail.common import (
     check_dir,
+    check_file,
+    delete_spool_file,
     die,
     get_file_contents,
     get_kbytes_from_str,
@@ -47,16 +47,19 @@ from slurmmail.common import (
     tail_file,
 )
 
-from slurmmail.slurm import check_job_output_file_path, Job
-
 DUMMY_PATH = pathlib.Path("/tmp")
 TAIL_EXE = "/usr/bin/tail"
-
 
 class CommonTestCase(TestCase):
     """
     Test slurmmail.common functions.
     """
+
+    @mock.patch("pathlib.Path.is_file")
+    def test_check_file(self, path_mock):
+        path_mock.return_value = False
+        with pytest.raises(SystemExit):
+            check_file(pathlib.Path("/foo/bar"))
 
     @mock.patch("os.access")
     @mock.patch("pathlib.Path.is_dir")
@@ -83,6 +86,11 @@ class CommonTestCase(TestCase):
         check_dir(DUMMY_PATH)
         die_mock.assert_not_called()
 
+    @mock.patch("pathlib.Path.unlink")
+    def test_delete_file(self, path_mock):
+        delete_spool_file(pathlib.Path("/foo/bar"))
+        path_mock.assert_called_once()
+
     def test_die(self):
         with pytest.raises(SystemExit):
             die("testing")
@@ -95,12 +103,14 @@ class CommonTestCase(TestCase):
         assert rtn == "data"
 
     def test_get_kbytes_from_str(self):
+        assert get_kbytes_from_str("100K") == 100
         assert get_kbytes_from_str("100.0M") == (102400)
         assert get_kbytes_from_str("100.0G") == (104857600)
         assert get_kbytes_from_str("10.0T") == (10737418240)
         assert get_kbytes_from_str("0") == 0
         assert get_kbytes_from_str("") == 0
         assert get_kbytes_from_str("foo") == 0
+        assert get_kbytes_from_str("1X") == 0
 
     def test_get_str_from_kbytes(self):
         assert get_str_from_kbytes(1023) == "1023.00KiB"
@@ -109,6 +119,9 @@ class CommonTestCase(TestCase):
         assert get_str_from_kbytes(1048576) == "1.00GiB"
         assert get_str_from_kbytes(1073741824) == "1.00TiB"
         assert get_str_from_kbytes(1099511627776) == "1.00PiB"
+        assert get_str_from_kbytes(1125899906842624) == "1.00EiB"
+        assert get_str_from_kbytes(1152921504606846976) == "1.00ZiB"
+        assert get_str_from_kbytes(1180591620717411303424) == "1.00YiB"
 
     def test_get_usec_from_str(self):
         # 2 mins
@@ -119,6 +132,10 @@ class CommonTestCase(TestCase):
         assert get_usec_from_str("3:0:0.0") == 1.08e10
         # 4 days 3 hours 2 mins
         assert get_usec_from_str("4-3:2:0.0") == 3.5652e11
+
+    def test_get_usec_from_str_exception(self):
+        with pytest.raises(SystemExit):
+            get_usec_from_str("2")
 
     @mock.patch("subprocess.Popen")
     def test_run_command(self, popen_mock):
@@ -137,16 +154,42 @@ class CommonTestCase(TestCase):
         assert stdout_rslt == stdout
         assert stderr_rslt == stderr
 
+    @mock.patch("subprocess.Popen")
+    @mock.patch("pathlib.Path.exists")
+    def test_tail_file(self, path_exists_mock, popen_mock):
+        path_exists_mock.return_value = True
+        stdout = ""
+        for i in range(11):
+            stdout += f"line {i + 1}\n"
+        stderr = "error"
+        process_mock = mock.Mock()
+        attrs = {
+            "communicate.return_value": (stdout.encode(), stderr.encode()),
+            "returncode": 0,
+        }
+        process_mock.configure_mock(**attrs)
+        popen_mock.return_value.__enter__.return_value = process_mock
+        rslt = tail_file(str(DUMMY_PATH), 10, pathlib.Path(TAIL_EXE))
+        assert rslt == stdout
+
     @mock.patch("pathlib.Path.exists")
     def test_tail_file_not_exists(self, path_exists_mock):
         path_exists_mock.return_value = False
-        rslt = tail_file(str(DUMMY_PATH), 10, TAIL_EXE)
+        rslt = tail_file(str(DUMMY_PATH), 10, pathlib.Path(TAIL_EXE))
         assert rslt == f"slurm-mail: file {DUMMY_PATH} does not exist"
 
     def test_tail_file_invalid_lines(self):
         for lines in [0, -1]:
-            rslt = tail_file(str(DUMMY_PATH), lines, TAIL_EXE)
+            rslt = tail_file(str(DUMMY_PATH), lines, pathlib.Path(TAIL_EXE))
             assert rslt == f"slurm-mail: invalid number of lines to tail: {lines}"
+
+    @mock.patch("pathlib.Path.exists")
+    def test_tail_file_exception(self, path_exists_mock):
+        err_msg = "Dummy Error"
+        path_exists_mock.return_value = True
+        path_exists_mock.side_effect = Exception(err_msg)
+        rslt = tail_file(str(DUMMY_PATH), 10, pathlib.Path(TAIL_EXE))
+        assert rslt == f"Unable to return contents of file: {err_msg}"
 
     @mock.patch("subprocess.Popen")
     @mock.patch("pathlib.Path.exists")
@@ -162,90 +205,8 @@ class CommonTestCase(TestCase):
         }
         process_mock.configure_mock(**attrs)
         popen_mock.return_value.__enter__.return_value = process_mock
-        rslt = tail_file(str(DUMMY_PATH), lines, TAIL_EXE)
+        rslt = tail_file(str(DUMMY_PATH), lines, pathlib.Path(TAIL_EXE))
         assert (
             rslt
-            == f"slurm-mail encounted an error trying to read the last {lines} lines of {DUMMY_PATH}"  # noqa
+            == f"slurm-mail: error trying to read the last {lines} lines of {DUMMY_PATH}"  # noqa
         )
-
-class TestCheckJobOuputFilePath:
-    """
-    Test slurmmail.slurm.check_job_output_file_path
-    """
-
-    def test_allowed_patterns(self):
-        for pattern in ['%A', '%a', '%j', '%u', '%x']:
-            assert check_job_output_file_path(f"output_{pattern}.out")
-
-    def test_invalid_patterns(self):
-        for pattern in ['%J', '%N', '%n', '%s', '%t']:
-            assert not check_job_output_file_path(f"output_{pattern}.out")
-
-class TestSlurmJob(TestCase):
-    """
-    Test slurmmail.slurm.Job
-    """
-
-    @staticmethod
-    def create_dummy_job():
-        return Job(DEFAULT_DATETIME_FORMAT, 1)
-
-    def test_is_not_array(self):
-        job = self.create_dummy_job()
-        assert not job.is_array()
-
-    def test_is_array(self):
-        job = Job(DEFAULT_DATETIME_FORMAT, 1, 1)
-        assert job.is_array()
-
-    def test_save_cpus_none(self):
-        job = self.create_dummy_job()
-        job.wallclock = 3600
-        job.used_cpu_usec = 60
-        with pytest.raises(Exception):
-            job.save()
-
-    def test_save_wallclock_none(self):
-        job = self.create_dummy_job()
-        job.cpus = 1
-        job.used_cpu_usec = 60
-        with pytest.raises(Exception):
-            job.save()
-
-    def test_save_used_cpu_usec_none(self):
-        job = self.create_dummy_job()
-        job.cpus = 1
-        job.wallclock = 3600
-        with pytest.raises(Exception):
-            job.save()
-
-    def test_save(self):
-        job = self.create_dummy_job()
-        job.cpus = 1
-        job.used_cpu_usec = 60
-        job.wallclock = 3600
-        job.save()
-
-    def test_set_end_ts(self):
-        job = self.create_dummy_job()
-        job.end_ts = 1661469811
-        assert job.end_ts == 1661469811
-        with pytest.raises(ValueError):
-            job.end_ts = 'None' # type: ignore
-
-    def test_set_start_ts(self):
-        job = self.create_dummy_job()
-        job.start_ts = 1661469811
-        assert job.start_ts == 1661469811
-        with pytest.raises(ValueError):
-            job.start_ts = 'None' # type: ignore
-
-    def test_set_state(self):
-        job = self.create_dummy_job()
-        job.state = "TIMEOUT"
-        assert job.state == "WALLCLOCK EXCEEDED"
-
-    def test_wc_string(self):
-        job = self.create_dummy_job()
-        job.wallclock = 0
-        assert job.wc_string.upper() == "UNLIMITED"

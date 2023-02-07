@@ -4,5 +4,5 @@ Upstream-Contact: $MAINTAINER <$EMAIL>
 Source: $URL
 
 Files: *
-Copyright: 2018-2022 $MAINTAINER
+Copyright: 2018-2023 $MAINTAINER
 License: GPL-3+
