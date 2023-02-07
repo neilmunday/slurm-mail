@@ -49,6 +49,18 @@ def check_job_output_file_path(path: str) -> bool:
             return False
     return True
 
+class JobException(Exception):
+    """
+    JobException class.
+    Raised by Job instances.
+    """
+
+    def __init__(self, msg):
+        """
+        Create a new JobException
+        """
+        super().__init__(msg)
+
 class Job:
     # pylint: disable=too-many-instance-attributes
     """
@@ -199,7 +211,7 @@ class Job:
     @property
     def wc_string(self) -> str:
         if self.wallclock is None:
-            raise Exception("Wallclock is None")
+            raise JobException("Wallclock is None")
         if self.wallclock == 0:
             return "Unlimited"
         return str(timedelta(seconds=self.wallclock))
@@ -216,20 +228,20 @@ class Job:
         can be caclulated.
         """
         if self.cpus is None:
-            raise Exception(
+            raise JobException(
                 "A job's CPU count must be set first"
             )
         if self.wallclock is None:
-            raise Exception(
+            raise JobException(
                 "A job's wallclock must be set first"
             )
         if self.used_cpu_usec is None:
-            raise Exception(
+            raise JobException(
                 "A job's used CPU time must be set first"
             )
         #self.__cpu_wallclock = self.__wallclock * self.cpus
         if self.did_start and self.__start_ts is not None and self.__end_ts is not None:
-            self.elapsed = (self.__end_ts - self.__start_ts)
+            self.elapsed = self.__end_ts - self.__start_ts
             if self.wallclock > 0:
                 self.__wc_accuracy = (
                     (float(self.elapsed) / float(self.wallclock)) * 100.0

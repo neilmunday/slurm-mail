@@ -32,7 +32,7 @@ from unittest import TestCase
 import pytest  # type: ignore
 
 from slurmmail import DEFAULT_DATETIME_FORMAT
-from slurmmail.slurm import check_job_output_file_path, Job
+from slurmmail.slurm import check_job_output_file_path, Job, JobException
 
 class TestCheckJobOuputFilePath:
     """
@@ -140,19 +140,19 @@ class TestSlurmJob(TestCase):
     def test_save_cpus_none(self):
         self._job.wallclock = 3600
         self._job.used_cpu_usec = 60
-        with pytest.raises(Exception):
+        with pytest.raises(JobException):
             self._job.save()
 
     def test_save_wallclock_none(self):
         self._job.cpus = 1
         self._job.used_cpu_usec = 60
-        with pytest.raises(Exception):
+        with pytest.raises(JobException):
             self._job.save()
 
     def test_save_used_cpu_usec_none(self):
         self._job.cpus = 1
         self._job.wallclock = 3600
-        with pytest.raises(Exception):
+        with pytest.raises(JobException):
             self._job.save()
 
     def test_save(self):
@@ -217,7 +217,7 @@ class TestSlurmJob(TestCase):
         assert self._job.wc_accuracy == "50.00%"
 
     def test_wc_string(self):
-        with pytest.raises(Exception):
+        with pytest.raises(JobException):
             self._job.wc_string # pylint: disable=pointless-statement
         self._job.wallclock = 0
         assert self._job.wc_string.upper() == "UNLIMITED"
