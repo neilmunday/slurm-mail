@@ -56,10 +56,11 @@ class JobException(Exception):
     """
 
     def __init__(self, msg):
+        # pylint: disable=useless-super-delegation
         """
         Create a new JobException
         """
-        super().__init__(msg) # pylint: disable=useless-super-delegation
+        super().__init__(msg)
 
 class Job:
     # pylint: disable=too-many-instance-attributes
@@ -249,8 +250,8 @@ class Job:
             if self.elapsed is not None and self.elapsed > 0 and self.__cpus is not None:
                 self.__cpu_time_usec = self.elapsed * self.__cpus * 1000000
                 self.__cpu_efficiency = (
-                        float(self.used_cpu_usec) / float(self.__cpu_time_usec)
-                    ) * 100.0
+                    float(self.used_cpu_usec) / float(self.__cpu_time_usec)
+                ) * 100.0
 
     def separate_output(self) -> bool:
         return self.stderr == self.stdout
