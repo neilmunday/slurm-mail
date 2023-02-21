@@ -59,5 +59,4 @@ package=`ls -1 $BUILD_DIR/*.deb`
 cp $package /tmp/
 ls -l /tmp/*.deb
 
-# dpkg -c $package
-#lintian $package
+$DIR/check-deb.sh $package
