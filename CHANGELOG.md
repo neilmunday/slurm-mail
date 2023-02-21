@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+Version 4.3
+-----------
+
+Date: 2023-02-21
+
+* Added support for Ubuntu 20.04.
+* Fixed Ubuntu package creation (issues #72 and #73).
+
 Version 4.2
 -----------
 
