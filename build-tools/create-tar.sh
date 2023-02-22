@@ -50,7 +50,7 @@ $DIR/process-template.py -o $TAR_DIR/slurm-mail.spec -t $DIR/slurm-mail.spec.tpl
 DEB_DIR=$TAR_DIR/debian
 mkdir -p $DEB_DIR
 install -m 644 $DIR/debian/compat $DEB_DIR/
-install -m 644 $DIR/debian/install $DEB_DIR/
+install -m 644 $DIR/debian/slurm-mail.install $DEB_DIR/
 install -m 755 $DIR/debian/rules $DEB_DIR/
 install -m 755 $DIR/debian/slurm-mail.postinst $DEB_DIR/
 install -m 755 $DIR/debian/slurm-mail.preinst $DEB_DIR/
