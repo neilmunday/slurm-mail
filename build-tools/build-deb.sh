@@ -59,6 +59,6 @@ package=`ls -1 $BUILD_DIR/*.deb`
 cp $package /tmp/
 ls -l /tmp/*.deb
 
-if [ "$1"=="check" ]; then
+if [ $1 == "check" ]; then
   $DIR/check-deb.sh $package
 fi
