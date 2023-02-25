@@ -92,14 +92,14 @@ jobs:
         run: |
           tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o 8
 
-integration_tests_rhel9:
-    needs: unit_tests
-    runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        slurm-version: ["22.05.8"]
-    steps:
-      - uses: actions/checkout@v3
-      - name: Run integration tests
-        run: |
-          tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o 9
+  integration_tests_rhel9:
+      needs: unit_tests
+      runs-on: ubuntu-20.04
+      strategy:
+        matrix:
+          slurm-version: ["22.05.8"]
+      steps:
+        - uses: actions/checkout@v3
+        - name: Run integration tests
+          run: |
+            tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o 9
