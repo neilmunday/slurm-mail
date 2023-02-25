@@ -43,6 +43,7 @@ function usage {
   echo "Usage: $0 -s SLURM_VERSION [-k] [-m] [-r] [-t TEST_NAME] [-v]" 1>&2
   echo "  -k                   keep the test container upon failure"
   echo "  -m                   show e-mail log"
+  echo "  -o                   RedHat OS to use"
   echo "  -r                   don't build slurm-mail RPM - use existing file"
   echo "  -s SLURM_VERSION     version of Slurm to test against"
   echo "  -t TEST_NAME         only run this named test"
@@ -58,7 +59,7 @@ MAIL_LOG=0
 USE_RPM=0
 VERBOSE=0
 
-while getopts ":kms:rt:v" options; do
+while getopts ":kmo:s:rt:v" options; do
   case "${options}" in
     k)
       KEEP_CONTAINER=1
@@ -68,6 +69,9 @@ while getopts ":kms:rt:v" options; do
       ;;
     r)
       USE_RPM=1
+      ;;
+    o)
+      OS=${OPTARG}
       ;;
     s)
       SLURM_VER=${OPTARG}
@@ -88,7 +92,7 @@ while getopts ":kms:rt:v" options; do
   esac
 done
 
-if [ -z $SLURM_VER ]; then
+if [ -z $SLURM_VER ] || [ -z $OS ]; then
   usage
 fi
 
@@ -107,30 +111,31 @@ fi
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-NAME="slurm-mail-${SLURM_VER}"
+NAME="slurm-mail-el${OS}-${SLURM_VER}"
 
 if [ $USE_RPM -eq 0 ]; then
   cd $DIR
-  rm -f ./*.rpm
+  rm -f ./*.el${OS}.noarch.rpm
 
-  cd ../../build-tools/RedHat_8
-  rm -f ./*.rpm
+  cd ../../build-tools/RedHat_${OS}
+  rm -f ./.el${OS}.noarch.rpm
   ./build.sh
   mv ./*.rpm $DIR/
 fi
 
 cd $DIR
-RPM=`ls -1 slurm-mail*.rpm`
+RPM=`ls -1 slurm-mail*.el${OS}.noarch.rpm`
 
 docker build \
   --build-arg DISABLE_CRON=1 \
   --build-arg SLURM_MAIL_RPM=${RPM} \
   --build-arg SLURM_VER=${SLURM_VER} \
   -t neilmunday/slurm-mail:${SLURM_VER} \
-  -f Dockerfile.slurm-mail .
+  -f Dockerfile.slurm-mail.el${OS} .
 
 docker run -d -h compute --name $NAME neilmunday/slurm-mail:${SLURM_VER}
 
-docker exec $NAME /bin/bash -c "/root/testing/run-tests.py -i /root/testing/tests.yml -o /root/testing/output $OPTS"
+docker exec $NAME /bin/bash -c \
+  "/root/testing/run-tests.py -i /root/testing/tests.yml -o /root/testing/output $OPTS"
 
 tidyup $NAME
