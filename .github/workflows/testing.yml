@@ -80,6 +80,18 @@ jobs:
           name: python-coverage-comment-action
           path: python-coverage-comment-action.txt
 
+  integration_tests_rhel7:
+    needs: unit_tests
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        slurm-version: ["22.05.8"]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run integration tests
+        run: |
+          tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o 8
+
   integration_tests_rhel8:
     needs: unit_tests
     runs-on: ubuntu-20.04
