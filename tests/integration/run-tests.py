@@ -67,16 +67,16 @@ def remove_logs():
     """
     Delete Slurm-Mail log files
     """
-    if spool_log.is_file():
+    if spool_log is not None and spool_log.is_file():
         logging.debug("deleting: %s", spool_log)
         os.unlink(spool_log)
     else:
         logging.debug("%s does not exist", spool_log)
-    if send_log.is_file():
+    if send_log is not None and send_log.is_file():
         logging.debug("deleting: %s", send_log)
         os.unlink(send_log)
     else:
-        logging.debug("deleting %s does not exist", send_log)
+        logging.debug("%s does not exist", send_log)
 
 
 def wait_for_job():
