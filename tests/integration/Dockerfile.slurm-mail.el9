@@ -1,6 +1,6 @@
 ARG SLURM_VER
 
-FROM ghcr.io/neilmunday/rocky9-slurm:$SLURM_VER
+FROM ghcr.io/neilmunday/slurm-mail/slurm-el9:$SLURM_VER
 
 ARG SMTP_SERVER=localhost
 ARG SMTP_PORT=25
