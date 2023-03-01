@@ -50,7 +50,7 @@ docker run -h slurm-mail-buildhost -d --name ${NAME} ${NAME}
 docker cp $tmp_file ${NAME}:$tmp_file
 rm -f $tmp_file
 docker exec ${NAME} /bin/bash -c "cd /root/slurm-mail && tar xvf $tmp_file"
-docker exec ${NAME} /bin/bash -c "/root/slurm-mail/build-tools/build-deb.sh check"
+docker exec ${NAME} /bin/bash -c "/root/slurm-mail/build-tools/build-deb.sh -o ub20 -c"
 pkg=`docker exec ${NAME} /bin/bash -c "ls -1 /tmp/slurm-mail*.deb"`
 docker cp ${NAME}:$pkg .
 

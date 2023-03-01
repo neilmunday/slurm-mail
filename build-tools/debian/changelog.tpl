@@ -1,4 +1,4 @@
-slurm-mail ($VERSION-ubuntu1) $DISTRIBUTION; urgency=low
+slurm-mail ($VERSION$OS_VERSION-ubuntu1) $DISTRIBUTION; urgency=low
 
   * New release
 

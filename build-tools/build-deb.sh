@@ -29,6 +29,37 @@ set -e
 
 source $DIR/common.sh
 
+function usage {
+  echo "Usage: $0 -o OS_VERSION" 1>&2
+  echo "  -c                   check the package is ok"
+  echo "  -o                   OS version, e.g. ub22"
+  exit 0
+}
+
+CHECK=0
+
+while getopts "o:c" options; do
+  case "${options}" in
+    c)
+      CHECK=1
+      ;;
+    o)
+      OS_VER=${OPTARG}
+      ;;
+    :)
+      echo "Error: -${OPTARG} requires a value"
+      usage
+      ;;
+    *)
+      usage
+      ;;
+  esac
+done
+
+if [ -z $OS_VER ]; then
+  usage
+fi
+
 VERSION=`$DIR/get-property.py version`
 
 TAR_FILE=$($DIR/create-tar.sh)
@@ -52,6 +83,7 @@ CHANGELOG_DATE=`date -R`
 
 sed -i "s#\$DISTRIBUTION#$DISTRIBUTION#" debian/changelog
 sed -i "s#\$DATE#$CHANGELOG_DATE#" debian/changelog
+sed -i "s#\$OS_VERSION#$OS_VER#" debian/changelog
 
 dpkg-buildpackage
 
@@ -59,6 +91,6 @@ package=`ls -1 $BUILD_DIR/*.deb`
 cp $package /tmp/
 ls -l /tmp/*.deb
 
-if [ ! -z $1 ] && [ $1 == "check" ]; then
+if [ $CHECK -eq 1 ]; then
   $DIR/check-deb.sh $package
 fi

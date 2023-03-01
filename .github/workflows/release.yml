@@ -59,10 +59,10 @@ jobs:
             ls -1 build-tools/OpenSUSE_15/slurm-mail*.rpm
           )" >> $GITHUB_ENV
           echo "UBUNTU20_DEB=$(
-            ls -1 build-tools/Ubuntu_20.04/slurm-mail*.deb
+            ls -1 build-tools/Ubuntu_20.04/slurm-mail*ub20*.deb
           )" >> $GITHUB_ENV
           echo "UBUNTU22_DEB=$(
-            ls -1 build-tools/Ubuntu_22.04/slurm-mail*.deb
+            ls -1 build-tools/Ubuntu_22.04/slurm-mail*ub22*.deb
           )" >> $GITHUB_ENV
       - name: Create md5sum for OpenSUSE 15 RPM
         run: md5sum ${{env.OPENSUSE15_RPM}} > ${{env.OPENSUSE15_RPM}}.md5sum
