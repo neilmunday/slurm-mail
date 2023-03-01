@@ -82,7 +82,7 @@ jobs:
 
   build_rhel7:
     needs: unit_tests
-    permisions:
+    permissions:
       contents: read
     runs-on: ubuntu-20.04
     steps:
