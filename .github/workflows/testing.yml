@@ -101,6 +101,27 @@ jobs:
           name: rhel7_pkg
           path: ${{env.RHEL7_RPM}}
 
+    build_rhel8:
+    needs: unit_tests
+    permissions:
+      contents: read
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Create RHEL 8 RPM
+        run: build-tools/RedHat_8/build.sh
+      - name: Get package name
+        id: pkg_paths
+        run: |
+          echo "RHEL8_RPM=$(
+            ls -1 build-tools/RedHat_8/slurm-mail*.rpm
+          )" >> $GITHUB_ENV
+      - name: Store RHEL 8 RPM
+        uses: actions/upload-artifact@v3
+        with:
+          name: rhel8_pkg
+          path: ${{env.RHEL8_RPM}}
+
   integration_tests_rhel7:
     needs: build_rhel7
     permissions:
@@ -131,7 +152,7 @@ jobs:
     permissions:
       contents: read
       packages: read
-    needs: unit_tests
+    needs: build_rhel8
     runs-on: ubuntu-20.04
     strategy:
       matrix:
@@ -144,9 +165,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        id: download
+        with:
+          name: 'rhel8_pkg'
+          path: tests/integration/
       - name: Run integration tests
         run: |
-          tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o el8
+          tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o el8 -r
 
   integration_tests_rhel9:
       needs: unit_tests
