@@ -101,7 +101,7 @@ jobs:
           name: rhel7_pkg
           path: ${{env.RHEL7_RPM}}
 
-    build_rhel8:
+  build_rhel8:
     needs: unit_tests
     permissions:
       contents: read
