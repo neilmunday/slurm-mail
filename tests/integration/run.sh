@@ -111,27 +111,27 @@ fi
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-NAME="slurm-mail-el${OS}-${SLURM_VER}"
+NAME="slurm-mail-${OS}-${SLURM_VER}"
 
 if [ $USE_RPM -eq 0 ]; then
   cd $DIR
-  rm -f ./*.el${OS}.noarch.rpm
+  rm -f ./*.${OS}.noarch.rpm
 
-  cd ../../build-tools/RedHat_${OS}
-  rm -f ./.el${OS}.noarch.rpm
+  cd ../../build-tools/${OS}
+  rm -f ./.${OS}.noarch.rpm
   ./build.sh
   mv ./*.rpm $DIR/
 fi
 
 cd $DIR
-RPM=`ls -1 slurm-mail*.el${OS}.noarch.rpm`
+RPM=`ls -1 slurm-mail*.${OS}.noarch.rpm`
 
 docker build \
   --build-arg DISABLE_CRON=1 \
   --build-arg SLURM_MAIL_RPM=${RPM} \
   --build-arg SLURM_VER=${SLURM_VER} \
   -t neilmunday/slurm-mail:${SLURM_VER} \
-  -f Dockerfile.slurm-mail.el${OS} .
+  -f Dockerfile.slurm-mail.${OS} .
 
 docker run -d -h compute --name $NAME neilmunday/slurm-mail:${SLURM_VER}
 

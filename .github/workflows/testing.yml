@@ -99,7 +99,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Run integration tests
         run: |
-          tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o 7
+          tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o el7
 
   integration_tests_rhel8:
     permissions:
@@ -120,7 +120,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Run integration tests
         run: |
-          tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o 8
+          tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o el8
 
   integration_tests_rhel9:
       needs: unit_tests
@@ -141,4 +141,4 @@ jobs:
         - uses: actions/checkout@v3
         - name: Run integration tests
           run: |
-            tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o 9
+            tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o el9
