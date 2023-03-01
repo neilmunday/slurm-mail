@@ -122,7 +122,7 @@ jobs:
         id: download
         with:
           name: 'rhel7_pkg'
-          path: tests/integration/{{ rhel7_pkg }}
+          path: tests/integration/
       - name: Run integration tests
         run: |
           tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o el7 -r
