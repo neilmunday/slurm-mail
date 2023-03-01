@@ -90,7 +90,7 @@ jobs:
       - name: Create RHEL 7 RPM
         run: build-tools/RedHat_7/build.sh
       - name: Get package name
-        id: pkg_paths
+        id: pkg_path
         run: |
           echo "RHEL7_RPM=$(
             ls -1 build-tools/RedHat_7/slurm-mail*.rpm
@@ -111,7 +111,7 @@ jobs:
       - name: Create RHEL 8 RPM
         run: build-tools/RedHat_8/build.sh
       - name: Get package name
-        id: pkg_paths
+        id: pkg_path
         run: |
           echo "RHEL8_RPM=$(
             ls -1 build-tools/RedHat_8/slurm-mail*.rpm
@@ -121,6 +121,27 @@ jobs:
         with:
           name: rhel8_pkg
           path: ${{env.RHEL8_RPM}}
+
+  build_rhel9:
+    needs: unit_tests
+    permissions:
+      contents: read
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Create RHEL 9 RPM
+        run: build-tools/RedHat_9/build.sh
+      - name: Get package name
+        id: pkg_path
+        run: |
+          echo "RHEL9_RPM=$(
+            ls -1 build-tools/RedHat_9/slurm-mail*.rpm
+          )" >> $GITHUB_ENV
+      - name: Store RHEL 9 RPM
+        uses: actions/upload-artifact@v3
+        with:
+          name: rhel9_pkg
+          path: ${{env.RHEL9_RPM}}
 
   integration_tests_rhel7:
     needs: build_rhel7
@@ -140,7 +161,6 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
-        id: download
         with:
           name: 'rhel7_pkg'
           path: tests/integration/
@@ -166,7 +186,6 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
-        id: download
         with:
           name: 'rhel8_pkg'
           path: tests/integration/
@@ -175,7 +194,7 @@ jobs:
           tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o el8 -r
 
   integration_tests_rhel9:
-      needs: unit_tests
+      needs: build_rhel9
       permissions:
         contents: read
         packages: read
@@ -191,6 +210,10 @@ jobs:
             username: ${{ github.actor }}
             password: ${{ secrets.GITHUB_TOKEN }}
         - uses: actions/checkout@v3
+        - uses: actions/download-artifact@v3
+          with:
+            name: 'rhel8_pkg'
+            path: tests/integration/
         - name: Run integration tests
           run: |
-            tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o el9
+            tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o el9 -r
