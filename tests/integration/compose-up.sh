@@ -70,7 +70,7 @@ if [ $USE_RPM -eq 0 ]; then
 fi
 
 cd $DIR
-RPM=`ls -1 slurm-mail*.rpm`
+RPM=`ls -1 slurm-mail*.el8.noarch.rpm`
 
 docker compose build --build-arg SLURM_VER=$SLURM_VER --build-arg SLURM_MAIL_RPM=$RPM
 docker compose up
