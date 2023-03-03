@@ -8,13 +8,20 @@ function die {
   exit 1
 }
 
+mkdir -p /var/run/mysqld
+chown mysql. /var/run/mysqld
+chown munge. /var/log/munge
+chown munge. /var/lib/munge
+mkdir -p /var/run/munge
+chown munge. /var/run/munge
+
 /usr/bin/supervisord --configuration /etc/supervisord.conf
 
 supervisorctl start mysqld
 
 for i in `seq 1 60`; do
-  if [ -e /var/lib/mysql/mysql.sock ]; then
-    echo "mysqld started"
+  if [ -e /var/lib/mysql/mysql.sock ] || [ -e /run/mysql/mysql.sock ]; then
+    # echo "mysqld started"
     break
   fi
   sleep 1
@@ -47,4 +54,3 @@ supervisorctl start slurmd || die "slurmd failed to start" /var/log/slurm/slurmd
 sinfo
 
 exec $@
-
