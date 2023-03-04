@@ -43,7 +43,7 @@ function usage {
   echo "Usage: $0 -s SLURM_VERSION [-k] [-m] [-r] [-t TEST_NAME] [-v]" 1>&2
   echo "  -k                   keep the test container upon failure"
   echo "  -m                   show e-mail log"
-  echo "  -o                   RedHat OS to use"
+  echo "  -o                   OS and version to use"
   echo "  -r                   don't build slurm-mail RPM - use existing file"
   echo "  -s SLURM_VERSION     version of Slurm to test against"
   echo "  -t TEST_NAME         only run this named test"
