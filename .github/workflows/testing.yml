@@ -143,6 +143,27 @@ jobs:
           name: rhel9_pkg
           path: ${{env.RHEL9_RPM}}
 
+  build_suse15:
+    needs: unit_tests
+    permissions:
+      contents: read
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Create SUSE 15 RPM
+        run: build-tools/OpenSUSE_15/build.sh
+      - name: Get package name
+        id: pkg_path
+        run: |
+          echo "SUSE15_RPM=$(
+            ls -1 build-tools/OpenSUSE_15/slurm-mail*.rpm
+          )" >> $GITHUB_ENV
+      - name: Store SUSE 15 RPM
+        uses: actions/upload-artifact@v3
+        with:
+          name: suse15_pkg
+          path: ${{env.SUSE15_RPM}}
+
   integration_tests_rhel7:
     needs: build_rhel7
     permissions:
@@ -169,10 +190,10 @@ jobs:
           tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o el7 -r
 
   integration_tests_rhel8:
+    needs: build_rhel8
     permissions:
       contents: read
       packages: read
-    needs: build_rhel8
     runs-on: ubuntu-20.04
     strategy:
       matrix:
@@ -194,26 +215,51 @@ jobs:
           tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o el8 -r
 
   integration_tests_rhel9:
-      needs: build_rhel9
-      permissions:
-        contents: read
-        packages: read
-      runs-on: ubuntu-20.04
-      strategy:
-        matrix:
-          slurm-version: ["22.05.8"]
-      steps:
-        - name: Log in to the container registry
-          uses: docker/login-action@v2
-          with:
-            registry: ghcr.io
-            username: ${{ github.actor }}
-            password: ${{ secrets.GITHUB_TOKEN }}
-        - uses: actions/checkout@v3
-        - uses: actions/download-artifact@v3
-          with:
-            name: 'rhel9_pkg'
-            path: tests/integration/
-        - name: Run integration tests
-          run: |
-            tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o el9 -r
+    needs: build_rhel9
+    permissions:
+      contents: read
+      packages: read
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        slurm-version: ["22.05.8"]
+    steps:
+      - name: Log in to the container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: 'rhel9_pkg'
+          path: tests/integration/
+      - name: Run integration tests
+        run: |
+          tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o el9 -r
+
+  integration_tests_suse15:
+    needs: build_suse15
+    permissions:
+      contents: read
+      packages: read
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        slurm-version: ["22.05.8"]
+    steps:
+      - name: Log in to the container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: 'suse15_pkg'
+          path: tests/integration/
+      - name: Run integration tests
+        run: |
+          tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o sl15 -r
