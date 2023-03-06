@@ -1,0 +1,65 @@
+FROM ubuntu:22.04
+
+LABEL org.opencontainers.image.source="https://github.com/neilmunday/slurm-mail" \
+      org.opencontainers.image.description="An Ubuntu 22 Slurm container intended for testing Slurm-Mail" \
+      org.opencontainers.image.title="ubuntu22-slurm" \
+      maintainer="Neil Munday"
+
+ARG SLURM_VER=23.02.0
+
+RUN apt-get update
+
+RUN ln -fs /usr/share/zoneinfo/Europe/London /etc/localtime
+
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    bsd-mailx \
+    bzip2 \
+    gcc \
+    libmariadb-dev \
+    libmunge-dev \
+    lsb-release \
+    make \
+    mariadb-client \
+    mariadb-server \
+    munge \
+    perl \
+    python3 \
+    python3-all \
+    supervisor \
+    tar \
+    tini \
+    wget && \
+    mkdir -p /etc/slurm && \
+    wget https://download.schedmd.com/slurm/slurm-${SLURM_VER}.tar.bz2 -O /root/slurm-${SLURM_VER}.tar.bz2 && \
+    cd /root && \
+    tar xvf slurm-${SLURM_VER}.tar.bz2 && \
+    cd slurm-${SLURM_VER} && \
+    ./configure --sysconfdir=/etc/slurm --prefix=/usr && \
+    make && \
+    make install && \
+    groupadd -r slurm && \
+    useradd -r -g slurm -d /var/empty/slurm -m -s /bin/bash slurm && \
+    groupadd test && \
+    useradd -g test -d /home/test -m test && \
+    install -d -o slurm -g slurm /etc/slurm /var/spool/slurm /var/log/slurm && \
+    apt-get remove -y \
+        gcc \
+        libmariadb-dev \
+        libmunge-dev && \
+    apt-get clean && \
+    rm -rfv /root/slurm*
+
+COPY supervisord.conf /etc/
+COPY --chown=slurm slurm.*.conf /etc/slurm/
+COPY --chown=slurm slurmdbd.conf /etc/slurm/
+COPY --chown=root entrypoint.sh /usr/local/sbin/
+
+RUN MAJOR_VER=`echo ${SLURM_VER} | egrep -o "^[0-9]+"` && \
+  mv /etc/slurm/slurm.${MAJOR_VER}.conf /etc/slurm/slurm.conf && \
+  rm -f /etc/slurm/slurm.*.conf
+
+RUN /usr/bin/mysql_install_db --user=mysql
+
+ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/sbin/entrypoint.sh"]
+
+CMD ["/usr/bin/tail", "-f", "/dev/null"]

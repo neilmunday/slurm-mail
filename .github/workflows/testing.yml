@@ -164,6 +164,48 @@ jobs:
           name: suse15_pkg
           path: ${{env.SUSE15_RPM}}
 
+  build_ubuntu20:
+    needs: unit_tests
+    permissions:
+      contents: read
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Create Ubuntu 20
+        run: build-tools/Ubuntu_20.04/build.sh
+      - name: Get package name
+        id: pkg_path
+        run: |
+          echo "UBUNTU20_PKG=$(
+            ls -1 build-tools/Ubuntu_20.04/slurm-mail*.deb
+          )" >> $GITHUB_ENV
+      - name: Store Ubuntu 20 package
+        uses: actions/upload-artifact@v3
+        with:
+          name: ubuntu20_pkg
+          path: ${{env.UBUNTU20_PKG}}
+
+  build_ubuntu22:
+    needs: unit_tests
+    permissions:
+      contents: read
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Create Ubuntu 22
+        run: build-tools/Ubuntu_22.04/build.sh
+      - name: Get package name
+        id: pkg_path
+        run: |
+          echo "UBUNTU22_PKG=$(
+            ls -1 build-tools/Ubuntu_22.04/slurm-mail*.deb
+          )" >> $GITHUB_ENV
+      - name: Store Ubuntu 22 package
+        uses: actions/upload-artifact@v3
+        with:
+          name: ubuntu22_pkg
+          path: ${{env.UBUNTU22_PKG}}
+
   integration_tests_rhel7:
     needs: build_rhel7
     permissions:
@@ -187,7 +229,7 @@ jobs:
           path: tests/integration/
       - name: Run integration tests
         run: |
-          tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o el7 -r
+          tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o el7 -p
 
   integration_tests_rhel8:
     needs: build_rhel8
@@ -212,7 +254,7 @@ jobs:
           path: tests/integration/
       - name: Run integration tests
         run: |
-          tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o el8 -r
+          tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o el8 -p
 
   integration_tests_rhel9:
     needs: build_rhel9
@@ -237,7 +279,7 @@ jobs:
           path: tests/integration/
       - name: Run integration tests
         run: |
-          tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o el9 -r
+          tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o el9 -p
 
   integration_tests_suse15:
     needs: build_suse15
@@ -262,4 +304,54 @@ jobs:
           path: tests/integration/
       - name: Run integration tests
         run: |
-          tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o sl15 -r
+          tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o sl15 -p
+
+  integration_tests_ubuntu20:
+    needs: build_ubuntu20
+    permissions:
+      contents: read
+      packages: read
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        slurm-version: ["21.08.8-2", "22.05.8", "23.02.0"]
+    steps:
+      - name: Log in to the container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: 'ubuntu20_pkg'
+          path: tests/integration/
+      - name: Run integration tests
+        run: |
+          tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o ub20 -p
+
+  integration_tests_ubuntu22:
+    needs: build_ubuntu22
+    permissions:
+      contents: read
+      packages: read
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        slurm-version: ["21.08.8-2", "22.05.8", "23.02.0"]
+    steps:
+      - name: Log in to the container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: 'ubuntu22_pkg'
+          path: tests/integration/
+      - name: Run integration tests
+        run: |
+          tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o ub22 -p
