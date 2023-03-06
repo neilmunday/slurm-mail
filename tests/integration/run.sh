@@ -44,7 +44,7 @@ function usage {
   echo "  -k                   keep the test container upon failure"
   echo "  -m                   show e-mail log"
   echo "  -o                   OS and version to use"
-  echo "  -r                   don't build slurm-mail RPM - use existing file"
+  echo "  -p                   don't build slurm-mail package - use existing file"
   echo "  -s SLURM_VERSION     version of Slurm to test against"
   echo "  -t TEST_NAME         only run this named test"
   echo "  -v                   turn on debugging"
@@ -56,10 +56,10 @@ trap 'catch $? $LINENO' EXIT
 
 KEEP_CONTAINER=0
 MAIL_LOG=0
-USE_RPM=0
+USE_PKG=0
 VERBOSE=0
 
-while getopts ":kmo:s:rt:v" options; do
+while getopts ":kmo:s:pt:v" options; do
   case "${options}" in
     k)
       KEEP_CONTAINER=1
@@ -67,11 +67,11 @@ while getopts ":kmo:s:rt:v" options; do
     m)
       MAIL_LOG=1
       ;;
-    r)
-      USE_RPM=1
-      ;;
     o)
       OS=${OPTARG}
+      ;;
+    p)
+      USE_PKG=1
       ;;
     s)
       SLURM_VER=${OPTARG}
@@ -109,26 +109,32 @@ if [ $MAIL_LOG -eq 1 ]; then
   OPTS="$OPTS -m"
 fi
 
+if [[ $OS == ub* ]]; then
+  PKG_EXT=".deb"
+else
+  PKG_EXT=".rpm"
+fi
+
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 NAME="slurm-mail-${OS}-${SLURM_VER}"
 
-if [ $USE_RPM -eq 0 ]; then
+if [ $USE_PKG -eq 0 ]; then
   cd $DIR
-  rm -f ./*.${OS}.noarch.rpm
+  rm -f ./slurm-mail*${OS}*${PKG_EXT}
 
   cd ../../build-tools/${OS}
-  rm -f ./.${OS}.noarch.rpm
+  rm -f ./slurm-mail*${OS}*${PKG_EXT}
   ./build.sh
-  mv ./*.rpm $DIR/
+  mv ./slurm-mail*${PKG_EXT} $DIR/
 fi
 
 cd $DIR
-RPM=`ls -1 slurm-mail*.${OS}.noarch.rpm`
+PKG=`ls -1 slurm-mail*${OS}*${PKG_EXT}`
 
 docker build \
   --build-arg DISABLE_CRON=1 \
-  --build-arg SLURM_MAIL_RPM=${RPM} \
+  --build-arg SLURM_MAIL_PKG=${PKG} \
   --build-arg SLURM_VER=${SLURM_VER} \
   -t neilmunday/slurm-mail:${SLURM_VER} \
   -f Dockerfile.slurm-mail.${OS} .
