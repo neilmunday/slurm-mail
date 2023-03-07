@@ -107,13 +107,13 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: tar_file
-          path: ${{env.TAR_PATH}}
+          path: ${{env.TAR_NAME}}
           if-no-files-found: error
       - name: Store tar file md5sum
         uses: actions/upload-artifact@v3
         with:
           name: tar_file
-          path: ${{env.TAR_PATH}}.md5sum
+          path: ${{env.TAR_NAME}}.md5sum
           if-no-files-found: error
 
   build_rhel7:
