@@ -479,7 +479,7 @@ jobs:
           path: downloads
       - uses: actions/download-artifact@v3
         with:
-          name: 'suse_15_pkg'
+          name: 'suse15_pkg'
           path: downloads
       - uses: actions/download-artifact@v3
         with:
