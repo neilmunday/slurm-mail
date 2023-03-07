@@ -19,6 +19,8 @@ on:
       - 'tests/integration/run.sh'
       - 'tests/integration/tests.yml'
       - 'tests/unit/*.py'
+    tags:
+      - "v*"
   workflow_dispatch:
 
 jobs:
@@ -445,3 +447,50 @@ jobs:
       - name: Run integration tests
         run: |
           tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o ub22 -p
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [
+      integration_tests_rhel7,
+      integration_tests_rhel8,
+      integration_tests_rhel9,
+      integration_tests_suse15,
+      integration_tests_ubuntu20,
+      integration_tests_ubuntu22
+    ]
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: create download directory
+        run: |
+          mkdir downloads
+      - uses: actions/download-artifact@v3
+        with:
+          name: 'rhel7_pkg'
+          path: downloads
+      - uses: actions/download-artifact@v3
+        with:
+          name: 'rhel8_pkg'
+          path: downloads
+      - uses: actions/download-artifact@v3
+        with:
+          name: 'rhel9_pkg'
+          path: downloads
+      - uses: actions/download-artifact@v3
+        with:
+          name: 'suse_15_pkg'
+          path: downloads
+      - uses: actions/download-artifact@v3
+        with:
+          name: 'ubuntu20_pkg'
+          path: downloads
+      - uses: actions/download-artifact@v3
+        with:
+          name: 'ubuntu22_pkg'
+          path: downloads
+      - name: GH Release
+        uses: softprops/action-gh-release@v0.1.15
+        with:
+          files: downloads/*
