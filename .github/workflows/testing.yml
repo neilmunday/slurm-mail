@@ -263,7 +263,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: ubuntu20_pkg
-          path: ${{UBUNTU20_PKG}}.md5sum
+          path: ${{env.UBUNTU20_PKG}}.md5sum
           if-no-files-found: error
 
   build_ubuntu22:
