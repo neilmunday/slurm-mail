@@ -19,8 +19,6 @@ on:
       - 'tests/integration/run.sh'
       - 'tests/integration/tests.yml'
       - 'tests/unit/*.py'
-    tags:
-      - "v*"
   workflow_dispatch:
 
 jobs:
