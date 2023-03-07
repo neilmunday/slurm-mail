@@ -293,7 +293,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: ubuntu22_pkg
-          path: ${{UBUNTU22_PKG}}.md5sum
+          path: ${{env.UBUNTU22_PKG}}.md5sum
           if-no-files-found: error
 
   integration_tests_rhel7:
