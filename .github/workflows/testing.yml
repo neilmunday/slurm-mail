@@ -80,6 +80,42 @@ jobs:
           name: python-coverage-comment-action
           path: python-coverage-comment-action.txt
 
+  build_tar:
+    needs: unit_tests
+    permissions:
+      contents: read
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Create tar
+        id: create_tar
+        run: |
+          echo "TAR_PATH=$(
+            build-tools/create-tar.sh
+          )" >> $GITHUB_ENV
+      - name: Get tar file name
+        id: tar_name
+        run: |
+          echo "TAR_NAME=$(
+            basename ${{env.TAR_PATH}}
+          )" >> $GITHUB_ENV
+      - name: Move tar file
+        run: mv -v ${{env.TAR_PATH}} ./
+      - name: Create md5sum for tar file
+        run: md5sum ${{env.TAR_NAME}} | awk '{ print $1}' > ${{env.TAR_NAME}}.md5sum
+      - name: Store tar file
+        uses: actions/upload-artifact@v3
+        if-no-files-found: error
+        with:
+          name: tar_file
+          path: ${{env.TAR_PATH}}
+      - name: Store tar file md5sum
+        uses: actions/upload-artifact@v3
+        if-no-files-found: error
+        with:
+          name: tar_file
+          path: ${{env.TAR_PATH}}.md5sum
+
   build_rhel7:
     needs: unit_tests
     permissions:
@@ -95,11 +131,20 @@ jobs:
           echo "RHEL7_RPM=$(
             ls -1 build-tools/RedHat_7/slurm-mail*.rpm
           )" >> $GITHUB_ENV
+      - name: Create md5sum for RHEL 7 RPM
+        run: md5sum ${{env.RHEL7_RPM}} > ${{env.RHEL7_RPM}}.md5sum
       - name: Store RHEL 7 RPM
         uses: actions/upload-artifact@v3
+        if-no-files-found: error
         with:
           name: rhel7_pkg
           path: ${{env.RHEL7_RPM}}
+      - name: Store RHEL 7 RPM md5sum
+        uses: actions/upload-artifact@v3
+        if-no-files-found: error
+        with:
+          name: rhel7_pkg
+          path: ${{env.RHEL7_RPM}}.md5sum
 
   build_rhel8:
     needs: unit_tests
@@ -116,11 +161,20 @@ jobs:
           echo "RHEL8_RPM=$(
             ls -1 build-tools/RedHat_8/slurm-mail*.rpm
           )" >> $GITHUB_ENV
+      - name: Create md5sum for RHEL 8 RPM
+        run: md5sum ${{env.RHEL8_RPM}} > ${{env.RHEL8_RPM}}.md5sum
       - name: Store RHEL 8 RPM
         uses: actions/upload-artifact@v3
+        if-no-files-found: error
         with:
           name: rhel8_pkg
           path: ${{env.RHEL8_RPM}}
+      - name: Store RHEL 8 RPM md5sum
+        uses: actions/upload-artifact@v3
+        if-no-files-found: error
+        with:
+          name: rhel8_pkg
+          path: ${{env.RHEL8_RPM}}.md5sum
 
   build_rhel9:
     needs: unit_tests
@@ -137,11 +191,20 @@ jobs:
           echo "RHEL9_RPM=$(
             ls -1 build-tools/RedHat_9/slurm-mail*.rpm
           )" >> $GITHUB_ENV
+      - name: Create md5sum for RHEL 9 RPM
+        run: md5sum ${{env.RHEL9_RPM}} > ${{env.RHEL9_RPM}}.md5sum
       - name: Store RHEL 9 RPM
         uses: actions/upload-artifact@v3
+        if-no-files-found: error
         with:
           name: rhel9_pkg
           path: ${{env.RHEL9_RPM}}
+      - name: Store RHEL 9 RPM md5sum
+        uses: actions/upload-artifact@v3
+        if-no-files-found: error
+        with:
+          name: rhel9_pkg
+          path: ${{env.RHEL9_RPM}}.md5sum
 
   build_suse15:
     needs: unit_tests
@@ -158,11 +221,20 @@ jobs:
           echo "SUSE15_RPM=$(
             ls -1 build-tools/OpenSUSE_15/slurm-mail*.rpm
           )" >> $GITHUB_ENV
+      - name: Create md5sum for SUSE 15 RPM
+        run: md5sum ${{env.SUSE15_RPM}} > ${{env.SUSE15_RPM}}.md5sum
       - name: Store SUSE 15 RPM
         uses: actions/upload-artifact@v3
+        if-no-files-found: error
         with:
           name: suse15_pkg
           path: ${{env.SUSE15_RPM}}
+      - name: Store SUSE 15 RPM md5sum
+        uses: actions/upload-artifact@v3
+        if-no-files-found: error
+        with:
+          name: suse15_pkg
+          path: ${{env.SUSE15_RPM}}.md5sum
 
   build_ubuntu20:
     needs: unit_tests
@@ -179,11 +251,20 @@ jobs:
           echo "UBUNTU20_PKG=$(
             ls -1 build-tools/Ubuntu_20.04/slurm-mail*.deb
           )" >> $GITHUB_ENV
+      - name: Create md5sum for Ubuntu 20 package
+        run: md5sum ${{env.UBUNTU20_PKG}} > ${{env.UBUNTU20_PKG}}.md5sum
       - name: Store Ubuntu 20 package
         uses: actions/upload-artifact@v3
+        if-no-files-found: error
         with:
           name: ubuntu20_pkg
           path: ${{env.UBUNTU20_PKG}}
+      - name: Store Ubuntu 20 package md5sum
+        uses: actions/upload-artifact@v3
+        if-no-files-found: error
+        with:
+          name: ubuntu20_pkg
+          path: ${{UBUNTU20_PKG}}.md5sum
 
   build_ubuntu22:
     needs: unit_tests
@@ -200,11 +281,20 @@ jobs:
           echo "UBUNTU22_PKG=$(
             ls -1 build-tools/Ubuntu_22.04/slurm-mail*.deb
           )" >> $GITHUB_ENV
+      - name: Create md5sum for Ubuntu 22 package
+        run: md5sum ${{env.UBUNTU22_PKG}} > ${{env.UBUNTU22_PKG}}.md5sum
       - name: Store Ubuntu 22 package
         uses: actions/upload-artifact@v3
+        if-no-files-found: error
         with:
           name: ubuntu22_pkg
           path: ${{env.UBUNTU22_PKG}}
+      - name: Store Ubuntu 22 package md5sum
+        uses: actions/upload-artifact@v3
+        if-no-files-found: error
+        with:
+          name: ubuntu20_pkg
+          path: ${{UBUNTU20_PKG}}.md5sum
 
   integration_tests_rhel7:
     needs: build_rhel7
