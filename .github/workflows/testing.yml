@@ -449,6 +449,7 @@ jobs:
   release:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: [
+      build_tar,
       integration_tests_rhel7,
       integration_tests_rhel8,
       integration_tests_rhel9,
