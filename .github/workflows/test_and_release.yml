@@ -1,0 +1,495 @@
+name: "test and release"
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/testing.yml'
+      - 'setup.py'
+      - 'src/slurmmail/*.py'
+      - 'tests/integration/*.py'
+      - 'tests/integration/run.sh'
+      - 'tests/integration/tests.yml'
+      - 'tests/unit/*.py'
+  push:
+    paths:
+      - '.github/workflows/testing.yml'
+      - 'setup.py'
+      - 'src/slurmmail/*.py'
+      - 'tests/integration/*.py'
+      - 'tests/integration/run.sh'
+      - 'tests/integration/tests.yml'
+      - 'tests/unit/*.py'
+  workflow_dispatch:
+
+jobs:
+  unit_tests:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10"]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install mock
+          pip install pytest
+          pip install pytest-cov
+          pip install typing-extensions
+
+      - name: Run unit tests
+        env:
+          COVERAGE_FILE: ".coverage.${{ matrix.python_version }}"
+        run: |
+          pytest -v
+
+      - name: Store coverage file
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage
+          path: .coverage.${{ matrix.python_version }}
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    needs: unit_tests
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/download-artifact@v3
+        id: download
+        with:
+          name: 'coverage'
+
+      - name: Coverage comment
+        id: coverage_comment
+        uses: py-cov-action/python-coverage-comment-action@v3
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MERGE_COVERAGE_FILES: true
+
+      - name: Store Pull Request comment to be posted
+        uses: actions/upload-artifact@v3
+        if: steps.coverage_comment.outputs.COMMENT_FILE_WRITTEN == 'true'
+        with:
+          name: python-coverage-comment-action
+          path: python-coverage-comment-action.txt
+
+  build_tar:
+    needs: unit_tests
+    permissions:
+      contents: read
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Create tar
+        id: create_tar
+        run: |
+          echo "TAR_PATH=$(
+            build-tools/create-tar.sh
+          )" >> $GITHUB_ENV
+      - name: Get tar file name
+        id: tar_name
+        run: |
+          echo "TAR_NAME=$(
+            basename ${{env.TAR_PATH}}
+          )" >> $GITHUB_ENV
+      - name: Move tar file
+        run: mv -v ${{env.TAR_PATH}} ./
+      - name: Create md5sum for tar file
+        run: md5sum ${{env.TAR_NAME}} | awk '{ print $1}' > ${{env.TAR_NAME}}.md5sum
+      - name: Store tar file
+        uses: actions/upload-artifact@v3
+        with:
+          name: tar_file
+          path: ${{env.TAR_NAME}}
+          if-no-files-found: error
+      - name: Store tar file md5sum
+        uses: actions/upload-artifact@v3
+        with:
+          name: tar_file
+          path: ${{env.TAR_NAME}}.md5sum
+          if-no-files-found: error
+
+  build_rhel7:
+    needs: unit_tests
+    permissions:
+      contents: read
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Create RHEL 7 RPM
+        run: build-tools/RedHat_7/build.sh
+      - name: Get package name
+        id: pkg_path
+        run: |
+          echo "RHEL7_RPM=$(
+            ls -1 build-tools/RedHat_7/slurm-mail*.rpm
+          )" >> $GITHUB_ENV
+      - name: Create md5sum for RHEL 7 RPM
+        run: md5sum ${{env.RHEL7_RPM}} > ${{env.RHEL7_RPM}}.md5sum
+      - name: Store RHEL 7 RPM
+        uses: actions/upload-artifact@v3
+        with:
+          name: rhel7_pkg
+          path: ${{env.RHEL7_RPM}}
+          if-no-files-found: error
+      - name: Store RHEL 7 RPM md5sum
+        uses: actions/upload-artifact@v3
+        with:
+          name: rhel7_pkg
+          path: ${{env.RHEL7_RPM}}.md5sum
+          if-no-files-found: error
+
+  build_rhel8:
+    needs: unit_tests
+    permissions:
+      contents: read
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Create RHEL 8 RPM
+        run: build-tools/RedHat_8/build.sh
+      - name: Get package name
+        id: pkg_path
+        run: |
+          echo "RHEL8_RPM=$(
+            ls -1 build-tools/RedHat_8/slurm-mail*.rpm
+          )" >> $GITHUB_ENV
+      - name: Create md5sum for RHEL 8 RPM
+        run: md5sum ${{env.RHEL8_RPM}} > ${{env.RHEL8_RPM}}.md5sum
+      - name: Store RHEL 8 RPM
+        uses: actions/upload-artifact@v3
+        with:
+          name: rhel8_pkg
+          path: ${{env.RHEL8_RPM}}
+          if-no-files-found: error
+      - name: Store RHEL 8 RPM md5sum
+        uses: actions/upload-artifact@v3
+        with:
+          name: rhel8_pkg
+          path: ${{env.RHEL8_RPM}}.md5sum
+          if-no-files-found: error
+
+  build_rhel9:
+    needs: unit_tests
+    permissions:
+      contents: read
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Create RHEL 9 RPM
+        run: build-tools/RedHat_9/build.sh
+      - name: Get package name
+        id: pkg_path
+        run: |
+          echo "RHEL9_RPM=$(
+            ls -1 build-tools/RedHat_9/slurm-mail*.rpm
+          )" >> $GITHUB_ENV
+      - name: Create md5sum for RHEL 9 RPM
+        run: md5sum ${{env.RHEL9_RPM}} > ${{env.RHEL9_RPM}}.md5sum
+      - name: Store RHEL 9 RPM
+        uses: actions/upload-artifact@v3
+        with:
+          name: rhel9_pkg
+          path: ${{env.RHEL9_RPM}}
+          if-no-files-found: error
+      - name: Store RHEL 9 RPM md5sum
+        uses: actions/upload-artifact@v3
+        with:
+          name: rhel9_pkg
+          path: ${{env.RHEL9_RPM}}.md5sum
+          if-no-files-found: error
+
+  build_suse15:
+    needs: unit_tests
+    permissions:
+      contents: read
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Create SUSE 15 RPM
+        run: build-tools/OpenSUSE_15/build.sh
+      - name: Get package name
+        id: pkg_path
+        run: |
+          echo "SUSE15_RPM=$(
+            ls -1 build-tools/OpenSUSE_15/slurm-mail*.rpm
+          )" >> $GITHUB_ENV
+      - name: Create md5sum for SUSE 15 RPM
+        run: md5sum ${{env.SUSE15_RPM}} > ${{env.SUSE15_RPM}}.md5sum
+      - name: Store SUSE 15 RPM
+        uses: actions/upload-artifact@v3
+        with:
+          name: suse15_pkg
+          path: ${{env.SUSE15_RPM}}
+          if-no-files-found: error
+      - name: Store SUSE 15 RPM md5sum
+        uses: actions/upload-artifact@v3
+        with:
+          name: suse15_pkg
+          path: ${{env.SUSE15_RPM}}.md5sum
+          if-no-files-found: error
+
+  build_ubuntu20:
+    needs: unit_tests
+    permissions:
+      contents: read
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Create Ubuntu 20
+        run: build-tools/Ubuntu_20.04/build.sh
+      - name: Get package name
+        id: pkg_path
+        run: |
+          echo "UBUNTU20_PKG=$(
+            ls -1 build-tools/Ubuntu_20.04/slurm-mail*.deb
+          )" >> $GITHUB_ENV
+      - name: Create md5sum for Ubuntu 20 package
+        run: md5sum ${{env.UBUNTU20_PKG}} > ${{env.UBUNTU20_PKG}}.md5sum
+      - name: Store Ubuntu 20 package
+        uses: actions/upload-artifact@v3
+        with:
+          name: ubuntu20_pkg
+          path: ${{env.UBUNTU20_PKG}}
+          if-no-files-found: error
+      - name: Store Ubuntu 20 package md5sum
+        uses: actions/upload-artifact@v3
+        with:
+          name: ubuntu20_pkg
+          path: ${{env.UBUNTU20_PKG}}.md5sum
+          if-no-files-found: error
+
+  build_ubuntu22:
+    needs: unit_tests
+    permissions:
+      contents: read
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Create Ubuntu 22
+        run: build-tools/Ubuntu_22.04/build.sh
+      - name: Get package name
+        id: pkg_path
+        run: |
+          echo "UBUNTU22_PKG=$(
+            ls -1 build-tools/Ubuntu_22.04/slurm-mail*.deb
+          )" >> $GITHUB_ENV
+      - name: Create md5sum for Ubuntu 22 package
+        run: md5sum ${{env.UBUNTU22_PKG}} > ${{env.UBUNTU22_PKG}}.md5sum
+      - name: Store Ubuntu 22 package
+        uses: actions/upload-artifact@v3
+        with:
+          name: ubuntu22_pkg
+          path: ${{env.UBUNTU22_PKG}}
+          if-no-files-found: error
+      - name: Store Ubuntu 22 package md5sum
+        uses: actions/upload-artifact@v3
+        with:
+          name: ubuntu22_pkg
+          path: ${{env.UBUNTU22_PKG}}.md5sum
+          if-no-files-found: error
+
+  integration_tests_rhel7:
+    needs: build_rhel7
+    permissions:
+      contents: read
+      packages: read
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        slurm-version: ["21.08.8-2", "22.05.8", "23.02.0"]
+    steps:
+      - name: Log in to the container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: 'rhel7_pkg'
+          path: tests/integration/
+      - name: Run integration tests
+        run: |
+          tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o el7 -p
+
+  integration_tests_rhel8:
+    needs: build_rhel8
+    permissions:
+      contents: read
+      packages: read
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        slurm-version: ["21.08.8-2", "22.05.8", "23.02.0"]
+    steps:
+      - name: Log in to the container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: 'rhel8_pkg'
+          path: tests/integration/
+      - name: Run integration tests
+        run: |
+          tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o el8 -p
+
+  integration_tests_rhel9:
+    needs: build_rhel9
+    permissions:
+      contents: read
+      packages: read
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        slurm-version: ["22.05.8", "23.02.0"]
+    steps:
+      - name: Log in to the container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: 'rhel9_pkg'
+          path: tests/integration/
+      - name: Run integration tests
+        run: |
+          tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o el9 -p
+
+  integration_tests_suse15:
+    needs: build_suse15
+    permissions:
+      contents: read
+      packages: read
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        slurm-version: ["21.08.8-2", "22.05.8", "23.02.0"]
+    steps:
+      - name: Log in to the container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: 'suse15_pkg'
+          path: tests/integration/
+      - name: Run integration tests
+        run: |
+          tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o sl15 -p
+
+  integration_tests_ubuntu20:
+    needs: build_ubuntu20
+    permissions:
+      contents: read
+      packages: read
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        slurm-version: ["21.08.8-2", "22.05.8", "23.02.0"]
+    steps:
+      - name: Log in to the container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: 'ubuntu20_pkg'
+          path: tests/integration/
+      - name: Run integration tests
+        run: |
+          tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o ub20 -p
+
+  integration_tests_ubuntu22:
+    needs: build_ubuntu22
+    permissions:
+      contents: read
+      packages: read
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        slurm-version: ["21.08.8-2", "22.05.8", "23.02.0"]
+    steps:
+      - name: Log in to the container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: 'ubuntu22_pkg'
+          path: tests/integration/
+      - name: Run integration tests
+        run: |
+          tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o ub22 -p
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [
+      build_tar,
+      integration_tests_rhel7,
+      integration_tests_rhel8,
+      integration_tests_rhel9,
+      integration_tests_suse15,
+      integration_tests_ubuntu20,
+      integration_tests_ubuntu22
+    ]
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: create download directory
+        run: |
+          mkdir downloads
+      - uses: actions/download-artifact@v3
+        with:
+          name: 'rhel7_pkg'
+          path: downloads
+      - uses: actions/download-artifact@v3
+        with:
+          name: 'rhel8_pkg'
+          path: downloads
+      - uses: actions/download-artifact@v3
+        with:
+          name: 'rhel9_pkg'
+          path: downloads
+      - uses: actions/download-artifact@v3
+        with:
+          name: 'suse_15_pkg'
+          path: downloads
+      - uses: actions/download-artifact@v3
+        with:
+          name: 'ubuntu20_pkg'
+          path: downloads
+      - uses: actions/download-artifact@v3
+        with:
+          name: 'ubuntu22_pkg'
+          path: downloads
+      - name: GH Release
+        uses: softprops/action-gh-release@v0.1.15
+        with:
+          files: downloads/*

@@ -80,9 +80,9 @@ slurm-mail/build-tools/build-rpm.sh
 
 The RPM will be written to `~/rpmbuild/RPMS/noarch`.
 
-### Ubuntu 22
+### Ubuntu 20 and 22
 
-A pre-built Ubuntu 22 package is provided at [releases](https://github.com/neilmunday/slurm-mail/releases).
+Pre-built Ubuntu 20 and 22 packages are provided at [releases](https://github.com/neilmunday/slurm-mail/releases).
 
 For other Debian variants you can create a package for your OS like so:
 
@@ -93,6 +93,13 @@ slurm-mail/build-tools/build-deb.sh
 ```
 
 At the end of the execution the location of the built package will be written to stdout.
+
+To install the generated package for example:
+
+```bash
+apt-get install -y cron logrotate python3 slurm-client
+dpkg --force-all -i /tmp/slurm-mail_4.3-ubuntu1_all.deb
+```
 
 ### From source (as root)
 

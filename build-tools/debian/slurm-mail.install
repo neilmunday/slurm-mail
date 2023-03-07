@@ -1,0 +1,2 @@
+etc/cron.d/slurm-mail /etc/cron.d/
+etc/logrotate.d/slurm-mail /etc/logrotate.d/

@@ -1,0 +1,35 @@
+ARG SLURM_VER
+
+FROM ghcr.io/neilmunday/slurm-mail/slurm-el9:$SLURM_VER
+
+ARG SMTP_SERVER=localhost
+ARG SMTP_PORT=25
+ARG DISABLE_CRON=0
+ARG SLURM_MAIL_PKG
+
+RUN dnf install -y chrony cronie python3 python3-pip python3-pyyaml && \
+    pip3 install aiosmtpd && \
+    mkdir -p /root/testing/output && \
+    sed -i "s#MailProg=/usr/bin/mailx#MailProg=/usr/bin/slurm-spool-mail#" /etc/slurm/slurm.conf && \
+    echo "alias ll='ls -l'" >> /root/.bashrc
+
+COPY supervisord.conf /etc/supervisord.conf
+
+COPY mail-server.py /usr/local/sbin/
+
+RUN chmod 0700 /usr/local/sbin/mail-server.py
+
+COPY run-tests.py tests.yml /root/testing/
+
+COPY $SLURM_MAIL_PKG /root/
+
+RUN dnf localinstall -y /root/$SLURM_MAIL_PKG && \
+    sed -i "s/includeOutputLines = 0/includeOutputLines = 20/" /etc/slurm-mail/slurm-mail.conf && \
+    sed -i "s/verbose = false/verbose = true/" /etc/slurm-mail/slurm-mail.conf && \
+    sed -i "s/smtpServer = localhost/smtpServer = $SMTP_SERVER/" /etc/slurm-mail/slurm-mail.conf && \
+    sed -i "s/smtpPort = 25/smtpPort = $SMTP_PORT/" /etc/slurm-mail/slurm-mail.conf && \
+    rm -f /root/$SLURM_MAIL_PKG
+
+RUN if [ "$DISABLE_CRON" = 1 ]; then rm /etc/cron.d/slurm-mail; fi
+
+CMD ["tail -f /dev/null"]

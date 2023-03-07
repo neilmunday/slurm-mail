@@ -1,5 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
+#
 #  This file is part of Slurm-Mail.
 #
 #  Slurm-Mail is a drop in replacement for Slurm's e-mails to give users
@@ -24,53 +25,46 @@
 
 set -e
 
-function usage {
-  echo "Usage: $0 -s SLURM_VERSION [-r]" 1>&2
-  echo "  -r                   don't build slurm-mail RPM - use existing file"
-  echo "  -s SLURM_VERSION     version of Slurm to test against"
-  exit 0
-}
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/common.sh
 
-USE_RPM=0
 
-while getopts ":s:r" options; do
-  case "${options}" in
-    r)
-      USE_RPM=1
-      ;;
-    s)
-      SLURM_VER=${OPTARG}
-      ;;
-    :)
-      echo "Error: -${OPTARG} requires a value"
-      usage
-      ;;
-    *)
-      usage
-      ;;
-  esac
+if [ -z $1 ]; then
+    die "package not specified"
+fi
+
+pkg=$1
+
+echo "will check: $pkg"
+check_file $pkg
+
+echo "installing..."
+apt-get install -y $pkg
+
+# check files were installed
+echo "checking files were installed..."
+cd $DIR
+cd ..
+
+allOk=0
+
+files=$(find ./etc/ -type f | sed 's/^\.//')
+files="
+${files} \
+/usr/bin/slurm-send-mail \
+/usr/bin/slurm-spool-mail
+"
+
+for f in $files; do
+    echo -n "checking: $f -> "
+    if [ -f "$f" ]; then
+        echo "OK"
+    else
+        echo "MISSING"
+        allOk=1
+    fi
 done
 
-if [ -z $SLURM_VER ]; then
-  usage
+if [ $allOk -eq 1 ]; then
+    die "One or more files were missing!"
 fi
-
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-NAME="slurm-mail-${SLURM_VER}"
-
-if [ $USE_RPM -eq 0 ]; then
-  cd $DIR
-  rm -f ./*.rpm
-
-  cd ../../build-tools/RedHat_8
-  rm -f ./*.rpm
-  ./build.sh
-  mv ./*.rpm $DIR/
-fi
-
-cd $DIR
-RPM=`ls -1 slurm-mail*.el8.noarch.rpm`
-
-docker compose build --build-arg SLURM_VER=$SLURM_VER --build-arg SLURM_MAIL_RPM=$RPM
-docker compose up

@@ -1,5 +1,6 @@
 #!/bin/bash
 
+#
 #  This file is part of Slurm-Mail.
 #
 #  Slurm-Mail is a drop in replacement for Slurm's e-mails to give users
@@ -22,55 +23,37 @@
 #  along with Slurm-Mail.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-set -e
-
-function usage {
-  echo "Usage: $0 -s SLURM_VERSION [-r]" 1>&2
-  echo "  -r                   don't build slurm-mail RPM - use existing file"
-  echo "  -s SLURM_VERSION     version of Slurm to test against"
-  exit 0
+function catch {
+    if [ "$1" != "0" ]; then
+        tidyup $NAME
+    fi
 }
 
-USE_RPM=0
-
-while getopts ":s:r" options; do
-  case "${options}" in
-    r)
-      USE_RPM=1
-      ;;
-    s)
-      SLURM_VER=${OPTARG}
-      ;;
-    :)
-      echo "Error: -${OPTARG} requires a value"
-      usage
-      ;;
-    *)
-      usage
-      ;;
-  esac
-done
-
-if [ -z $SLURM_VER ]; then
-  usage
-fi
+set -e
+trap 'catch $? $LINENO' EXIT
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-NAME="slurm-mail-${SLURM_VER}"
-
-if [ $USE_RPM -eq 0 ]; then
-  cd $DIR
-  rm -f ./*.rpm
-
-  cd ../../build-tools/RedHat_8
-  rm -f ./*.rpm
-  ./build.sh
-  mv ./*.rpm $DIR/
-fi
+NAME="slurm-mail-builder-ubuntu20.04-${RANDOM}"
 
 cd $DIR
-RPM=`ls -1 slurm-mail*.el8.noarch.rpm`
+source ../common.sh
 
-docker compose build --build-arg SLURM_VER=$SLURM_VER --build-arg SLURM_MAIL_RPM=$RPM
-docker compose up
+rm -f ./slurm-mail*.deb
+
+docker build -t ${NAME}:latest .
+
+tmp_file=`mktemp /tmp/XXXXXX.tar.gz`
+echo "Temporary tar file: $tmp_file"
+tar cvfz $tmp_file ../../*
+
+docker run -h slurm-mail-buildhost -d --name ${NAME} ${NAME}
+docker cp $tmp_file ${NAME}:$tmp_file
+rm -f $tmp_file
+docker exec ${NAME} /bin/bash -c "cd /root/slurm-mail && tar xvf $tmp_file"
+docker exec ${NAME} /bin/bash -c "/root/slurm-mail/build-tools/build-deb.sh -o ub20 -c"
+pkg=`docker exec ${NAME} /bin/bash -c "ls -1 /tmp/slurm-mail*.deb"`
+docker cp ${NAME}:$pkg .
+
+echo "Created: "`ls -1 slurm-mail*.deb`
+
+tidyup ${NAME}

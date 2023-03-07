@@ -25,23 +25,25 @@
 
 function check_dir {
   if [ ! -d $1 ]; then
-    echo "$1 does not exist or is not a directory"
-    exit 1
+    die "$1 does not exist or is not a directory"
   fi
 }
 
 function check_file {
   if [ ! -f $1 ]; then
-    echo "$1 does not exist"
-    exit 1
+    die "$1 does not exist"
   fi
 }
 
 function check_exe {
   if ! command -v $1 > /dev/null 2>&1 ; then
-    echo "$1 is not installed"
-    exit 1
+    die "$1 is not installed"
   fi
+}
+
+function die {
+  echo $1
+  exit 1
 }
 
 function tidyup {

@@ -1,6 +1,7 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
 
 set -e
 
-mkdir -p /var/log/slurm-mail
-chown slurm. /var/log/slurm-mail
+mkdir -p /var/log/slurm-mail /var/spool/slurm-mail
+chown slurm. /var/log/slurm-mail /var/spool/slurm-mail
+chmod 700 /var/spool/slurm-mail

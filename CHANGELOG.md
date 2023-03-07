@@ -1,6 +1,17 @@
 Change Log
 ==========
 
+Version 4.3
+-----------
+
+Date: 2023-03-07
+
+* Added support for Ubuntu 20.04.
+* Fixed Ubuntu package creation (issues #72 and #73).
+* Added support for Slurm 23.02.0 (issue #76)
+* Added integration tests for RHEL 7, 9, SUSE 15, Ubuntu 20 and 22
+* Combined release and testing workflows
+
 Version 4.2
 -----------
 

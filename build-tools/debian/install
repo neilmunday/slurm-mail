@@ -1,3 +1,0 @@
-README.md /usr/share/doc/slurm-mail/README.md
-etc/cron.d/slurm-mail /etc/cron.d/slurm-mail
-etc/logrotate.d/slurm-mail /etc/logrotate.d/slurm-mail

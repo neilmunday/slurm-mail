@@ -8,6 +8,6 @@ Build-Depends: python3
 
 Package: slurm-mail
 Architecture: all
-Depends: cron, logrotate, python3, slurm-client
+Depends: cron, logrotate, ${misc:Depends}, python3, ${python3:Depends}, slurm-client
 Description: $DESCRIPTION
   $LONG_DESCRIPTION

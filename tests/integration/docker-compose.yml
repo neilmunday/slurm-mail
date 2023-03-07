@@ -6,7 +6,7 @@ services:
         DISABLE_CRON: 0
         SMTP_PORT: "1025"
         SMTP_SERVER: "mailhog"
-      dockerfile: Dockerfile.slurm-mail
+      dockerfile: Dockerfile.slurm-mail.el8
     container_name: slurm-mail
     image: slurm-mail
   mailhog:
