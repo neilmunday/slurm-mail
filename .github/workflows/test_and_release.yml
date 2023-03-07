@@ -483,6 +483,10 @@ jobs:
           path: downloads
       - uses: actions/download-artifact@v3
         with:
+          name: 'tar_file'
+          path: downloads
+      - uses: actions/download-artifact@v3
+        with:
           name: 'ubuntu20_pkg'
           path: downloads
       - uses: actions/download-artifact@v3
