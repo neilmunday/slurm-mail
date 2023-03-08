@@ -117,9 +117,9 @@ if __name__ == "__main__":
 
     for docker_file in docker_files:
         logging.info("patching %s", docker_file)
-        with fileinput.FileInput(str(docker_file), True) as f:
+        with fileinput.FileInput(files=(docker_file), inplace=True) as input_file:
             search_str = f"ARG SLURM_VER={current_version}\n"
-            for line in f:
+            for line in input_file:
                 if line == search_str:
                     print(f"ARG SLURM_VER={latest_version}", end="\n")
                 else:
