@@ -109,12 +109,14 @@ jobs:
           name: tar_file
           path: ${{env.TAR_NAME}}
           if-no-files-found: error
+          retention-days: 5
       - name: Store tar file md5sum
         uses: actions/upload-artifact@v3
         with:
           name: tar_file
           path: ${{env.TAR_NAME}}.md5sum
           if-no-files-found: error
+          retention-days: 5
 
   build_rhel7:
     needs: unit_tests
@@ -139,12 +141,14 @@ jobs:
           name: rhel7_pkg
           path: ${{env.RHEL7_RPM}}
           if-no-files-found: error
+          retention-days: 5
       - name: Store RHEL 7 RPM md5sum
         uses: actions/upload-artifact@v3
         with:
           name: rhel7_pkg
           path: ${{env.RHEL7_RPM}}.md5sum
           if-no-files-found: error
+          retention-days: 5
 
   build_rhel8:
     needs: unit_tests
@@ -169,12 +173,14 @@ jobs:
           name: rhel8_pkg
           path: ${{env.RHEL8_RPM}}
           if-no-files-found: error
+          retention-days: 5
       - name: Store RHEL 8 RPM md5sum
         uses: actions/upload-artifact@v3
         with:
           name: rhel8_pkg
           path: ${{env.RHEL8_RPM}}.md5sum
           if-no-files-found: error
+          retention-days: 5
 
   build_rhel9:
     needs: unit_tests
@@ -199,12 +205,14 @@ jobs:
           name: rhel9_pkg
           path: ${{env.RHEL9_RPM}}
           if-no-files-found: error
+          retention-days: 5
       - name: Store RHEL 9 RPM md5sum
         uses: actions/upload-artifact@v3
         with:
           name: rhel9_pkg
           path: ${{env.RHEL9_RPM}}.md5sum
           if-no-files-found: error
+          retention-days: 5
 
   build_suse15:
     needs: unit_tests
@@ -229,12 +237,14 @@ jobs:
           name: suse15_pkg
           path: ${{env.SUSE15_RPM}}
           if-no-files-found: error
+          retention-days: 5
       - name: Store SUSE 15 RPM md5sum
         uses: actions/upload-artifact@v3
         with:
           name: suse15_pkg
           path: ${{env.SUSE15_RPM}}.md5sum
           if-no-files-found: error
+          retention-days: 5
 
   build_ubuntu20:
     needs: unit_tests
@@ -259,12 +269,14 @@ jobs:
           name: ubuntu20_pkg
           path: ${{env.UBUNTU20_PKG}}
           if-no-files-found: error
+          retention-days: 5
       - name: Store Ubuntu 20 package md5sum
         uses: actions/upload-artifact@v3
         with:
           name: ubuntu20_pkg
           path: ${{env.UBUNTU20_PKG}}.md5sum
           if-no-files-found: error
+          retention-days: 5
 
   build_ubuntu22:
     needs: unit_tests
@@ -289,12 +301,14 @@ jobs:
           name: ubuntu22_pkg
           path: ${{env.UBUNTU22_PKG}}
           if-no-files-found: error
+          retention-days: 5
       - name: Store Ubuntu 22 package md5sum
         uses: actions/upload-artifact@v3
         with:
           name: ubuntu22_pkg
           path: ${{env.UBUNTU22_PKG}}.md5sum
           if-no-files-found: error
+          retention-days: 5
 
   integration_tests_rhel7:
     needs: build_rhel7
