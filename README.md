@@ -266,14 +266,14 @@ rm -rf /opt/slurm-mail
 
 Thank you to the following people who have contributed code improvements, features and aided the development of Slurm-Mail:
 
-* Dan Barker (@danbarke): https://www.github.com/danbarke
-* David Murray (@dajamu): https://www.github.com/dajamu
-* drhey (@drhey): https://www.github.com/drhey
-* hakasapl (@hakasapl): https://www.github.com/hakasapl
-* Jan-Christoph Klie (@jcklie): https://github.com/jcklie
-* langefa (@langefa): https://github.com/langefa
-* rzegson (@rzegson): https://github.com/rzegson
-* Mehran Khodabandeh (@mkhodabandeh): https://www.github.com/mkhodabandeh
-* sdx23 (@sdx23): https://www.github.com/sdx23
-* Simon Feltman (@sfeltman): https://www.github.com/sfeltman
-* Woody Chang (@jitkang): https://github.com/jitkang
+* [Dan Barker (@danbarke)](https://www.github.com/danbarke)
+* [David Murray (@dajamu)](https://www.github.com/dajamu)
+* [drhey (@drhey)](https://www.github.com/drhey)
+* [hakasapl (@hakasapl)](https://www.github.com/hakasapl)
+* [Jan-Christoph Klie (@jcklie)](https://github.com/jcklie)
+* [langefa (@langefa)](https://github.com/langefa)
+* [rzegson (@rzegson)](https://github.com/rzegson)
+* [Mehran Khodabandeh (@mkhodabandeh)](https://www.github.com/mkhodabandeh)
+* [sdx23 (@sdx23)](https://www.github.com/sdx23)
+* [Simon Feltman (@sfeltman)](https://www.github.com/sfeltman)
+* [Woody Chang (@jitkang)](https://github.com/jitkang)
