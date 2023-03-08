@@ -144,4 +144,14 @@ docker run -d -h compute --name $NAME neilmunday/slurm-mail:${SLURM_VER}
 docker exec $NAME /bin/bash -c \
   "/root/testing/run-tests.py -i /root/testing/tests.yml -o /root/testing/output $OPTS"
 
+if [ $PKG_EXT == ".rpm" ]; then
+  if [ $OS == "el7 "]; then
+    docker exec $NAME /bin/bash "-c yum erase -y slurm-mail"
+  else
+    docker exec $NAME /bin/bash "-c dnf erase -y slurm-mail"
+  fi
+elif [ $PKG_EXT == ".deb" ]; then
+  docker exec $NAME /bin/bash -c "apt remove -y slurm-mail"
+fi
+
 tidyup $NAME
