@@ -146,9 +146,9 @@ docker exec $NAME /bin/bash -c \
 
 if [ $PKG_EXT == ".rpm" ]; then
   if [ $OS == "el7 " ]; then
-    docker exec $NAME /bin/bash "-c yum erase -y slurm-mail"
+    docker exec $NAME /bin/bash -c "yum erase -y slurm-mail"
   else
-    docker exec $NAME /bin/bash "-c dnf erase -y slurm-mail"
+    docker exec $NAME /bin/bash -c "dnf erase -y slurm-mail"
   fi
 elif [ $PKG_EXT == ".deb" ]; then
   docker exec $NAME /bin/bash -c "apt remove -y slurm-mail"
