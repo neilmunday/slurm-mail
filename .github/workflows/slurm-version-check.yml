@@ -34,7 +34,7 @@ jobs:
             echo "latest_version=${latest_version}" >> $GITHUB_OUTPUT
             if [ $(gh pr list --search "slurm $latest_version }} in:title" | wc -l) -eq 0 ]; then
               echo "no existing PR"
-              if [ $(git branch -l | grep "slurm $latest_version" | wc -l) -eq 0 ]; then
+              if [ $(git branch -r | grep "slurm_${latest_version}" | wc -l) -eq 0 ]; then
                 echo "no existing branch"
                 proceed=1
               fi
@@ -51,7 +51,7 @@ jobs:
       - name: create branch for new Slurm version
         if: steps.check.outputs.proceed == '1'
         run: |
-          git checkout -b "${{ steps.check.outputs.latest_version }}"
+          git checkout -b "slurm_${{ steps.check.outputs.latest_version }}"
       - name: update Slurm version in Docker files to latest
         if: steps.check.outputs.proceed == '1'
         run: |
@@ -60,7 +60,7 @@ jobs:
         if: steps.check.outputs.proceed == '1'
         run: |
           git commit -a -m "Update SLURM version to ${{ steps.check.outputs.latest_version }}"
-          git push --set-upstream origin "${{ steps.check.outputs.latest_version }}"
+          git push --set-upstream origin "slurm_${{ steps.check.outputs.latest_version }}"
       - name: create pull request
         if: steps.check.outputs.proceed == '1'
         env:
