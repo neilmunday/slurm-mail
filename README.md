@@ -20,7 +20,8 @@ Repository: https://github.com/neilmunday/slurm-mail
 9. [Job Arrays](#job-arrays)
 10. [Testing](#testing)
 11. [Upgrading from Slurm-Mail version 3 to 4](#upgrading-from-slurm-mail-version-3-to-4)
-12. [Contributors](#contributors)
+12. [Troubleshooting](#troubleshooting)
+13. [Contributors](#contributors)
 
 ## Introduction
 
@@ -146,6 +147,13 @@ smtpPassword = your_gmail_password
 
 > **_NOTE:_**  As this file will contain your Gmail password make sure that it has the correct owner, group and file access permissions.
 
+If your SMTP server does not require a login, leave `smtpUserName` and `smtpPassword` set to null, i.e.
+
+```
+smtpUserName =
+smtpPassword =
+```
+
 For SMTP servers that use SSL rather than starttls please set `smtpUseSsl = yes`.
 
 ## Customising E-mails
@@ -261,6 +269,17 @@ systemctl restart slurmctld
 ```
 rm -rf /opt/slurm-mail
 ```
+
+## Troubleshooting
+
+1. Check that spool files are being created under: `/var/spool/slurm-mail`. If they are not, check:
+
+* `cron` is working
+* for invocation or `/usr/bin/slurm-spool-mail` in the `slurmctld` logs
+
+2. If spool files are being created but not purged please comment out `logFile` in the `[slurm-send-mail]` section in `/etc/slurm-mail/slurm-mail.conf` and run (as root): `/usr/bin/slurm-send-mail -v` at the console.
+
+3. If `/usr/bin/slurm-send-mail` is executing ok but you are not receiving e-mails, then check the mail logs on your server for any mail delivery errors.
 
 ## Contributors
 
