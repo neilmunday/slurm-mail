@@ -13,10 +13,10 @@ The images are name: `ghcr.io/neilmunday/slurm-mail/slurm-${OS_VERSION}`. E.g. `
 Use the `SLURM_VER` build argument to specify the Slurm version to build in the image, e.g.
 
 ```
-docker build --build-arg SLURM_VER=22.05.8 -f Dockerfile.el9 -t ghcr.io/neilmunday/slurm-mail/slurm-el9:22.05.8 -t ghcr.io/neilmunday/slurm-mail/slurm-el9:latest  .
+docker build --build-arg SLURM_VER=23.02.1 -f Dockerfile.el9 -t ghcr.io/neilmunday/slurm-mail/slurm-el9:23.02.1 -t ghcr.io/neilmunday/slurm-mail/slurm-el9:latest  .
 ```
 
-The default value is currently 22.05.8.
+The default value is currently 23.02.1.
 
 **Note:** The first release of a Slurm version does not require `-1` in the `SLURM_VER` value.
 
