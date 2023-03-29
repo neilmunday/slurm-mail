@@ -275,7 +275,7 @@ rm -rf /opt/slurm-mail
 1. Check that spool files are being created under: `/var/spool/slurm-mail`. If they are not, check:
 
 * `cron` is working
-* for invocation or `/usr/bin/slurm-spool-mail` in the `slurmctld` logs
+* for invocation of `/usr/bin/slurm-spool-mail` in the `slurmctld` logs
 
 2. If spool files are being created but not purged please comment out `logFile` in the `[slurm-send-mail]` section in `/etc/slurm-mail/slurm-mail.conf` and run (as root): `/usr/bin/slurm-send-mail -v` at the console.
 
