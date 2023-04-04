@@ -1,0 +1,32 @@
+name: "build docker Slurm images"
+
+on:
+  pull_request:
+    paths:
+      - 'tests/integration/docker-slurm/Dockerfile*'
+      - 'tests/integration/docker-slurm/*.conf'
+      - 'tests/integration/docker-slurm/entrypoint.sh'
+  push:
+    paths:
+      - 'tests/integration/docker-slurm/Dockerfile*'
+      - 'tests/integration/docker-slurm/*.conf'
+      - 'tests/integration/docker-slurm/entrypoint.sh'
+  workflow_dispatch:
+
+jobs:
+  unit_tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: ["el7", "el8", "el9", "sl15", "ub20", "ub22"]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Get Slurm version
+        id: get_slurm_version
+        run: |
+          slurm_version=$(cat tests/integration/docker-slurm/current_version)
+          echo "slurm_version=${slurm_version}" >> $GITHUB_OUTPUT
+      - name: Build Docker image for ${{ matrix.os }}
+        run: |
+          cd tests/integration/docker-slurm
+          docker build --build-arg SLURM_VER=${{ steps.get_slurm_version.outputs.slurm_version }} -f Dockerfile.${{ matrix.os }} -t ghcr.io/neilmunday/slurm-mail/slurm-${{ matrix.os }}:${{ steps.get_slurm_version.outputs.slurm_version }} -t ghcr.io/neilmunday/slurm-mail/slurm-${{ matrix.os }}:latest .
