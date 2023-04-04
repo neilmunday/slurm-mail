@@ -1,4 +1,4 @@
-name: "build docker Slurm images"
+name: "Build docker Slurm images"
 
 on:
   pull_request:
