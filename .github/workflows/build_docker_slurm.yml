@@ -40,6 +40,6 @@ jobs:
         run: |
           docker build --build-arg SLURM_VER=${{ steps.get_slurm_version.outputs.slurm_version }} -f Dockerfile.${{ matrix.os }} -t ghcr.io/neilmunday/slurm-mail/slurm-${{ matrix.os }}:${{ steps.get_slurm_version.outputs.slurm_version }} -t ghcr.io/neilmunday/slurm-mail/slurm-${{ matrix.os }}:latest .
       - name: Push Docker image ghcr.io/neilmunday/slurm-mail/slurm-${{ matrix.os }}:${{ steps.get_slurm_version.outputs.slurm_version }}
-        if: github.event.pull_request.merged == true
+        if: github.event_name == 'push'
         run: |
           docker push -a ghcr.io/neilmunday/slurm-mail/slurm-${{ matrix.os }}
