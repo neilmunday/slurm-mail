@@ -64,6 +64,7 @@ jobs:
       - name: create pull request
         if: steps.check.outputs.proceed == '1'
         env:
-          GH_TOKEN: ${{ github.token }}
+          # need to use a PAT otherwise other workflows will not run
+          GH_TOKEN: ${{ secrets.PRPAT }}
         run: |
           gh pr create -a neilmunday -f
