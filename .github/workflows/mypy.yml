@@ -30,6 +30,7 @@ jobs:
         pip install aiosmtpd
         pip install PyYAML
         pip install mypy
+        pip install pytest
         pip install requests
         pip install types-mock
         pip install typing-extensions
