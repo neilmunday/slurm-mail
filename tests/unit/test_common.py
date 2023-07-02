@@ -1,4 +1,4 @@
-# pylint: disable=line-too-long,missing-function-docstring,too-many-public-methods
+# pylint: disable=line-too-long,missing-function-docstring,redefined-outer-name,too-many-public-methods
 
 #
 #  This file is part of Slurm-Mail.
@@ -27,7 +27,6 @@
 Unit tests for slurmmail.common
 """
 import pathlib
-from unittest import TestCase
 from unittest.mock import mock_open
 
 import mock
@@ -50,56 +49,95 @@ from slurmmail.common import (
 DUMMY_PATH = pathlib.Path("/tmp")
 TAIL_EXE = "/usr/bin/tail"
 
-class CommonTestCase(TestCase):
+#
+# Fixtures
+#
+
+@pytest.fixture
+def mock_die():
+    with mock.patch("slurmmail.common.die") as the_mock:
+        yield the_mock
+
+@pytest.fixture
+def mock_os_system():
+    with mock.patch("os.system") as the_mock:
+        yield the_mock
+
+@pytest.fixture()
+def mock_path_exists():
+    with mock.patch("pathlib.Path.exists") as the_mock:
+        yield the_mock
+
+@pytest.fixture
+def mock_path_is_dir():
+    with mock.patch("pathlib.Path.is_dir") as the_mock:
+        yield the_mock
+
+@pytest.fixture
+def mock_path_is_file():
+    with mock.patch("pathlib.Path.is_file") as the_mock:
+        yield the_mock
+
+@pytest.fixture
+def mock_path_open():
+    with mock.patch("pathlib.Path.open", new_callable=mock_open, read_data="data") as the_mock:
+        yield the_mock
+
+@pytest.fixture
+def mock_path_unlink():
+    with mock.patch("pathlib.Path.unlink") as the_mock:
+        yield the_mock
+
+@pytest.fixture
+def mock_subprocess_popen():
+    with mock.patch("subprocess.Popen") as the_mock:
+        the_mock.return_value.__enter__.return_value = mock.MagicMock()
+        yield the_mock
+
+#
+# Test classes
+#
+
+class TestCommon:
     """
     Test slurmmail.common functions.
     """
 
-    @mock.patch("pathlib.Path.is_file")
-    def test_check_file(self, path_mock):
-        path_mock.return_value = False
+    def test_check_file(self, mock_path_is_file):
+        mock_path_is_file.return_value = False
         with pytest.raises(SystemExit):
             check_file(pathlib.Path("/foo/bar"))
 
-    @mock.patch("os.access")
-    @mock.patch("pathlib.Path.is_dir")
-    def test_check_dir_not_dir(self, pathlib_is_dir_mock, os_access_mock):
-        pathlib_is_dir_mock.return_value = False
+    def test_check_dir_not_dir(self, mock_path_is_dir, mock_os_access):
+        mock_path_is_dir.return_value = False
         with pytest.raises(SystemExit):
             check_dir(DUMMY_PATH)
-        os_access_mock.assert_not_called()
+        mock_os_access.assert_not_called()
 
-    @mock.patch("os.access")
-    @mock.patch("pathlib.Path.is_dir")
-    def test_check_dir_not_writeable(self, pathlib_is_dir_mock, os_access_mock):
-        pathlib_is_dir_mock.return_value = True
-        os_access_mock.return_value = False
+    def test_check_dir_not_writeable(self, mock_path_is_dir, mock_os_access):
+        mock_path_is_dir.return_value = True
+        mock_os_access.return_value = False
         with pytest.raises(SystemExit):
             check_dir(DUMMY_PATH)
 
-    @mock.patch("os.system")
-    @mock.patch("slurmmail.common.die")
-    @mock.patch("pathlib.Path.is_dir")
-    def test_check_dir_ok(self, pathlib_is_dir_mock, die_mock, os_system_mock):
-        pathlib_is_dir_mock.return_value = True
-        os_system_mock.return_value = True
+    def test_check_dir_ok(self, mock_path_is_dir, mock_die, mock_os_system):
+        mock_path_is_dir.return_value = True
+        mock_os_system.return_value = True
         check_dir(DUMMY_PATH)
-        die_mock.assert_not_called()
+        mock_die.assert_not_called()
 
-    @mock.patch("pathlib.Path.unlink")
-    def test_delete_file(self, path_mock):
+    def test_delete_file(self, mock_path_unlink):
         delete_spool_file(pathlib.Path("/foo/bar"))
-        path_mock.assert_called_once()
+        mock_path_unlink.assert_called_once()
 
     def test_die(self):
         with pytest.raises(SystemExit):
             die("testing")
 
-    @mock.patch("pathlib.Path.open", new_callable=mock_open, read_data="data")
-    def test_get_file_contents(self, open_mock):
+    def test_get_file_contents(self, mock_path_open):
         path = pathlib.Path("/tmp/test")
         rtn = get_file_contents(path)
-        open_mock.assert_called_once()
+        mock_path_open.assert_called_once()
         assert rtn == "data"
 
     def test_get_kbytes_from_str(self):
@@ -137,44 +175,33 @@ class CommonTestCase(TestCase):
         with pytest.raises(SystemExit):
             get_usec_from_str("2")
 
-    @mock.patch("subprocess.Popen")
-    def test_run_command(self, popen_mock):
+    def test_run_command(self, mock_subprocess_popen):
         stdout = "output"
-        stderr = "error"
-        process_mock = mock.Mock()
+        stderr = "stderr"
         attrs = {
             "communicate.return_value": (stdout.encode(), stderr.encode()),
             "returncode": 0,
         }
-        process_mock.configure_mock(**attrs)
-        popen_mock.return_value.__enter__.return_value = process_mock
+        mock_subprocess_popen.return_value.__enter__.return_value.configure_mock(**attrs)
         rtn, stdout_rslt, stderr_rslt = run_command(TAIL_EXE)
-        popen_mock.assert_called_once()
+        mock_subprocess_popen.assert_called_once()
         assert rtn == 0
         assert stdout_rslt == stdout
         assert stderr_rslt == stderr
 
-    @mock.patch("subprocess.Popen")
-    @mock.patch("pathlib.Path.exists")
-    def test_tail_file(self, path_exists_mock, popen_mock):
-        path_exists_mock.return_value = True
-        stdout = ""
-        for i in range(11):
-            stdout += f"line {i + 1}\n"
-        stderr = "error"
-        process_mock = mock.Mock()
+    def test_tail_file(self, mock_path_exists, mock_subprocess_popen):
+        mock_path_exists.return_value = True
+        stdout = "\n".join([f"line {i + 1}" for i in range(11)])
         attrs = {
-            "communicate.return_value": (stdout.encode(), stderr.encode()),
+            "communicate.return_value": (stdout.encode(), "error".encode()),
             "returncode": 0,
         }
-        process_mock.configure_mock(**attrs)
-        popen_mock.return_value.__enter__.return_value = process_mock
+        mock_subprocess_popen.return_value.__enter__.return_value.configure_mock(**attrs)
         rslt = tail_file(str(DUMMY_PATH), 10, pathlib.Path(TAIL_EXE))
         assert rslt == stdout
 
-    @mock.patch("pathlib.Path.exists")
-    def test_tail_file_not_exists(self, path_exists_mock):
-        path_exists_mock.return_value = False
+    def test_tail_file_not_exists(self, mock_path_exists):
+        mock_path_exists.return_value = False
         rslt = tail_file(str(DUMMY_PATH), 10, pathlib.Path(TAIL_EXE))
         assert rslt == f"slurm-mail: file {DUMMY_PATH} does not exist"
 
@@ -183,28 +210,21 @@ class CommonTestCase(TestCase):
             rslt = tail_file(str(DUMMY_PATH), lines, pathlib.Path(TAIL_EXE))
             assert rslt == f"slurm-mail: invalid number of lines to tail: {lines}"
 
-    @mock.patch("pathlib.Path.exists")
-    def test_tail_file_exception(self, path_exists_mock):
+    def test_tail_file_exception(self, mock_path_exists):
         err_msg = "Dummy Error"
-        path_exists_mock.return_value = True
-        path_exists_mock.side_effect = Exception(err_msg)
+        mock_path_exists.return_value = True
+        mock_path_exists.side_effect = Exception(err_msg)
         rslt = tail_file(str(DUMMY_PATH), 10, pathlib.Path(TAIL_EXE))
         assert rslt == f"Unable to return contents of file: {err_msg}"
 
-    @mock.patch("subprocess.Popen")
-    @mock.patch("pathlib.Path.exists")
-    def test_tail_file_exe_failed(self, path_exists_mock, popen_mock):
+    def test_tail_file_exe_failed(self, mock_path_exists, mock_subprocess_popen):
         lines = 10
-        path_exists_mock.return_value = True
-        stdout = "output"
-        stderr = "error"
-        process_mock = mock.Mock()
+        mock_path_exists.return_value = True
         attrs = {
-            "communicate.return_value": (stdout.encode(), stderr.encode()),
+            "communicate.return_value": ("output".encode(), "error".encode()),
             "returncode": 1,
         }
-        process_mock.configure_mock(**attrs)
-        popen_mock.return_value.__enter__.return_value = process_mock
+        mock_subprocess_popen.return_value.__enter__.return_value.configure_mock(**attrs)
         rslt = tail_file(str(DUMMY_PATH), lines, pathlib.Path(TAIL_EXE))
         assert (
             rslt
