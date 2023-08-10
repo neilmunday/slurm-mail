@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 4.5
+-----------
+
+Date: 2023-08-10
+
+* Removed required Slurm dependency For RHEL and Ubuntu packages (issue #92).
+
 Version 4.4
 -----------
 

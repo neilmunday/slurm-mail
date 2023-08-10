@@ -293,6 +293,7 @@ Thank you to the following people who have contributed code improvements, featur
 * [langefa (@langefa)](https://github.com/langefa)
 * [rzegson (@rzegson)](https://github.com/rzegson)
 * [Mehran Khodabandeh (@mkhodabandeh)](https://www.github.com/mkhodabandeh)
+* [Neil Prockter (@mrgum)](https://github.com/mrgum)
 * [sdx23 (@sdx23)](https://www.github.com/sdx23)
 * [Simon Feltman (@sfeltman)](https://www.github.com/sfeltman)
 * [Woody Chang (@jitkang)](https://github.com/jitkang)
