@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - '.github/workflows/test_and_release.yml'
+      - 'build-tools/*'
       - 'setup.py'
       - 'src/slurmmail/*.py'
       - 'tests/integration/*.py'
@@ -13,6 +14,7 @@ on:
   push:
     paths:
       - '.github/workflows/test_and_release.yml'
+      - 'build-tools/*'
       - 'setup.py'
       - 'src/slurmmail/*.py'
       - 'tests/integration/*.py'
