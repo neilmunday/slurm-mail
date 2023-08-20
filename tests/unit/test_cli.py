@@ -851,12 +851,14 @@ class TestProcessSpoolFile:
             assert mock_slurmmail_cli_run_command.call_count == 3
             mock_slurmmail_cli_delete_spool_file.assert_called_once()
             assert mock_smtp_sendmail.call_count == 2
+            # Note: call.args was added in Python 3.8 so we can't use it here.
             for call in mock_smtp_sendmail.mock_calls:
+                _, args, _ = call
                 assert (
-                    call.args[0]
+                    args[0]
                     == mock_slurmmail_cli_process_spool_file_options.email_from_address
                 )
-                assert call.args[1] == ["root"]
+                assert args[1] == ["root"]
 
     def test_job_ended_scontrol_failure(
         self,
