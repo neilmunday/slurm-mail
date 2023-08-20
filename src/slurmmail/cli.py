@@ -1,4 +1,4 @@
-# pylint: disable=invalid-name,broad-except,consider-using-f-string
+# pylint: disable=invalid-name,broad-except,consider-using-f-string,line-too-long
 
 #
 #  This file is part of Slurm-Mail.
@@ -810,7 +810,7 @@ def spool_mail_main():
                 r"Slurm"
                 r" Job_id=(?P<job_id>[0-9]+).*?(?P<state>(Began|Ended|Failed|Requeued|Invalid"  # noqa
                 r" dependency|Reached time limit|Reached (?P<limit>[0-9]+)% of time"
-                r" limit|Staged Out))",  # pylint: disable=line-too-long
+                r" limit|Staged Out))",
                 info,
             )
             if not match:

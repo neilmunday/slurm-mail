@@ -31,7 +31,7 @@ import configparser
 import pathlib
 from os import access
 import smtplib
-from typing import Any, Dict, Union
+from typing import Dict, Union
 from unittest.mock import MagicMock, mock_open, patch
 import sys
 
