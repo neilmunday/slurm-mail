@@ -32,7 +32,6 @@ jobs:
         pip install mypy
         pip install pytest
         pip install requests
-        pip install types-mock
         pip install typing-extensions
         pip install types-beautifulsoup4
         pip install types-requests
