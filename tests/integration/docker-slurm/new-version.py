@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# pylint: disable=invalid-name,missing-module-docstring
+# pylint: disable=duplicate-code,invalid-name,missing-module-docstring
 
 import argparse
 import fileinput
@@ -19,43 +19,36 @@ from slurmmail.common import check_file, die
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
+
 def format_date(the_date: datetime) -> str:
     """
     Returns a formatted date string.
     """
-    day_endings = {
-        1: 'st',
-        2: 'nd',
-        3: 'rd',
-        21: 'st',
-        22: 'nd',
-        23: 'rd',
-        31: 'st'
-    }
+    day_endings = {1: "st", 2: "nd", 3: "rd", 21: "st", 22: "nd", 23: "rd", 31: "st"}
 
     return the_date.strftime("%-d{ORD} %B %Y").replace(
         "{ORD}", day_endings.get(the_date.day, "th")
     )
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Checks for new Slurm version and updates repo files as required",
-        add_help=True
+        add_help=True,
     )
     parser.add_argument(
         "-c",
         "--check",
         help="Check for new version only",
         dest="check",
-        action="store_true"
+        action="store_true",
     )
     parser.add_argument(
         "-v",
         "--verbose",
         help="Turn on debug messages",
         dest="verbose",
-        action="store_true"
+        action="store_true",
     )
     args = parser.parse_args()
 
@@ -63,7 +56,7 @@ if __name__ == "__main__":
     if args.verbose:
         log_level = logging.DEBUG
 
-    logging.basicConfig(format='%(message)s', level=log_level)
+    logging.basicConfig(format="%(message)s", level=log_level)
 
     current_dir = pathlib.Path(__file__).parents[0]
     version_file = current_dir / "current_version"
@@ -75,14 +68,14 @@ if __name__ == "__main__":
     url = "https://schedmd.com/downloads.php"
     logging.debug("loading %s", url)
     reqs = requests.get(url, timeout=20)
-    soup = BeautifulSoup(reqs.text, 'html.parser')
+    soup = BeautifulSoup(reqs.text, "html.parser")
 
     download_re = re.compile(
         r"^https://download.schedmd.com/slurm/slurm-([0-9]+\.[0-9]+\.[0-9]+).tar.bz2$"
     )
     versions: List[str] = []
 
-    for link in soup.find_all('a'):
+    for link in soup.find_all("a"):
         link = link.get("href")
         match = download_re.match(link)
         if match:
@@ -108,7 +101,7 @@ if __name__ == "__main__":
             f.write(latest_version)
         sys.exit(0)
 
-    major_version = latest_version.split('.', 1)[0]
+    major_version = latest_version.split(".", 1)[0]
 
     conf_file = current_dir / f"slurm.{major_version}.conf"
     check_file(conf_file)

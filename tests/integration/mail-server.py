@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-# pylint: disable=broad-except,consider-using-f-string,duplicate-code
-# pylint: disable=invalid-name,redefined-outer-name
+# pylint: disable=broad-except,consider-using-f-string,duplicate-code,invalid-name,redefined-outer-name  # noqa
 
 #
 #  This file is part of Slurm-Mail.
@@ -78,8 +77,9 @@ class TestHandler:
 
 async def amain(loop, ip, port):
     """
-    Asyc main function.
+    Async main function.
     """
+    controller = None
     try:
         controller = aiosmtpd.controller.Controller(
             TestHandler(), hostname=ip, port=port
@@ -88,7 +88,8 @@ async def amain(loop, ip, port):
         logging.info("mail server listening on %s:%d", ip, port)
     except PermissionError as e:
         logging.error(e)
-        controller.stop()
+        if controller:
+            controller.stop()
         loop.stop()
 
 
