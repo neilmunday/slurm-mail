@@ -33,9 +33,9 @@ jobs:
         pip install PyYAML
         pip install requests
         pip install typing-extensions
-    - name: Analysing the code with pylint
+    - name: Analysing the code with pylint for Python 3.6
       run: |
-        pylint --disable=no-self-use $(git ls-files '*.py')
+        pylint --disable=duplicate-code,no-self-use $(git ls-files '*.py')
       if: ${{ matrix.python-version == '3.6' }}
     - name: Analysing the code with pylint
       run: |
