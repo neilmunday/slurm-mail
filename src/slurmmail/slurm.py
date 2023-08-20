@@ -1,4 +1,4 @@
-# pylint: disable=invalid-name,broad-except,line-too-long,consider-using-f-string,missing-function-docstring
+# pylint: disable=invalid-name,broad-except,consider-using-f-string,missing-function-docstring
 
 #
 #  This file is part of Slurm-Mail.
@@ -34,12 +34,13 @@ from typing import List, Optional
 
 from slurmmail.common import get_kbytes_from_str, get_str_from_kbytes
 
+
 def check_job_output_file_path(path: str) -> bool:
     """
     Check if the given path contains any Slurm filename
     characters that will not be expanded by scontrol.
     """
-    supported_values = ['%A', '%a', '%j', '%u', '%x']
+    supported_values = ["%A", "%a", "%j", "%u", "%x"]
     path_re = re.compile(r"(?P<sub>%[\w])")
     matches = path_re.findall(path)
     if matches is None or len(matches) == 0:
@@ -48,6 +49,7 @@ def check_job_output_file_path(path: str) -> bool:
         if match not in supported_values:
             return False
     return True
+
 
 class JobException(Exception):
     """
@@ -62,13 +64,16 @@ class JobException(Exception):
         """
         super().__init__(msg)
 
+
 class Job:
     # pylint: disable=too-many-instance-attributes
     """
     Helper object to store job data
     """
 
-    def __init__(self, datetime_format: str, job_id: int, array_id: Optional[int] = None):
+    def __init__(
+        self, datetime_format: str, job_id: int, array_id: Optional[int] = None
+    ):
         self.__cpus: Optional[int] = None
         self.__cpu_efficiency: Optional[float] = None
         self.__cpu_time_usec: Optional[int] = None
@@ -229,25 +234,23 @@ class Job:
         can be caclulated.
         """
         if self.cpus is None:
-            raise JobException(
-                "A job's CPU count must be set first"
-            )
+            raise JobException("A job's CPU count must be set first")
         if self.wallclock is None:
-            raise JobException(
-                "A job's wallclock must be set first"
-            )
+            raise JobException("A job's wallclock must be set first")
         if self.used_cpu_usec is None:
-            raise JobException(
-                "A job's used CPU time must be set first"
-            )
-        #self.__cpu_wallclock = self.__wallclock * self.cpus
+            raise JobException("A job's used CPU time must be set first")
+        # self.__cpu_wallclock = self.__wallclock * self.cpus
         if self.did_start and self.__start_ts is not None and self.__end_ts is not None:
             self.elapsed = self.__end_ts - self.__start_ts
             if self.wallclock > 0:
                 self.__wc_accuracy = (
-                    (float(self.elapsed) / float(self.wallclock)) * 100.0
-                )
-            if self.elapsed is not None and self.elapsed > 0 and self.__cpus is not None:
+                    float(self.elapsed) / float(self.wallclock)
+                ) * 100.0
+            if (
+                self.elapsed is not None
+                and self.elapsed > 0
+                and self.__cpus is not None
+            ):
                 self.__cpu_time_usec = self.elapsed * self.__cpus * 1000000
                 self.__cpu_efficiency = (
                     float(self.used_cpu_usec) / float(self.__cpu_time_usec)

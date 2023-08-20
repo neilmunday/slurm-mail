@@ -1,4 +1,4 @@
-# pylint: disable=line-too-long,missing-function-docstring,redefined-outer-name,too-many-public-methods
+# pylint: disable=missing-function-docstring,redefined-outer-name,too-many-public-methods  # noqa
 
 #
 #  This file is part of Slurm-Mail.
@@ -27,9 +27,7 @@
 Unit tests for slurmmail.common
 """
 import pathlib
-from unittest.mock import mock_open
-
-import mock
+from unittest.mock import MagicMock, mock_open, patch
 
 import pytest  # type: ignore
 
@@ -53,50 +51,62 @@ TAIL_EXE = "/usr/bin/tail"
 # Fixtures
 #
 
+
 @pytest.fixture
 def mock_die():
-    with mock.patch("slurmmail.common.die") as the_mock:
+    with patch("slurmmail.common.die") as the_mock:
         yield the_mock
+
 
 @pytest.fixture
 def mock_os_system():
-    with mock.patch("os.system") as the_mock:
+    with patch("os.system") as the_mock:
         yield the_mock
+
 
 @pytest.fixture()
 def mock_path_exists():
-    with mock.patch("pathlib.Path.exists") as the_mock:
+    with patch("pathlib.Path.exists") as the_mock:
         yield the_mock
+
 
 @pytest.fixture
 def mock_path_is_dir():
-    with mock.patch("pathlib.Path.is_dir") as the_mock:
+    with patch("pathlib.Path.is_dir") as the_mock:
         yield the_mock
+
 
 @pytest.fixture
 def mock_path_is_file():
-    with mock.patch("pathlib.Path.is_file") as the_mock:
+    with patch("pathlib.Path.is_file") as the_mock:
         yield the_mock
+
 
 @pytest.fixture
 def mock_path_open():
-    with mock.patch("pathlib.Path.open", new_callable=mock_open, read_data="data") as the_mock:
+    with patch(
+        "pathlib.Path.open", new_callable=mock_open, read_data="data"
+    ) as the_mock:
         yield the_mock
+
 
 @pytest.fixture
 def mock_path_unlink():
-    with mock.patch("pathlib.Path.unlink") as the_mock:
+    with patch("pathlib.Path.unlink") as the_mock:
         yield the_mock
+
 
 @pytest.fixture
 def mock_subprocess_popen():
-    with mock.patch("subprocess.Popen") as the_mock:
-        the_mock.return_value.__enter__.return_value = mock.MagicMock()
+    with patch("subprocess.Popen") as the_mock:
+        the_mock.return_value.__enter__.return_value = MagicMock()
         yield the_mock
+
 
 #
 # Test classes
 #
+
 
 class TestCommon:
     """
@@ -182,7 +192,9 @@ class TestCommon:
             "communicate.return_value": (stdout.encode(), stderr.encode()),
             "returncode": 0,
         }
-        mock_subprocess_popen.return_value.__enter__.return_value.configure_mock(**attrs)
+        mock_subprocess_popen.return_value.__enter__.return_value.configure_mock(
+            **attrs
+        )
         rtn, stdout_rslt, stderr_rslt = run_command(TAIL_EXE)
         mock_subprocess_popen.assert_called_once()
         assert rtn == 0
@@ -196,7 +208,9 @@ class TestCommon:
             "communicate.return_value": (stdout.encode(), "error".encode()),
             "returncode": 0,
         }
-        mock_subprocess_popen.return_value.__enter__.return_value.configure_mock(**attrs)
+        mock_subprocess_popen.return_value.__enter__.return_value.configure_mock(
+            **attrs
+        )
         rslt = tail_file(str(DUMMY_PATH), 10, pathlib.Path(TAIL_EXE))
         assert rslt == stdout
 
@@ -224,7 +238,9 @@ class TestCommon:
             "communicate.return_value": ("output".encode(), "error".encode()),
             "returncode": 1,
         }
-        mock_subprocess_popen.return_value.__enter__.return_value.configure_mock(**attrs)
+        mock_subprocess_popen.return_value.__enter__.return_value.configure_mock(
+            **attrs
+        )
         rslt = tail_file(str(DUMMY_PATH), lines, pathlib.Path(TAIL_EXE))
         assert (
             rslt

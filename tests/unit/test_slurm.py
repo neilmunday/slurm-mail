@@ -1,4 +1,4 @@
-# pylint: disable=line-too-long,missing-function-docstring,redefined-outer-name,too-many-public-methods
+# pylint: disable=line-too-long,missing-function-docstring,redefined-outer-name,too-many-public-methods  # noqa
 
 #
 #  This file is part of Slurm-Mail.
@@ -32,6 +32,7 @@ import pytest  # type: ignore
 from slurmmail import DEFAULT_DATETIME_FORMAT
 from slurmmail.slurm import check_job_output_file_path, Job, JobException
 
+
 class TestCheckJobOuputFilePath:
     """
     Test slurmmail.slurm.check_job_output_file_path
@@ -41,16 +42,18 @@ class TestCheckJobOuputFilePath:
         assert check_job_output_file_path("output.out")
 
     def test_allowed_patterns(self):
-        for pattern in ['%A', '%a', '%j', '%u', '%x']:
+        for pattern in ["%A", "%a", "%j", "%u", "%x"]:
             assert check_job_output_file_path(f"output_{pattern}.out")
 
     def test_invalid_patterns(self):
-        for pattern in ['%J', '%N', '%n', '%s', '%t']:
+        for pattern in ["%J", "%N", "%n", "%s", "%t"]:
             assert not check_job_output_file_path(f"output_{pattern}.out")
+
 
 @pytest.fixture
 def job():
     return Job(DEFAULT_DATETIME_FORMAT, 1)
+
 
 class TestSlurmJob:
     """
@@ -62,8 +65,8 @@ class TestSlurmJob:
         assert job.cancelled
 
     def test_cpu_efficiency_100pc(self, job):
-        job.start_ts = 1673384400 # Tue 10 Jan 21:00:00 GMT 2023
-        job.end_ts = 1673470800   # Wed 11 Jan 21:00:00 GMT 2023
+        job.start_ts = 1673384400  # Tue 10 Jan 21:00:00 GMT 2023
+        job.end_ts = 1673470800  # Wed 11 Jan 21:00:00 GMT 2023
         job.nodes = 2
         job.cpus = 16
         job.wallclock = 86400
@@ -72,8 +75,8 @@ class TestSlurmJob:
         assert job.cpu_efficiency == "100.00%"
 
     def test_cpu_efficiency_50pc(self, job):
-        job.start_ts = 1673384400 # Tue 10 Jan 21:00:00 GMT 2023
-        job.end_ts = 1673470800   # Wed 11 Jan 21:00:00 GMT 2023
+        job.start_ts = 1673384400  # Tue 10 Jan 21:00:00 GMT 2023
+        job.end_ts = 1673470800  # Wed 11 Jan 21:00:00 GMT 2023
         job.nodes = 2
         job.cpus = 16
         job.wallclock = 86400
@@ -88,7 +91,7 @@ class TestSlurmJob:
         assert job.did_start is False
 
     def test_end_time(self, job):
-        job.end_ts = 1673470800   # Wed 11 Jan 21:00:00 GMT 2023
+        job.end_ts = 1673470800  # Wed 11 Jan 21:00:00 GMT 2023
         assert job.end == "11/01/2023 21:00:00"
 
     def test_is_not_array(self, job):
@@ -166,25 +169,25 @@ class TestSlurmJob:
         job.end_ts = 1661469811
         assert job.end_ts == 1661469811
         with pytest.raises(ValueError):
-            job.end_ts = 'None' # type: ignore
+            job.end_ts = "None"  # type: ignore
 
     def test_set_start_ts(self, job):
         job.start_ts = 1661469811
         assert job.start_ts == 1661469811
         with pytest.raises(ValueError):
-            job.start_ts = 'None' # type: ignore
+            job.start_ts = "None"  # type: ignore
 
     def test_set_state(self, job):
         job.state = "TIMEOUT"
         assert job.state == "WALLCLOCK EXCEEDED"
 
     def test_start_time(self, job):
-        job.start_ts = 1673384400 # Tue 10 Jan 21:00:00 GMT 2023
+        job.start_ts = 1673384400  # Tue 10 Jan 21:00:00 GMT 2023
         assert job.start == "10/01/2023 21:00:00"
 
     def test_used_cpu_str(self, job):
-        job.start_ts = 1673384400 # Tue 10 Jan 21:00:00 GMT 2023
-        job.end_ts = 1673470800   # Wed 11 Jan 21:00:00 GMT 2023
+        job.start_ts = 1673384400  # Tue 10 Jan 21:00:00 GMT 2023
+        job.end_ts = 1673470800  # Wed 11 Jan 21:00:00 GMT 2023
         job.nodes = 2
         job.cpus = 16
         job.wallclock = 86400
@@ -193,8 +196,8 @@ class TestSlurmJob:
         assert job.used_cpu_str == "16 days, 0:00:00"
 
     def test_wc_accuracy_100pc(self, job):
-        job.start_ts = 1673384400 # Tue 10 Jan 21:00:00 GMT 2023
-        job.end_ts = 1673470800   # Wed 11 Jan 21:00:00 GMT 2023
+        job.start_ts = 1673384400  # Tue 10 Jan 21:00:00 GMT 2023
+        job.end_ts = 1673470800  # Wed 11 Jan 21:00:00 GMT 2023
         job.nodes = 2
         job.cpus = 16
         job.wallclock = 86400
@@ -203,8 +206,8 @@ class TestSlurmJob:
         assert job.wc_accuracy == "100.00%"
 
     def test_wc_accuracy_50pc(self, job):
-        job.start_ts = 1673384400 # Tue 10 Jan 21:00:00 GMT 2023
-        job.end_ts = 1673470800   # Wed 11 Jan 21:00:00 GMT 2023
+        job.start_ts = 1673384400  # Tue 10 Jan 21:00:00 GMT 2023
+        job.end_ts = 1673470800  # Wed 11 Jan 21:00:00 GMT 2023
         job.nodes = 2
         job.cpus = 16
         job.wallclock = 172800
@@ -214,7 +217,7 @@ class TestSlurmJob:
 
     def test_wc_string(self, job):
         with pytest.raises(JobException):
-            job.wc_string # pylint: disable=pointless-statement
+            job.wc_string  # pylint: disable=pointless-statement
         job.wallclock = 0
         assert job.wc_string.upper() == "UNLIMITED"
         job.wallclock = 86400

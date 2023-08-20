@@ -1,5 +1,4 @@
-# pylint: disable=consider-using-f-string
-# pylint: disable=invalid-name,broad-except,line-too-long
+# pylint: disable=consider-using-f-string,invalid-name,broad-except,line-too-long
 
 #
 #  This file is part of Slurm-Mail.
@@ -95,7 +94,7 @@ def get_kbytes_from_str(value: str) -> int:
         kbytes = int(float(value[:-1]))
     except Exception:
         logging.error(
-            "get_kbytes_from_str: input value: %s, numeric component: %s, units: %s",  # noqa
+            "get_kbytes_from_str: input value: %s, numeric component: %s, units: %s",
             value,
             value[:-1],
             units,
@@ -109,10 +108,7 @@ def get_kbytes_from_str(value: str) -> int:
         return 1048576 * kbytes
     if units == "T":
         return 1073741824 * kbytes
-    logging.error(
-        "get_kbytes_from_str: unknown unit '%s' for value '%s'",
-        units, value
-    )
+    logging.error("get_kbytes_from_str: unknown unit '%s' for value '%s'", units, value)
     return 0
 
 
@@ -156,16 +152,12 @@ def run_command(cmd: str) -> tuple:
     Execute the given command and return a tuple that contains the
     return code, std out and std err output.
     """
-    logging.debug("Running \"%s\"", cmd)
+    logging.debug('Running "%s"', cmd)
     with subprocess.Popen(
         shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE
     ) as process:
         stdout, stderr = process.communicate()
-        return (
-            process.returncode,
-            stdout.decode("utf-8"),
-            stderr.decode("utf-8")
-        )
+        return (process.returncode, stdout.decode("utf-8"), stderr.decode("utf-8"))
 
 
 def tail_file(f: str, num_lines: int, tail_exe: pathlib.Path) -> str:
@@ -173,9 +165,8 @@ def tail_file(f: str, num_lines: int, tail_exe: pathlib.Path) -> str:
     Returns the last N lines of the given file.
     """
     if num_lines < 1:
-        err_msg = (
-            "slurm-mail: invalid number of lines "
-            "to tail: {0}".format(num_lines)
+        err_msg = "slurm-mail: invalid number of lines " "to tail: {0}".format(
+            num_lines
         )
         logging.error(err_msg)
         return err_msg
@@ -185,9 +176,7 @@ def tail_file(f: str, num_lines: int, tail_exe: pathlib.Path) -> str:
             logging.error(err_msg)
             return err_msg
 
-        rtn, stdout, _ = run_command(
-            "{0} -{1} '{2}'".format(tail_exe, num_lines, f)
-        )
+        rtn, stdout, _ = run_command("{0} -{1} '{2}'".format(tail_exe, num_lines, f))
         if rtn != 0:
             err_msg = (
                 "slurm-mail: error trying to read "

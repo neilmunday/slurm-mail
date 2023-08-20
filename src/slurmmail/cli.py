@@ -56,17 +56,19 @@ from string import Template
 from typing import Dict, Optional
 
 from slurmmail import conf_dir, conf_file, tpl_dir
-from slurmmail.common import \
-    check_dir, \
-    check_file, \
-    delete_spool_file, \
-    die, \
-    get_file_contents, \
-    get_kbytes_from_str, \
-    get_usec_from_str, \
-    run_command, \
-    tail_file
+from slurmmail.common import (
+    check_dir,
+    check_file,
+    delete_spool_file,
+    die,
+    get_file_contents,
+    get_kbytes_from_str,
+    get_usec_from_str,
+    run_command,
+    tail_file,
+)
 from slurmmail.slurm import check_job_output_file_path, Job
+
 
 class ProcessSpoolFileOptions:
     # pylint: disable=too-few-public-methods,too-many-instance-attributes
@@ -81,7 +83,7 @@ class ProcessSpoolFileOptions:
         self.email_from_address: str
         self.email_from_name: Optional[str] = None
         self.email_subject: str
-        self.mail_regex: str = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+        self.mail_regex: str = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
         self.validate_email: Optional[bool] = None
         self.sacct_exe: pathlib.Path
         self.scontrol_exe: pathlib.Path
@@ -90,6 +92,7 @@ class ProcessSpoolFileOptions:
         self.tail_exe: pathlib.Path
         self.tail_lines: int
         self.templates: Dict[str, pathlib.Path]
+
 
 def get_scontrol_values(input_str: str) -> Dict[str, str]:
     """
@@ -114,9 +117,9 @@ def get_scontrol_values(input_str: str) -> Dict[str, str]:
         output[key] = value
     return output
 
+
 def __process_spool_file(
-    json_file: pathlib.Path, smtp_conn: smtplib.SMTP,
-    options: ProcessSpoolFileOptions
+    json_file: pathlib.Path, smtp_conn: smtplib.SMTP, options: ProcessSpoolFileOptions
 ):
     # pylint: disable=too-many-branches,too-many-locals,too-many-statements,too-many-nested-blocks
     # data is JSON encoded as of version 2.6
@@ -149,31 +152,53 @@ def __process_spool_file(
 
     jobs = []  # store job object for each job in this array
 
-    if not state in [
-            "Began",
-            "Ended",
-            "Failed",
-            "Invalid dependency",
-            "Requeued",
-            "Staged Out",
-            "Time reached 50%",
-            "Time reached 80%",
-            "Time reached 90%",
-            "Time limit reached"
-        ]:
-        logging.warning("Unsupported job state: %s - no emails will be generated", state)
+    if state not in [
+        "Began",
+        "Ended",
+        "Failed",
+        "Invalid dependency",
+        "Requeued",
+        "Staged Out",
+        "Time reached 50%",
+        "Time reached 80%",
+        "Time reached 90%",
+        "Time limit reached",
+    ]:
+        logging.warning(
+            "Unsupported job state: %s - no emails will be generated", state
+        )
     else:
         fields = [
-            "JobId", "User", "Group", "Partition", "Start", "End", "State",
-            "ReqMem", "MaxRSS", "NCPUS", "TotalCPU",
-            "NNodes", "WorkDir", "Elapsed", "ExitCode", "Comment", "Cluster",
-            "NodeList", "TimeLimit", "TimelimitRaw", "JobIdRaw", "JobName"
+            "JobId",
+            "User",
+            "Group",
+            "Partition",
+            "Start",
+            "End",
+            "State",
+            "ReqMem",
+            "MaxRSS",
+            "NCPUS",
+            "TotalCPU",
+            "NNodes",
+            "WorkDir",
+            "Elapsed",
+            "ExitCode",
+            "Comment",
+            "Cluster",
+            "NodeList",
+            "TimeLimit",
+            "TimelimitRaw",
+            "JobIdRaw",
+            "JobName",
         ]
         field_num = len(fields)
         field_str = ",".join(fields)
 
         # Get job info from sacct
-        cmd = "{0} -j {1} -P -n --fields={2}".format(options.sacct_exe, first_job_id, field_str)
+        cmd = "{0} -j {1} -P -n --fields={2}".format(
+            options.sacct_exe, first_job_id, field_str
+        )
         rc, stdout, stderr = run_command(cmd)
         if rc != 0:
             logging.error("Failed to run %s", cmd)
@@ -191,109 +216,106 @@ def __process_spool_file(
                 for i in range(field_num):
                     sacct_dict[fields[i]] = data[i]
 
-                if not re.match(
-                    r"^([0-9]+|[0-9]+_[0-9]+)$",
-                    sacct_dict['JobId']
-                ):
+                if not re.match(r"^([0-9]+|[0-9]+_[0-9]+)$", sacct_dict["JobId"]):
                     # grab MaxRSS value
                     if (
-                        state != "Began" and
-                        sacct_dict['MaxRSS'] != ""  and
-                        job is not None and
-                        (
-                            job.max_rss is None or
-                            get_kbytes_from_str(sacct_dict['MaxRSS']) > job.max_rss
+                        state != "Began"
+                        and sacct_dict["MaxRSS"] != ""
+                        and job is not None
+                        and (
+                            job.max_rss is None
+                            or get_kbytes_from_str(sacct_dict["MaxRSS"]) > job.max_rss
                         )
                     ):
-                        job.max_rss_str = sacct_dict['MaxRSS']
+                        job.max_rss_str = sacct_dict["MaxRSS"]
                     continue
 
-                if "{0}".format(first_job_id) not in sacct_dict['JobId']:
+                if "{0}".format(first_job_id) not in sacct_dict["JobId"]:
                     continue
 
-                job_id = int(sacct_dict['JobIdRaw'])
-                if "_" in sacct_dict['JobId']:
+                job_id = int(sacct_dict["JobIdRaw"])
+                if "_" in sacct_dict["JobId"]:
                     job = Job(
                         options.datetime_format,
                         job_id,
-                        int(sacct_dict['JobId'].split("_")[0])
+                        int(sacct_dict["JobId"].split("_")[0]),
                     )
                 else:
                     job = Job(options.datetime_format, job_id)
 
-                job.cluster = sacct_dict['Cluster']
-                job.comment = sacct_dict['Comment']
-                job.cpus = int(sacct_dict['NCPUS'])
-                job.group = sacct_dict['Group']
-                job.name = sacct_dict['JobName']
-                job.nodelist = sacct_dict['NodeList']
-                job.nodes = sacct_dict['NNodes']
-                job.partition = sacct_dict['Partition']
+                job.cluster = sacct_dict["Cluster"]
+                job.comment = sacct_dict["Comment"]
+                job.cpus = int(sacct_dict["NCPUS"])
+                job.group = sacct_dict["Group"]
+                job.name = sacct_dict["JobName"]
+                job.nodelist = sacct_dict["NodeList"]
+                job.nodes = sacct_dict["NNodes"]
+                job.partition = sacct_dict["Partition"]
                 # for Slurm < 21, the ReqMem value will have 'n' or 'c'
                 # appended depending on whether the user has requested per node
                 # see issue #38
-                if sacct_dict['ReqMem'][-1:] == "c" and job.cpus is not None:
+                if sacct_dict["ReqMem"][-1:] == "c" and job.cpus is not None:
                     logging.debug("Applying ReqMem workaround for Slurm versions < 21")
                     # need to multiply by job.cpus
                     try:
-                        sacct_dict['ReqMem'] = "{0}{1}".format(
-                            float(sacct_dict['ReqMem'][:-2]) * job.cpus, # type: ignore
-                            sacct_dict['ReqMem'][-2:-1]
+                        sacct_dict["ReqMem"] = "{0}{1}".format(
+                            float(sacct_dict["ReqMem"][:-2]) * job.cpus,  # type: ignore
+                            sacct_dict["ReqMem"][-2:-1],
                         )
                     except ValueError:
                         logging.error(
-                            "Failed to convert ReqMem \"%s\" to a float",
-                            sacct_dict['ReqMem'][:-2]
+                            'Failed to convert ReqMem "%s" to a float',
+                            sacct_dict["ReqMem"][:-2],
                         )
-                elif sacct_dict['ReqMem'][-1:] == "n":
+                elif sacct_dict["ReqMem"][-1:] == "n":
                     logging.debug("Applying ReqMem workaround for Slurm versions < 21")
-                    sacct_dict['ReqMem'] = sacct_dict['ReqMem'][:-1]
-                job.requested_mem_str = sacct_dict['ReqMem']
+                    sacct_dict["ReqMem"] = sacct_dict["ReqMem"][:-1]
+                job.requested_mem_str = sacct_dict["ReqMem"]
                 # if job start is "None", then the job was never despatched
                 # e.g. pending job was cancelled
-                if sacct_dict['Start'] != 'None':
+                if sacct_dict["Start"] != "None":
                     try:
-                        job.start_ts = sacct_dict['Start']
+                        job.start_ts = sacct_dict["Start"]
                     except ValueError:
                         logging.warning(
                             "job %s: could not parse '%s' for job start timestamp",
                             job.id,
-                            sacct_dict['Start']
+                            sacct_dict["Start"],
                         )
-                job.used_cpu_usec = get_usec_from_str(sacct_dict['TotalCPU'])
-                job.user = sacct_dict['User']
-                job.workdir = sacct_dict['WorkDir']
+                job.used_cpu_usec = get_usec_from_str(sacct_dict["TotalCPU"])
+                job.user = sacct_dict["User"]
+                job.workdir = sacct_dict["WorkDir"]
 
-                if sacct_dict['TimeLimit'] == "UNLIMITED":
+                if sacct_dict["TimeLimit"] == "UNLIMITED":
                     job.wallclock = 0
                 else:
                     try:
-                        job.wallclock = int(sacct_dict['TimelimitRaw']) * 60
+                        job.wallclock = int(sacct_dict["TimelimitRaw"]) * 60
                     except ValueError:
                         logging.warning(
                             "job %s: could not parse: '%s' for job time limit",
                             job.id,
-                            sacct_dict['TimelimitRaw']
+                            sacct_dict["TimelimitRaw"],
                         )
                         job.wallclock = 0
 
                 if state in ["Ended", "Failed", "Time limit reached"]:
-                    job.state = sacct_dict['State']
+                    job.state = sacct_dict["State"]
                     try:
-                        job.end_ts = sacct_dict['End']
+                        job.end_ts = sacct_dict["End"]
                     except ValueError:
                         logging.warning(
                             "job %s: could not parse: '%s' for job end timestamp",
                             job.id,
-                            sacct_dict['End']
+                            sacct_dict["End"],
                         )
-                    job.exit_code = sacct_dict['ExitCode']
+                    job.exit_code = sacct_dict["ExitCode"]
                     if (
-                        sacct_dict['MaxRSS'] != "" and
-                        job.max_rss is not None and
-                        get_kbytes_from_str(sacct_dict['MaxRSS']) > job.max_rss
+                        sacct_dict["MaxRSS"] != ""
+                        and job.max_rss is not None
+                        and get_kbytes_from_str(sacct_dict["MaxRSS"]) > job.max_rss
                     ):
-                        job.max_rss_str = sacct_dict['MaxRSS']
+                        job.max_rss_str = sacct_dict["MaxRSS"]
 
                 if job.did_start:
                     # Get additional info from scontrol.
@@ -312,11 +334,11 @@ def __process_spool_file(
                         # StdOut and StdError will not be present
                         # for interactive jobs
                         if "StdErr" in scontrol_dict:
-                            job.stderr = scontrol_dict['StdErr']
+                            job.stderr = scontrol_dict["StdErr"]
                         else:
                             job.stderr = "N/A"
                         if "StdOut" in scontrol_dict:
-                            job.stdout = scontrol_dict['StdOut']
+                            job.stdout = scontrol_dict["StdOut"]
                         else:
                             job.stdout = "N/A"
                     else:
@@ -331,60 +353,81 @@ def __process_spool_file(
 
     if not array_summary and 0 < options.array_max_notifications > len(jobs):
         logging.info(
-            "Asked to send notifications for %d array-jobs which exceeds the limit of %d. "
-            "Will send only send the first %d.",
-            len(jobs), options.array_max_notifications, options.array_max_notifications
+            "Asked to send notifications for %d array-jobs which exceeds the limit of"
+            " %d. Will send only send the first %d.",
+            len(jobs),
+            options.array_max_notifications,
+            options.array_max_notifications,
         )
-        jobs = jobs[:options.array_max_notifications]
+        jobs = jobs[: options.array_max_notifications]
 
     for job in jobs:
         # Will only be one job regardless of if it is an array in the
         # "began" state. For jobs that have ended there can be mulitple
         # jobs objects if it is an array.
         logging.debug("Creating template for job %s", job.id)
-        tpl = Template(get_file_contents(options.templates['job_table']))
+        tpl = Template(get_file_contents(options.templates["job_table"]))
         job_table = tpl.substitute(
-            JOB_ID=job.id, JOB_NAME=job.name, PARTITION=job.partition,
-            START=job.start, END=job.end, WORKDIR=job.workdir,
-            START_TS=job.start_ts, END_TS=job.end_ts,
-            ELAPSED=str(timedelta(seconds=job.elapsed)), EXIT_STATE=job.state,
-            EXIT_CODE=job.exit_code, COMMENT=job.comment,
-            MEMORY=job.requested_mem_str, MAX_MEMORY=job.max_rss_str,
-            NODES=job.nodes, NODE_LIST=job.nodelist, STDOUT=job.stdout,
-            STDERR=job.stderr, CPU_EFFICIENCY=job.cpu_efficiency,
-            CPU_TIME=job.used_cpu_str, WALLCLOCK=job.wc_string,
-            WALLCLOCK_ACCURACY=job.wc_accuracy
+            JOB_ID=job.id,
+            JOB_NAME=job.name,
+            PARTITION=job.partition,
+            START=job.start,
+            END=job.end,
+            WORKDIR=job.workdir,
+            START_TS=job.start_ts,
+            END_TS=job.end_ts,
+            ELAPSED=str(timedelta(seconds=job.elapsed)),
+            EXIT_STATE=job.state,
+            EXIT_CODE=job.exit_code,
+            COMMENT=job.comment,
+            MEMORY=job.requested_mem_str,
+            MAX_MEMORY=job.max_rss_str,
+            NODES=job.nodes,
+            NODE_LIST=job.nodelist,
+            STDOUT=job.stdout,
+            STDERR=job.stderr,
+            CPU_EFFICIENCY=job.cpu_efficiency,
+            CPU_TIME=job.used_cpu_str,
+            WALLCLOCK=job.wc_string,
+            WALLCLOCK_ACCURACY=job.wc_accuracy,
         )
 
         logging.debug("Creating e-mail signature template")
-        tpl = Template(get_file_contents(options.templates['signature']))
+        tpl = Template(get_file_contents(options.templates["signature"]))
         signature = tpl.substitute(EMAIL_FROM=options.email_from_name)
 
         body = ""
         if state == "Began":
             if job.is_array():
-                tpl = None # type: ignore
+                tpl = None  # type: ignore
 
                 if array_summary:
                     tpl = Template(
-                        get_file_contents(options.templates['array_summary_started'])
+                        get_file_contents(options.templates["array_summary_started"])
                     )
                 else:
                     tpl = Template(
-                        get_file_contents(options.templates['array_started'])
+                        get_file_contents(options.templates["array_started"])
                     )
 
                 body = tpl.substitute(
-                    CSS=options.css, JOB_ID=job.id, ARRAY_JOB_ID=job.array_id,
-                    USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
-                    CLUSTER=job.cluster, SIGNATURE=signature
+                    CSS=options.css,
+                    JOB_ID=job.id,
+                    ARRAY_JOB_ID=job.array_id,
+                    USER=pwd.getpwnam(job.user).pw_gecos,
+                    JOB_TABLE=job_table,
+                    CLUSTER=job.cluster,
+                    SIGNATURE=signature,
                 )
             else:
-                tpl = Template(get_file_contents(options.templates['started']))
+                tpl = Template(get_file_contents(options.templates["started"]))
                 body = tpl.substitute(
-                    CSS=options.css, JOB_ID=job.id, SIGNATURE=signature,
-                    USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
-                    CLUSTER=job.cluster
+                    CSS=options.css,
+                    JOB_ID=job.id,
+                    SIGNATURE=signature,
+                    USER=pwd.getpwnam(job.user).pw_gecos,
+                    JOB_TABLE=job_table,
+                    CLUSTER=job.cluster,
                 )
         elif state in ["Ended", "Failed", "Requeued", "Time limit reached"]:
             if job.did_start:
@@ -393,24 +436,31 @@ def __process_spool_file(
                     end_txt = "reached its time limit"
                 job_output = ""
 
-                if options.tail_lines > 0 and \
-                    job.stdout not in ["?", "N/A"] and \
-                    check_job_output_file_path(job.stdout):
-
-                    tpl = Template(get_file_contents(options.templates['job_output']))
+                if (
+                    options.tail_lines > 0
+                    and job.stdout not in ["?", "N/A"]
+                    and check_job_output_file_path(job.stdout)
+                ):
+                    tpl = Template(get_file_contents(options.templates["job_output"]))
 
                     # Drop privileges prior to tailing output
                     os.setegid(grp.getgrnam(job.group).gr_gid)
                     os.seteuid(pwd.getpwnam(job.user).pw_uid)
 
                     job_output = tpl.substitute(
-                        OUTPUT_LINES=options.tail_lines, OUTPUT_FILE=job.stdout,
-                        JOB_OUTPUT=tail_file(job.stdout, options.tail_lines, options.tail_exe)
+                        OUTPUT_LINES=options.tail_lines,
+                        OUTPUT_FILE=job.stdout,
+                        JOB_OUTPUT=tail_file(
+                            job.stdout, options.tail_lines, options.tail_exe
+                        ),
                     )
                     if not job.separate_output() and job.stderr not in ["?", "N/A"]:
                         job_output += tpl.substitute(
-                            OUTPUT_LINES=options.tail_lines, OUTPUT_FILE=job.stderr,
-                            JOB_OUTPUT=tail_file(job.stderr, options.tail_lines, options.tail_exe)
+                            OUTPUT_LINES=options.tail_lines,
+                            OUTPUT_FILE=job.stderr,
+                            JOB_OUTPUT=tail_file(
+                                job.stderr, options.tail_lines, options.tail_exe
+                            ),
                         )
 
                     # Restore root privileges
@@ -419,60 +469,94 @@ def __process_spool_file(
 
                 if job.is_array():
                     if array_summary:
-                        tpl = Template(get_file_contents(options.templates['array_summary_ended']))
+                        tpl = Template(
+                            get_file_contents(options.templates["array_summary_ended"])
+                        )
                         body = tpl.substitute(
-                            CSS=options.css, END_TXT=end_txt, JOB_ID=job.id,
-                            ARRAY_JOB_ID=job.array_id, SIGNATURE=signature,
-                            USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
-                            JOB_OUTPUT=job_output, CLUSTER=job.cluster
+                            CSS=options.css,
+                            END_TXT=end_txt,
+                            JOB_ID=job.id,
+                            ARRAY_JOB_ID=job.array_id,
+                            SIGNATURE=signature,
+                            USER=pwd.getpwnam(job.user).pw_gecos,
+                            JOB_TABLE=job_table,
+                            JOB_OUTPUT=job_output,
+                            CLUSTER=job.cluster,
                         )
                     else:
-                        tpl = Template(get_file_contents(options.templates['array_ended']))
+                        tpl = Template(
+                            get_file_contents(options.templates["array_ended"])
+                        )
                         body = tpl.substitute(
-                            CSS=options.css, END_TXT=end_txt, JOB_ID=job.id,
-                            ARRAY_JOB_ID=job.array_id, SIGNATURE=signature,
-                            USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
-                            JOB_OUTPUT=job_output, CLUSTER=job.cluster
+                            CSS=options.css,
+                            END_TXT=end_txt,
+                            JOB_ID=job.id,
+                            ARRAY_JOB_ID=job.array_id,
+                            SIGNATURE=signature,
+                            USER=pwd.getpwnam(job.user).pw_gecos,
+                            JOB_TABLE=job_table,
+                            JOB_OUTPUT=job_output,
+                            CLUSTER=job.cluster,
                         )
                 else:
-                    tpl = Template(get_file_contents(options.templates['ended']))
+                    tpl = Template(get_file_contents(options.templates["ended"]))
                     body = tpl.substitute(
-                        CSS=options.css, END_TXT=end_txt, JOB_ID=job.id,
-                        USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
-                        JOB_OUTPUT=job_output, CLUSTER=job.cluster,
-                        SIGNATURE=signature
+                        CSS=options.css,
+                        END_TXT=end_txt,
+                        JOB_ID=job.id,
+                        USER=pwd.getpwnam(job.user).pw_gecos,
+                        JOB_TABLE=job_table,
+                        JOB_OUTPUT=job_output,
+                        CLUSTER=job.cluster,
+                        SIGNATURE=signature,
                     )
             else:
                 # job was cancelled whilst pending
-                tpl = Template(get_file_contents(options.templates['never_ran']))
+                tpl = Template(get_file_contents(options.templates["never_ran"]))
                 body = tpl.substitute(
-                    CSS=options.css, JOB_ID=job.id,
-                    USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
-                    CLUSTER=job.cluster, SIGNATURE=signature
+                    CSS=options.css,
+                    JOB_ID=job.id,
+                    USER=pwd.getpwnam(job.user).pw_gecos,
+                    JOB_TABLE=job_table,
+                    CLUSTER=job.cluster,
+                    SIGNATURE=signature,
                 )
         elif state in ["Time reached 50%", "Time reached 80%", "Time reached 90%"]:
             reached = int(state[-3:-1])
-            remaining = (1 - (reached / 100))  * job.wallclock
+            remaining = (1 - (reached / 100)) * job.wallclock
             remaining_str = str(timedelta(seconds=remaining))
-            tpl = Template(get_file_contents(options.templates['time']))
+            tpl = Template(get_file_contents(options.templates["time"]))
             body = tpl.substitute(
-                CSS=options.css, REACHED=reached,JOB_ID=job.id, REMAINING=remaining_str,
-                USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
-                CLUSTER=job.cluster, SIGNATURE=signature
+                CSS=options.css,
+                REACHED=reached,
+                JOB_ID=job.id,
+                REMAINING=remaining_str,
+                USER=pwd.getpwnam(job.user).pw_gecos,
+                JOB_TABLE=job_table,
+                CLUSTER=job.cluster,
+                SIGNATURE=signature,
             )
             # change state value for upcomming e-mail send
             state = "{0}% of time limit reached".format(reached)
         elif state == "Invalid dependency":
-            tpl = Template(get_file_contents(options.templates['invalid_dependency']))
+            tpl = Template(get_file_contents(options.templates["invalid_dependency"]))
             body = tpl.substitute(
-                CSS=options.css, CLUSTER=job.cluster, JOB_ID=job.id, SIGNATURE=signature,
-                USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
+                CSS=options.css,
+                CLUSTER=job.cluster,
+                JOB_ID=job.id,
+                SIGNATURE=signature,
+                USER=pwd.getpwnam(job.user).pw_gecos,
+                JOB_TABLE=job_table,
             )
         elif state == "Staged Out":
-            tpl = Template(get_file_contents(options.templates['staged_out']))
+            tpl = Template(get_file_contents(options.templates["staged_out"]))
             body = tpl.substitute(
-                CSS=options.css, CLUSTER=job.cluster, JOB_ID=job.id, SIGNATURE=signature,
-                USER=pwd.getpwnam(job.user).pw_gecos, JOB_TABLE=job_table,
+                CSS=options.css,
+                CLUSTER=job.cluster,
+                JOB_ID=job.id,
+                SIGNATURE=signature,
+                USER=pwd.getpwnam(job.user).pw_gecos,
+                JOB_TABLE=job_table,
             )
 
         if job.cancelled:
@@ -481,23 +565,30 @@ def __process_spool_file(
             subject_state = state
 
         msg = MIMEMultipart("alternative")
-        msg['Subject'] = Template(options.email_subject).substitute(
+        msg["Subject"] = Template(options.email_subject).substitute(
             CLUSTER=job.cluster, JOB_ID=job.id, JOB_NAME=job.name, STATE=subject_state
         )
-        msg['To'] = user_email
-        msg['From'] = options.email_from_address
-        msg['Date'] = email.utils.formatdate(localtime=True)
-        msg['Message-ID'] = email.utils.make_msgid()
+        msg["To"] = user_email
+        msg["From"] = options.email_from_address
+        msg["Date"] = email.utils.formatdate(localtime=True)
+        msg["Message-ID"] = email.utils.make_msgid()
         msg.attach(MIMEText(body, "html"))
         logging.info(
-            "Sending e-mail to: %s using %s for job %s (%s) "
-            "via SMTP server %s:%s",
-            job.user, user_email, job.id, state, options.smtp_server, options.smtp_port
+            "Sending e-mail to: %s using %s for job %s (%s) via SMTP server %s:%s",
+            job.user,
+            user_email,
+            job.id,
+            state,
+            options.smtp_server,
+            options.smtp_port,
         )
 
-        smtp_conn.sendmail(options.email_from_address, user_email.split(","), msg.as_string())
+        smtp_conn.sendmail(
+            options.email_from_address, user_email.split(","), msg.as_string()
+        )
 
     delete_spool_file(json_file)
+
 
 def send_mail_main():
     # pylint: disable=too-many-branches,too-many-locals,too-many-statements
@@ -512,11 +603,14 @@ def send_mail_main():
         description="Send pending Slurm e-mails to users", add_help=True
     )
     parser.add_argument(
-        "-v", "--verbose", help="Turn on debug messages", dest="verbose",
-        action="store_true"
+        "-v",
+        "--verbose",
+        help="Turn on debug messages",
+        dest="verbose",
+        action="store_true",
     )
     args = parser.parse_args()
-    os.environ['SLURM_TIME_FORMAT'] = "%s"
+    os.environ["SLURM_TIME_FORMAT"] = "%s"
 
     options = ProcessSpoolFileOptions()
 
@@ -525,19 +619,19 @@ def send_mail_main():
     check_dir(tpl_dir)
 
     options.templates = {}
-    options.templates['array_ended'] = tpl_dir / "ended-array.tpl"
-    options.templates['array_started'] = tpl_dir / "started-array.tpl"
-    options.templates['array_summary_started'] = tpl_dir / "started-array-summary.tpl"
-    options.templates['array_summary_ended'] = tpl_dir / "ended-array-summary.tpl"
-    options.templates['ended'] = tpl_dir / "ended.tpl"
-    options.templates['invalid_dependency'] = tpl_dir / "invalid-dependency.tpl"
-    options.templates['job_output'] = tpl_dir / "job-output.tpl"
-    options.templates['job_table'] = tpl_dir / "job-table.tpl"
-    options.templates['never_ran'] = tpl_dir / "never-ran.tpl"
-    options.templates['signature'] = tpl_dir / "signature.tpl"
-    options.templates['staged_out'] = tpl_dir / "staged-out.tpl"
-    options.templates['started'] = tpl_dir / "started.tpl"
-    options.templates['time'] = tpl_dir / "time.tpl"
+    options.templates["array_ended"] = tpl_dir / "ended-array.tpl"
+    options.templates["array_started"] = tpl_dir / "started-array.tpl"
+    options.templates["array_summary_started"] = tpl_dir / "started-array-summary.tpl"
+    options.templates["array_summary_ended"] = tpl_dir / "ended-array-summary.tpl"
+    options.templates["ended"] = tpl_dir / "ended.tpl"
+    options.templates["invalid_dependency"] = tpl_dir / "invalid-dependency.tpl"
+    options.templates["job_output"] = tpl_dir / "job-output.tpl"
+    options.templates["job_table"] = tpl_dir / "job-table.tpl"
+    options.templates["never_ran"] = tpl_dir / "never-ran.tpl"
+    options.templates["signature"] = tpl_dir / "signature.tpl"
+    options.templates["staged_out"] = tpl_dir / "staged-out.tpl"
+    options.templates["started"] = tpl_dir / "started.tpl"
+    options.templates["time"] = tpl_dir / "time.tpl"
 
     for _, tpl_file in options.templates.items():
         check_file(tpl_file)
@@ -546,25 +640,23 @@ def send_mail_main():
     check_file(stylesheet)
 
     # Parse config file
+    log_file = None
+    verbose = False
     try:
         config = configparser.RawConfigParser()
         config.read(str(conf_file))
         section = "slurm-send-mail"
 
         if not config.has_section(section):
-            die(
-                "Could not find config section '{0}' in {1}".format(
-                    section, conf_file
-                )
-            )
+            die("Could not find config section '{0}' in {1}".format(section, conf_file))
 
         spool_dir = pathlib.Path(config.get("common", "spoolDir"))
         if config.has_option(section, "logFile"):
             log_file = pathlib.Path(config.get(section, "logFile"))
-        else:
-            log_file = None
         verbose = config.getboolean(section, "verbose")
-        options.array_max_notifications = config.getint(section, "arrayMaxNotifications")
+        options.array_max_notifications = config.getint(
+            section, "arrayMaxNotifications"
+        )
         options.email_from_address = config.get(section, "emailFromUserAddress")
         options.email_from_name = config.get(section, "emailFromName")
         options.email_subject = config.get(section, "emailSubject")
@@ -595,13 +687,10 @@ def send_mail_main():
     if log_file:
         check_dir(log_file.parent)
         logging.basicConfig(
-            format=log_format, datefmt=log_date, level=log_level,
-            filename=log_file
+            format=log_format, datefmt=log_date, level=log_level, filename=log_file
         )
     else:
-        logging.basicConfig(
-            format=log_format, datefmt=log_date, level=log_level
-        )
+        logging.basicConfig(format=log_format, datefmt=log_date, level=log_level)
 
     check_file(options.tail_exe)
     check_file(options.sacct_exe)
@@ -636,15 +725,11 @@ def send_mail_main():
             try:
                 if smtp_use_ssl:
                     smtp_conn = smtplib.SMTP_SSL(
-                        host=options.smtp_server,
-                        port=options.smtp_port,
-                        timeout=60
+                        host=options.smtp_server, port=options.smtp_port, timeout=60
                     )
                 else:
                     smtp_conn = smtplib.SMTP(
-                        host=options.smtp_server,
-                        port=options.smtp_port,
-                        timeout=60
+                        host=options.smtp_server, port=options.smtp_port, timeout=60
                     )
 
                 if smtp_use_tls:
@@ -660,6 +745,7 @@ def send_mail_main():
             logging.error("Failed to process: %s", f)
             logging.error(e, exc_info=True)
 
+
 def spool_mail_main():
     # pylint: disable=too-many-locals,too-many-statements
     """
@@ -671,17 +757,14 @@ def spool_mail_main():
     compared to the default Slurm e-mails.
     """
     check_file(conf_file)
+    verbose = False
 
     try:
         section = "slurm-spool-mail"
         config = configparser.RawConfigParser()
         config.read(str(conf_file))
         if not config.has_section(section):
-            die(
-                "Could not find config section '{0}' in {1}".format(
-                    section, conf_file
-                )
-            )
+            die("Could not find config section '{0}' in {1}".format(section, conf_file))
         spool_dir = config.get("common", "spoolDir")
         log_file = pathlib.Path(config.get(section, "logFile"))
         verbose = config.getboolean(section, "verbose")
@@ -697,7 +780,9 @@ def spool_mail_main():
 
     logging.basicConfig(
         format="%(asctime)s:%(levelname)s: %(message)s",
-        datefmt="%Y/%m/%d %H:%M:%S", level=log_level, filename=log_file
+        datefmt="%Y/%m/%d %H:%M:%S",
+        level=log_level,
+        filename=log_file,
     )
     logging.debug("Called with: %s", sys.argv)
 
@@ -705,21 +790,28 @@ def spool_mail_main():
         die("Incorrect number of command line arguments")
 
     try:
-        info = sys.argv[2].split(',', maxsplit=1)[0]
+        info = sys.argv[2].split(",", maxsplit=1)[0]
         logging.debug("info str: %s", info)
         match = None
         if "Array" in info:
             match = re.search(
-                r"Slurm ((?P<array_summary>Array Summary)|Array Task) Job_id=[0-9]+_([0-9]+|\*) \((?P<job_id>[0-9]+)\).*?(?P<state>(Began|Ended|Failed|Requeued|Invalid dependency|Reached time limit|Reached (?P<limit>[0-9]+)% of time limit|Staged Out))", # pylint: disable=line-too-long
-                info
+                r"Slurm ((?P<array_summary>Array Summary)|Array Task)"
+                r" Job_id=[0-9]+_([0-9]+|\*)"
+                r" \((?P<job_id>[0-9]+)\).*?(?P<state>(Began|Ended|Failed|Requeued|Invalid"
+                r" dependency|Reached time limit|Reached (?P<limit>[0-9]+)% of time"
+                r" limit|Staged Out))",  # pylint: disable=line-too-long
+                info,
             )
             if not match:
                 die("Failed to parse Slurm info.")
             array_summary = match.group("array_summary") is not None
         else:
             match = re.search(
-                r"Slurm Job_id=(?P<job_id>[0-9]+).*?(?P<state>(Began|Ended|Failed|Requeued|Invalid dependency|Reached time limit|Reached (?P<limit>[0-9]+)% of time limit|Staged Out))", # pylint: disable=line-too-long
-                info
+                r"Slurm"
+                r" Job_id=(?P<job_id>[0-9]+).*?(?P<state>(Began|Ended|Failed|Requeued|Invalid"
+                r" dependency|Reached time limit|Reached (?P<limit>[0-9]+)% of time"
+                r" limit|Staged Out))",  # pylint: disable=line-too-long
+                info,
             )
             if not match:
                 die("Failed to parse Slurm info.")
@@ -743,7 +835,7 @@ def spool_mail_main():
             "job_id": job_id,
             "state": state,
             "email": email_to,
-            "array_summary": array_summary
+            "array_summary": array_summary,
         }
 
         output_path = pathlib.Path(spool_dir).joinpath(

@@ -3,11 +3,12 @@
 """
 Common fixtures used between different unit test modules.
 """
+from unittest.mock import patch
 
-import mock
 import pytest
+
 
 @pytest.fixture
 def mock_os_access():
-    with mock.patch("os.access", return_value=True) as the_mock:
+    with patch("os.access", return_value=True) as the_mock:
         yield the_mock
