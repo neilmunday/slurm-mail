@@ -31,7 +31,7 @@ import configparser
 import pathlib
 from os import access
 import smtplib
-from typing import Dict, Union
+from typing import Any, Dict, Union
 from unittest.mock import MagicMock, mock_open, patch
 import sys
 
@@ -310,7 +310,7 @@ class MockRawConfigParser(configparser.RawConfigParser):
     def reset_mock() -> None:
         MockRawConfigParser.__mock_values = {}
 
-    def get(
+    def get(  # type: ignore
         self,
         section: str,
         option: str,
