@@ -35,6 +35,8 @@ import shlex
 import subprocess
 import sys
 
+from typing import NoReturn
+
 
 def check_dir(path: pathlib.Path):
     """
@@ -64,7 +66,7 @@ def delete_spool_file(f: pathlib.Path):
     f.unlink()
 
 
-def die(msg: str):
+def die(msg: str) -> NoReturn:
     """
     Exit the program with the given error message.
     """
