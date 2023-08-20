@@ -76,7 +76,7 @@ class ProcessSpoolFileOptions:
     A helper class to provide settings to `__process_spool_file`
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.array_max_notifications: int
         self.css: Optional[str] = None
         self.datetime_format: str
@@ -121,7 +121,7 @@ def get_scontrol_values(input_str: str) -> Dict[str, str]:
 def __process_spool_file(
     json_file: pathlib.Path, smtp_conn: smtplib.SMTP, options: ProcessSpoolFileOptions
 ):
-    # pylint: disable=too-many-branches,too-many-locals,too-many-statements,too-many-nested-blocks
+    # pylint: disable=too-many-branches,too-many-locals,too-many-statements,too-many-nested-blocks  # noqa
     # data is JSON encoded as of version 2.6
     with json_file.open() as spool_file:
         try:
@@ -797,7 +797,7 @@ def spool_mail_main():
             match = re.search(
                 r"Slurm ((?P<array_summary>Array Summary)|Array Task)"
                 r" Job_id=[0-9]+_([0-9]+|\*)"
-                r" \((?P<job_id>[0-9]+)\).*?(?P<state>(Began|Ended|Failed|Requeued|Invalid"
+                r" \((?P<job_id>[0-9]+)\).*?(?P<state>(Began|Ended|Failed|Requeued|Invalid"  # noqa
                 r" dependency|Reached time limit|Reached (?P<limit>[0-9]+)% of time"
                 r" limit|Staged Out))",  # pylint: disable=line-too-long
                 info,
@@ -808,7 +808,7 @@ def spool_mail_main():
         else:
             match = re.search(
                 r"Slurm"
-                r" Job_id=(?P<job_id>[0-9]+).*?(?P<state>(Began|Ended|Failed|Requeued|Invalid"
+                r" Job_id=(?P<job_id>[0-9]+).*?(?P<state>(Began|Ended|Failed|Requeued|Invalid"  # noqa
                 r" dependency|Reached time limit|Reached (?P<limit>[0-9]+)% of time"
                 r" limit|Staged Out))",  # pylint: disable=line-too-long
                 info,
