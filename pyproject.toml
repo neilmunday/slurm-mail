@@ -6,5 +6,8 @@ testpaths = [
     "tests/unit"
 ]
 
+[tool.black]
+preview-string-processing = true
+
 [tool.coverage.run]
 relative_files = true
