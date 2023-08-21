@@ -27,6 +27,8 @@
 Unit tests for slurmmail.slurm
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest  # type: ignore
 
 from slurmmail import DEFAULT_DATETIME_FORMAT
@@ -52,9 +54,29 @@ class TestCheckJobOuputFilePath:
 
 @pytest.fixture
 def job():
-    return Job(DEFAULT_DATETIME_FORMAT, 1)
+    job = Job(DEFAULT_DATETIME_FORMAT, 1)
+    job.user = "foo"
+    yield job
 
 
+@pytest.fixture
+def mock_pwd_getpwnam():
+    with patch("pwd.getpwnam") as the_mock:
+        def get_pwnam(username: str) -> MagicMock:
+            pw_struct = MagicMock()
+            if username == "foo":
+                pw_struct.pw_gecos = "Foo Bar, Building 42, 1234, 5678, foo@bar.com"
+            elif username == "jdoe":
+                pw_struct.pw_gecos = "John Doe"
+            else:
+                raise KeyError(f"getpwnam(): name not found: '{username}'")
+            return pw_struct
+
+        the_mock.side_effect = get_pwnam
+        yield the_mock
+
+
+@pytest.mark.usefixtures("mock_pwd_getpwnam")
 class TestSlurmJob:
     """
     Test slurmmail.slurm.Job
@@ -121,6 +143,10 @@ class TestSlurmJob:
 
     def test_no_used_cpu_str(self, job):
         assert job.used_cpu_str is None
+
+    def test_no_user(self, job):
+        job.user = None
+        assert job.user_real_name is None
 
     def test_no_wc_accuracy(self, job):
         assert job.wc_accuracy == "N/A"
@@ -194,6 +220,11 @@ class TestSlurmJob:
         job.used_cpu_usec = 1382400000000
         job.save()
         assert job.used_cpu_str == "16 days, 0:00:00"
+
+    def test_user_real_name(self, job):
+        assert job.user_real_name == "Foo Bar"
+        job.user = "jdoe"
+        assert job.user_real_name == "John Doe"
 
     def test_wc_accuracy_100pc(self, job):
         job.start_ts = 1673384400  # Tue 10 Jan 21:00:00 GMT 2023

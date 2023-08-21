@@ -27,6 +27,7 @@
 This module provides Slurm related classes.
 """
 
+import pwd
 import re
 
 from datetime import datetime, timedelta
@@ -199,6 +200,12 @@ class Job:
         if self.used_cpu_usec is not None:
             return str(timedelta(seconds=self.used_cpu_usec / 1000000))
         return None
+
+    @property
+    def user_real_name(self) -> Optional[str]:
+        if self.user is None:
+            return None
+        return pwd.getpwnam(self.user).pw_gecos.split(",", maxsplit=1)[0]
 
     @property
     def wallclock(self) -> Optional[int]:
