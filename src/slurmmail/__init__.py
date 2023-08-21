@@ -43,5 +43,5 @@ LONG_DESCRIPTION = 'Slurm-Mail is a drop in replacement for Slurm\'s ' + \
     ' compared to the standard Slurm e-mails.'
 MAINTAINER = 'Neil Munday'
 NAME = 'slurmmail'
-VERSION = '4.5'
+VERSION = '4.6'
 URL = 'https://www.github.com/neilmunday/slurm-mail'
