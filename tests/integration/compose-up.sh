@@ -72,5 +72,5 @@ fi
 cd $DIR
 RPM=`ls -1 slurm-mail*.el8.noarch.rpm`
 
-docker compose build --build-arg SLURM_VER=$SLURM_VER --build-arg SLURM_MAIL_RPM=$RPM
+docker compose build --build-arg SLURM_VER=$SLURM_VER --build-arg SLURM_MAIL_PKG=$RPM
 docker compose up
