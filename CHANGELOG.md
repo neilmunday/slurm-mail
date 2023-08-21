@@ -10,6 +10,7 @@ Date: 2023-08-21
 * Replaced mock library with unittest.
 * Pylint workflow corrected for Python 3.6.
 * Added user_real_name property to Job class to fix issue #94
+* Fix compose-up.sh script.
 
 Version 4.5
 -----------
