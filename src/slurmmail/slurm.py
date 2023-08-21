@@ -1,4 +1,4 @@
-# pylint: disable=invalid-name,broad-except,consider-using-f-string,missing-function-docstring
+# pylint: disable=invalid-name,broad-except,consider-using-f-string,missing-function-docstring  # noqa
 
 #
 #  This file is part of Slurm-Mail.
