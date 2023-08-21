@@ -1,6 +1,16 @@
 Change Log
 ==========
 
+Version 4.6
+-----------
+
+Date: 2023-08-21
+
+* Code refactoring for black and flake8.
+* Replaced mock library with unittest.
+* Pylint workflow corrected for Python 3.6.
+* Added user_real_name property to Job class to fix issue #94
+
 Version 4.5
 -----------
 
