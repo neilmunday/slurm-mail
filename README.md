@@ -222,7 +222,7 @@ Slurm-Mail will honour the behaviour of `--mail-type` option of `sbatch` for job
 
 Unit tests can be found at [tests/unit](tests/unit).
 
-Integration tests can be found at [tests/inegration](tests/integration) which also contains a Docker compose file which allows you to experiment with a demo of Slurm-Mail complete with [MailHog](https://hub.docker.com/r/mailhog/mailhog/) as a working mail server and webmail client.
+Integration tests can be found at [tests/integration](tests/integration) which also contains a Docker compose file which allows you to experiment with a demo of Slurm-Mail complete with [MailHog](https://hub.docker.com/r/mailhog/mailhog/) as a working mail server and webmail client.
 
 ## Upgrading from Slurm-Mail version 3 to 4
 
