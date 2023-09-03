@@ -6,7 +6,7 @@ At present there are no persistent volumes so each invocation of the image creat
 
 ## Naming
 
-The images are name: `ghcr.io/neilmunday/slurm-mail/slurm-${OS_VERSION}`. E.g. `el9` for RHEL9 compatible operating systems.
+The images are named: `ghcr.io/neilmunday/slurm-mail/slurm-${OS_VERSION}`. E.g. `el9` for RHEL9 compatible operating systems.
 
 ## Building
 
