@@ -319,7 +319,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        slurm-version: ["21.08.8-2", "22.05.8", "23.02.4"]
+        slurm-version: ["21.08.8-2", "22.05.8", "23.02.5"]
     steps:
       - name: Log in to the container registry
         uses: docker/login-action@v2
@@ -344,7 +344,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        slurm-version: ["21.08.8-2", "22.05.9", "23.02.4"]
+        slurm-version: ["21.08.8-2", "22.05.9", "23.02.5"]
     steps:
       - name: Log in to the container registry
         uses: docker/login-action@v2
@@ -369,7 +369,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        slurm-version: ["22.05.8", "23.02.4"]
+        slurm-version: ["22.05.8", "23.02.5"]
     steps:
       - name: Log in to the container registry
         uses: docker/login-action@v2
@@ -394,7 +394,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        slurm-version: ["21.08.8-2", "22.05.8", "23.02.4"]
+        slurm-version: ["21.08.8-2", "22.05.8", "23.02.5"]
     steps:
       - name: Log in to the container registry
         uses: docker/login-action@v2
@@ -419,7 +419,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        slurm-version: ["21.08.8-2", "22.05.8", "23.02.4"]
+        slurm-version: ["21.08.8-2", "22.05.8", "23.02.5"]
     steps:
       - name: Log in to the container registry
         uses: docker/login-action@v2
@@ -444,7 +444,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        slurm-version: ["21.08.8-2", "22.05.8", "23.02.4"]
+        slurm-version: ["21.08.8-2", "22.05.8", "23.02.5"]
     steps:
       - name: Log in to the container registry
         uses: docker/login-action@v2
