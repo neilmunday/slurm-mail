@@ -59,7 +59,7 @@ jobs:
       - name: commit changes
         if: steps.check.outputs.proceed == '1'
         run: |
-          git commit -a -m "Update SLURM version to ${{ steps.check.outputs.latest_version }}"
+          git commit -a -m "feat: Update SLURM version to ${{ steps.check.outputs.latest_version }}"
           git push --set-upstream origin "slurm_${{ steps.check.outputs.latest_version }}"
       - name: create pull request
         if: steps.check.outputs.proceed == '1'
