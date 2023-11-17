@@ -87,6 +87,7 @@ class Job:
 
         self.array_id: Optional[int] = array_id
         self.cluster: Optional[str] = None
+        self.admin_comment: Optional[str] = None
         self.comment: Optional[str] = None
         self.elapsed: Optional[int] = 0
         self.exit_code: Optional[int] = None
