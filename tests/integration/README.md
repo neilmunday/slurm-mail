@@ -2,13 +2,17 @@
 
 ## Introduction
 
-The `tests/integration` directory contains an automated test harness for Slurm-Mail. It makes use of https://github.com/neilmunday/rocky8-slurm to create a container to run the integration tests under.
+The `tests/integration` directory contains an automated test harness for Slurm-Mail. It makes use of the docker images created by the Docker files in the [docker-slurm](docker-slurm) sub directory.
 
 ## Adding new Slurm version support
 
-> **_Note:_** When a new version of Slurm is released https://github.com/neilmunday/rocky8-slurm needs to have been updated to support this new version first.
+When a new version of Slurm is released the Docker files in the [docker-slurm](docker-slurm) sub directory need to be updated to the new version and the images created and pushed to the `ghcr.io/neilmunday/slurm-mail` image repository. This is partially automated via the [slurm_version_check](../../.github/workflows/slurm_version_check.yml) and [build_docker_slurm](../../.github/workflows/build_docker_slurm.yml) workflows.
 
-Update the `../.github/workflows/testing.yml` workflow to include the new Slurm version.
+Each day [slurm_version_check](../../.github/workflows/slurm_version_check.yml) checks for new versions of Slurm. If a new version is found the workflow updates all of the files in the [docker-slurm](docker-slurm) directory with the new version string and creates a pull request.
+
+When the pull request is merged the [build_docker_slurm](../../.github/workflows/build_docker_slurm.yml) workflow automatically creates the new Slurm-Mail docker images so they are ready to use.
+
+Finally, the `../.github/workflows/testing.yml` workflow must be updated to include the new Slurm version.
 
 ## Adding tests
 
