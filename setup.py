@@ -27,11 +27,18 @@ Slurm-Mail's setup.py
 
 import pathlib
 import sys
-import setuptools # type: ignore
+import setuptools  # type: ignore
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[0] / "src"))
 
-from slurmmail import ARCHITECTURE, DESCRIPTION, LONG_DESCRIPTION, MAINTAINER, NAME, VERSION  # pylint: disable=wrong-import-position
+from slurmmail import (  # noqa
+    ARCHITECTURE,
+    DESCRIPTION,
+    LONG_DESCRIPTION,
+    MAINTAINER,
+    NAME,
+    VERSION
+)
 
 setuptools.setup(
     author='Neil Munday',
@@ -57,7 +64,7 @@ setuptools.setup(
         ])
     ],
     description=DESCRIPTION,
-    entry_points = {
+    entry_points={
         'console_scripts': [
             'slurm-send-mail=slurmmail.cli:send_mail_main',
             'slurm-spool-mail=slurmmail.cli:spool_mail_main'
