@@ -31,7 +31,7 @@ import setuptools  # type: ignore
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[0] / "src"))
 
-from slurmmail import (  # noqa
+from slurmmail import (  # pylint: disable=wrong-import-position # noqa
     ARCHITECTURE,
     DESCRIPTION,
     LONG_DESCRIPTION,
