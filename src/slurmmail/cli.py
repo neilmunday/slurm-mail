@@ -184,6 +184,7 @@ def __process_spool_file(
             "WorkDir",
             "Elapsed",
             "ExitCode",
+            "AdminComment",
             "Comment",
             "Cluster",
             "NodeList",
@@ -244,6 +245,7 @@ def __process_spool_file(
                     job = Job(options.datetime_format, job_id)
 
                 job.cluster = sacct_dict["Cluster"]
+                job.admin_comment = sacct_dict["AdminComment"]
                 job.comment = sacct_dict["Comment"]
                 job.cpus = int(sacct_dict["NCPUS"])
                 job.group = sacct_dict["Group"]
@@ -379,6 +381,7 @@ def __process_spool_file(
             ELAPSED=str(timedelta(seconds=job.elapsed)),
             EXIT_STATE=job.state,
             EXIT_CODE=job.exit_code,
+            ADMIN_COMMENT=job.admin_comment,
             COMMENT=job.comment,
             MEMORY=job.requested_mem_str,
             MAX_MEMORY=job.max_rss_str,
