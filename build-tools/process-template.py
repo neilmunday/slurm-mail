@@ -60,7 +60,7 @@ def write_file(template_path: pathlib.Path, write_path: pathlib.Path):
                 VERSION=slurmmail.VERSION
             )
         )
-    logging.debug("wrote: %s", output_path)
+    logging.debug("wrote: %s", write_path)
 
 if __name__ == "__main__":
 
