@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+Version 4.7
+-----------
+
+Date: 2023-11-23
+
+* Fix parsing of command line arguments to `slurm-spool-mail` when commas are present in the job name (pull #100, @jitkang).
+* Documentation for integration tests updated.
+
 Version 4.6
 -----------
 
