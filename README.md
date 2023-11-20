@@ -218,9 +218,27 @@ Notes:
 
 Slurm-Mail will honour the behaviour of `--mail-type` option of `sbatch` for job arrays. If a user specifies `--mail-type=ARRAY_TASKS` then Slurm-Mail will send notification e-mails for all jobs in the array. If you want to limit the number of e-mails that will be sent in this scenario then change the `arrayMaxNotifications` parameter in `slurm-mail.conf` to a value greater than zero.
 
+# Development
+
+Clone this repository to your desktop and make sure you have a supported version of Python installed (see *Requirements* above).
+
+Pull requests are welcome!
+
+A VSCode settings file is provided in this repository and is configured to allow you to run unit tests from the GUI.
+
 # Testing
 
-Unit tests can be found at [tests/unit](tests/unit).
+In order to run the unit tests you will need to install `pylint`, e.g.
+
+```bash
+pip3 install --user pylint
+```
+
+The unit tests can be found at [tests/unit](tests/unit) and can be invoked from either VSCode or from the command line, e.g.
+
+```bash
+pylint setup.py src/slurmmail/*.py tests/unit/*.py tests/integration/docker-slurm/*.py tests/integration/*.py
+```
 
 Integration tests can be found at [tests/integration](tests/integration) which also contains a Docker compose file which allows you to experiment with a demo of Slurm-Mail complete with [MailHog](https://hub.docker.com/r/mailhog/mailhog/) as a working mail server and webmail client.
 
