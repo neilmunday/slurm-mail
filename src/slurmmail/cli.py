@@ -790,10 +790,10 @@ def spool_mail_main():
         die("Incorrect number of command line arguments")
 
     try:
-        logging.debug("info str: %s", info)
         match = None
         if "Array" in sys.argv[2]:
             info = ",".join(sys.argv[2].split(","))
+            logging.debug("info str: %s", info)
             match = re.search(
                 r"Slurm ((?P<array_summary>Array Summary)|Array Task)"
                 r" Job_id=[0-9]+_([0-9]+|\*)"
@@ -807,6 +807,7 @@ def spool_mail_main():
             array_summary = match.group("array_summary") is not None
         else:
             info = ",".join(sys.argv[2].split(",")[0:-1])
+            logging.debug("info str: %s", info)
             match = re.search(
                 r"Slurm"
                 r" Job_id=(?P<job_id>[0-9]+).*?(?P<state>(Began|Ended|Failed|Requeued|Invalid"  # noqa
