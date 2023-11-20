@@ -790,7 +790,7 @@ def spool_mail_main():
         die("Incorrect number of command line arguments")
 
     try:
-        info = sys.argv[2].split(",", maxsplit=1)[0]
+        info = ",".join(sys.argv[2].split(",")[0:-1])
         logging.debug("info str: %s", info)
         match = None
         if "Array" in info:
