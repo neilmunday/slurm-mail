@@ -52,6 +52,7 @@ Note: some variables are only displayed in the e-mail if the job has ended.
 
 | Variable            | Purpose                                               |
 | ------------------- | ----------------------------------------------------- |
+| $ADMIN_COMMENT      | The admin cmment added to the job.                    |
 | $COMMENT            | The job's comment.                                    |
 | $CPU_EFFICIENCY     | The CPU efficiency of the job.                        |
 | $CPU_TIME           | The CPU time used by the job.                         |
