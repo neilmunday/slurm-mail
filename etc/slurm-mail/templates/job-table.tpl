@@ -35,6 +35,10 @@
 		<td>Work dir:</td>
 		<td>$WORKDIR</td>
 	</tr>
+	<tr class="jobEnd">
+		<td>Admin Comment:</td>
+		<td>$ADMIN_COMMENT</td>
+	</tr>
 	<tr>
 		<td>Comment:</td>
 		<td>$COMMENT</td>
