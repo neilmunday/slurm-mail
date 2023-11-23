@@ -7,6 +7,8 @@ Version 4.7
 Date: 2023-11-23
 
 * Fix parsing of command line arguments to `slurm-spool-mail` when commas are present in the job name (pull #100, @jitkang).
+* Added Slurm admin comment to job completion e-mail template (pull #101, @jitkang).
+* Updated Slurm docker image for SLES to work with SLES 23.11.0.
 * Documentation for integration tests updated.
 
 Version 4.6
