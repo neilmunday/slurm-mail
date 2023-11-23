@@ -1,4 +1,4 @@
-FROM opensuse/leap:15.4
+FROM opensuse/leap:15.5
 
 LABEL org.opencontainers.image.source="https://github.com/neilmunday/slurm-mail" \
       org.opencontainers.image.description="A OpenSuSE 15 Slurm container intended for testing Slurm-Mail" \
@@ -6,13 +6,18 @@ LABEL org.opencontainers.image.source="https://github.com/neilmunday/slurm-mail"
       maintainer="Neil Munday"
 
 ARG SLURM_VER=23.11.0
+ARG MARIADB_VER=11.3
 
-RUN zypper install -y \
+RUN zypper update -y && \
+    rpm --import https://yum.mariadb.org/RPM-GPG-KEY-MariaDB && \
+    zypper addrepo --gpgcheck --refresh https://yum.mariadb.org/${MARIADB_VER}/sles/15/x86_64 mariadb && \
+    zypper --gpg-auto-import-keys refresh && \
+    zypper install -y \
     gcc \
+    MariaDB-devel \
+    MariaDB-client \
+    MariaDB-server \
     mailx \
-    libmariadb-devel \
-    mariadb \
-    mariadb-client \
     munge-devel \
     pam-devel \
     perl \
@@ -33,7 +38,7 @@ RUN zypper install -y \
     /usr/src/packages/RPMS/x86_64/slurm-slurmdbd-${SLURM_VER}*.x86_64.rpm && \
     zypper remove -y \
     gcc \
-    libmariadb-devel \
+    MariaDB-devel \
     make \
     munge-devel \
     pam-devel \
@@ -58,9 +63,11 @@ RUN MAJOR_VER=`echo ${SLURM_VER} | egrep -o "^[0-9]+"` && \
     mv /etc/slurm/slurm.${MAJOR_VER}.conf /etc/slurm/slurm.conf && \
     rm -f /etc/slurm/slurm.*.conf && \
     chmod 600 /etc/slurm/slurm*.conf && \
-    /usr/bin/mysql_install_db --user=mysql && \
+    /usr/bin/mariadb-install-db --user=mysql && \
     ln -s /tini /usr/bin/tini && \
-    ln -s /var/log/supervisord /var/log/supervisor
+    ln -s /var/log/supervisord /var/log/supervisor && \
+    ln -s /usr/bin/mariadb /usr/bin/mysql && \
+    ln -s /usr/bin/mariadbd-safe /usr/bin/mysqld_safe
 
 ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/sbin/entrypoint.sh"]
 CMD ["tail -f /dev/null"]
