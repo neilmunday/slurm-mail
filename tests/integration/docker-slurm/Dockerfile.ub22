@@ -7,11 +7,10 @@ LABEL org.opencontainers.image.source="https://github.com/neilmunday/slurm-mail"
 
 ARG SLURM_VER=23.11.1
 
-RUN apt-get update
-
 RUN ln -fs /usr/share/zoneinfo/Europe/London /etc/localtime
 
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
+RUN DEBIAN_FRONTEND=noninteractive apt-get update -y && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
     bsd-mailx \
     bzip2 \
     gcc \
