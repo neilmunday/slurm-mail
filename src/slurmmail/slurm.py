@@ -239,7 +239,7 @@ class Job:
         """
         This function should be called after all properties
         have been set so that additional job properties
-        can be caclulated.
+        can be calculated.
         """
         if self.cpus is None:
             raise JobException("A job's CPU count must be set first")
