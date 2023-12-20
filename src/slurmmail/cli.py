@@ -179,6 +179,7 @@ def __process_spool_file(
             "ReqMem",
             "MaxRSS",
             "NCPUS",
+            "CPUTimeRaw",
             "TotalCPU",
             "NNodes",
             "WorkDir",
@@ -248,6 +249,7 @@ def __process_spool_file(
                 job.admin_comment = sacct_dict["AdminComment"]
                 job.comment = sacct_dict["Comment"]
                 job.cpus = int(sacct_dict["NCPUS"])
+                job.cpu_time = int(sacct_dict["CPUTimeRaw"])
                 job.group = sacct_dict["Group"]
                 job.name = sacct_dict["JobName"]
                 job.nodelist = sacct_dict["NodeList"]

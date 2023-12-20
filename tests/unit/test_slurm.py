@@ -111,6 +111,11 @@ class TestSlurmJob:
 
     def test_did_not_start(self, job):
         assert job.did_start is False
+        job.used_cpu_usec = 0
+        assert job.did_start is False
+        job.used_cpu_usec = None
+        job.cpu_time = 0
+        assert job.did_start is False
 
     def test_end_time(self, job):
         job.end_ts = 1673470800  # Wed 11 Jan 21:00:00 GMT 2023

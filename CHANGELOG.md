@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 4.8
+-----------
+
+Date: 2023-12-20
+
+* Fix for jobs incorrectly being reported as not running (issue #103)
+
 Version 4.7
 -----------
 
