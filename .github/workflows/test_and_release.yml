@@ -317,7 +317,7 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
     - id: set-matrix
-      run: echo "::set-output name=matrix::[\"22.05.11\", \"23.11.1\"]"
+      run: echo "matrix=[\"22.05.11\", \"23.11.1\"]" >> $GITHUB_OUTPUT
 
   integration_tests_rhel7:
     needs: [build_rhel7, generate_slurm_matrix]
