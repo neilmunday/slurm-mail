@@ -1,16 +1,8 @@
 name: "Purge SLURM docker images"
 
 on:
-  pull_request:
-    paths:
-      - 'tests/integration/docker-slurm/Dockerfile*'
-      - 'tests/integration/docker-slurm/*.conf'
-      - 'tests/integration/docker-slurm/entrypoint.sh'
-  push:
-    paths:
-      - 'tests/integration/docker-slurm/Dockerfile*'
-      - 'tests/integration/docker-slurm/*.conf'
-      - 'tests/integration/docker-slurm/entrypoint.sh'
+  schedule:
+    - cron: "0 0 * * *"
   workflow_dispatch:
 
 jobs:
