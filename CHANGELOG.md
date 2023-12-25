@@ -4,9 +4,10 @@ Change Log
 Version 4.8
 -----------
 
-Date: 2023-12-20
+Date: 2023-12-25
 
-* Fix for jobs incorrectly being reported as not running (issue #103)
+* Fix for jobs incorrectly being reported as not running (issue #103).
+* Only SLURM versions 22 and 23 will be included in integration tests from now on.
 
 Version 4.7
 -----------
