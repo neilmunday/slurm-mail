@@ -89,6 +89,7 @@ class Job:
         self.cluster: Optional[str] = None
         self.admin_comment: Optional[str] = None
         self.comment: Optional[str] = None
+        self.cpu_time: Optional[int] = None
         self.elapsed: Optional[int] = 0
         self.exit_code: Optional[int] = None
         self.group: Optional[str] = None
@@ -130,9 +131,11 @@ class Job:
 
     @property
     def did_start(self) -> bool:
-        if self.used_cpu_usec is None:
-            return False
-        return self.used_cpu_usec > 0
+        return (
+            self.used_cpu_usec is not None and self.used_cpu_usec > 0
+        ) or (
+            self.cpu_time is not None and self.cpu_time > 0
+        )
 
     @property
     def end(self) -> str:
