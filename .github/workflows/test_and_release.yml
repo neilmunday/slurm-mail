@@ -7,6 +7,7 @@ on:
       - 'build-tools/*'
       - 'setup.py'
       - 'src/slurmmail/*.py'
+      - 'supported_slurm_versions.json'
       - 'tests/integration/*.py'
       - 'tests/integration/run.sh'
       - 'tests/integration/tests.yml'
@@ -17,6 +18,7 @@ on:
       - 'build-tools/*'
       - 'setup.py'
       - 'src/slurmmail/*.py'
+      - 'supported_slurm_versions.json'
       - 'tests/integration/*.py'
       - 'tests/integration/run.sh'
       - 'tests/integration/tests.yml'
@@ -316,8 +318,12 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-    - id: set-matrix
-      run: echo "matrix=[\"22.05.11\", \"23.11.1\"]" >> $GITHUB_OUTPUT
+      - uses: actions/checkout@v3
+      - id: set-matrix
+        name: set-matrix
+        run: |
+          matrix=$(cat ./supported_slurm_versions.json)
+          echo "matrix=${matrix}" >> $GITHUB_OUTPUT
 
   integration_tests_rhel7:
     needs: [build_rhel7, generate_slurm_matrix]
