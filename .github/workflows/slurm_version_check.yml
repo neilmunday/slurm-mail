@@ -1,4 +1,4 @@
-name: "Check for new Slurm version"
+name: "Check for new SLURM version"
 on:
   schedule:
     - cron: "0 0 * * *"
