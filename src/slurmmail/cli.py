@@ -355,7 +355,7 @@ def __process_spool_file(
     if array_summary or len(jobs) == 1:
         jobs = [jobs[0]]
 
-    if not array_summary and 0 < options.array_max_notifications > len(jobs):
+    if not array_summary and 0 < options.array_max_notifications < len(jobs):
         logging.info(
             "Asked to send notifications for %d array-jobs which exceeds the limit of"
             " %d. Will send only send the first %d.",
