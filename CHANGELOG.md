@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 4.9
+-----------
+
+Date: 2023-12-28
+
+* Fix for job array max notifications (issue #106).
+
 Version 4.8
 -----------
 
