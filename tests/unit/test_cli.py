@@ -60,6 +60,11 @@ def clear_sys_argv():
     """
     sys.argv = [""]
 
+@pytest.fixture
+def mock_get_file_contents():
+    with patch("slurmmail.cli.get_file_contents", wraps=slurmmail.cli.get_file_contents) as the_mock:
+        yield the_mock
+
 
 @pytest.fixture
 def mock_json_dump():
@@ -239,6 +244,19 @@ def mock_smtp_ssl():
 def mock_smtp_sendmail():
     with patch("smtplib.SMTP.sendmail") as the_mock:
         yield the_mock
+
+#
+# Helpers
+#
+
+def check_template_used(the_mock: MagicMock, template_name: str):
+    call_found = False
+    print(the_mock.mock_calls)
+    for call in the_mock.mock_calls:
+        _, args, _ = call
+        if args[0].name == template_name:
+            call_found = True
+    assert call_found
 
 
 #
@@ -460,6 +478,7 @@ class TestProcessSpoolFile:
 
     def test_job_began(
         self,
+        mock_get_file_contents,
         mock_slurmmail_cli_delete_spool_file,
         mock_slurmmail_cli_process_spool_file_options,
         mock_slurmmail_cli_run_command,
@@ -492,9 +511,11 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
+            check_template_used(mock_get_file_contents, "started.tpl")
 
     def test_job_ended(
         self,
+        mock_get_file_contents,
         mock_slurmmail_cli_delete_spool_file,
         mock_slurmmail_cli_process_spool_file_options,
         mock_slurmmail_cli_run_command,
@@ -550,9 +571,11 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
+            check_template_used(mock_get_file_contents, "ended.tpl")
 
     def test_job_ended_mem_per_node_slurm_less_than_v21(
         self,
+        mock_get_file_contents,
         mock_slurmmail_cli_delete_spool_file,
         mock_slurmmail_cli_process_spool_file_options,
         mock_slurmmail_cli_run_command,
@@ -608,9 +631,11 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
+            check_template_used(mock_get_file_contents, "ended.tpl")
 
     def test_job_ended_mem_per_core_slurm_less_than_v21(
         self,
+        mock_get_file_contents,
         mock_slurmmail_cli_delete_spool_file,
         mock_slurmmail_cli_process_spool_file_options,
         mock_slurmmail_cli_run_command,
@@ -666,10 +691,11 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
+            check_template_used(mock_get_file_contents, "ended.tpl")
 
-    @patch("slurmmail.cli.check_job_output_file_path")
     def test_job_ended_tail_file(
         self,
+        mock_get_file_contents,
         mock_slurmmail_cli_check_job_output_file_path,
         mock_slurmmail_cli_delete_spool_file,
         mock_os_setegid,
@@ -737,9 +763,11 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
+            check_template_used(mock_get_file_contents, "ended.tpl")
 
     def test_job_array_began_summary(
         self,
+        mock_get_file_contents,
         mock_slurmmail_cli_delete_spool_file,
         mock_slurmmail_cli_process_spool_file_options,
         mock_slurmmail_cli_run_command,
@@ -776,9 +804,11 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
+            check_template_used(mock_get_file_contents, "started-array-summary.tpl")
 
     def test_job_array_ended_summary(
         self,
+        mock_get_file_contents,
         mock_slurmmail_cli_delete_spool_file,
         mock_slurmmail_cli_process_spool_file_options,
         mock_slurmmail_cli_run_command,
@@ -874,9 +904,11 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
+            check_template_used(mock_get_file_contents, "ended-array-summary.tpl")
 
     def test_job_array_ended_no_summary(
         self,
+        mock_get_file_contents,
         mock_slurmmail_cli_delete_spool_file,
         mock_slurmmail_cli_process_spool_file_options,
         mock_slurmmail_cli_run_command,
@@ -975,9 +1007,11 @@ class TestProcessSpoolFile:
                     == mock_slurmmail_cli_process_spool_file_options.email_from_address
                 )
                 assert args[1] == ["root"]
+            check_template_used(mock_get_file_contents, "ended-array.tpl")
 
     def test_job_array_ended_no_summary_max_notifications_exceeded(
         self,
+        mock_get_file_contents,
         mock_slurmmail_cli_delete_spool_file,
         mock_slurmmail_cli_process_spool_file_options,
         mock_slurmmail_cli_run_command,
@@ -1078,9 +1112,11 @@ class TestProcessSpoolFile:
                     == mock_slurmmail_cli_process_spool_file_options.email_from_address
                 )
                 assert args[1] == ["root"]
+            check_template_used(mock_get_file_contents, "ended-array.tpl")
 
     def test_job_ended_scontrol_failure(
         self,
+        mock_get_file_contents,
         mock_slurmmail_cli_delete_spool_file,
         mock_logging_error,
         mock_slurmmail_cli_process_spool_file_options,
@@ -1118,9 +1154,11 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
+            check_template_used(mock_get_file_contents, "ended.tpl")
 
     def test_job_ended_unlimited_wallclock(
         self,
+        mock_get_file_contents,
         mock_slurmmail_cli_delete_spool_file,
         mock_slurmmail_cli_process_spool_file_options,
         mock_slurmmail_cli_run_command,
@@ -1176,9 +1214,11 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
+            check_template_used(mock_get_file_contents, "ended.tpl")
 
     def test_job_ended_bad_wallclock(
         self,
+        mock_get_file_contents,
         mock_slurmmail_cli_delete_spool_file,
         mock_logging_warning,
         mock_slurmmail_cli_process_spool_file_options,
@@ -1236,9 +1276,11 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
+            check_template_used(mock_get_file_contents, "ended.tpl")
 
     def test_job_ended_bad_end_ts(
         self,
+        mock_get_file_contents,
         mock_slurmmail_cli_delete_spool_file,
         mock_logging_warning,
         mock_slurmmail_cli_process_spool_file_options,
@@ -1296,9 +1338,11 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
+            check_template_used(mock_get_file_contents, "ended.tpl")
 
     def test_job_timelimit_reached(
         self,
+        mock_get_file_contents,
         mock_slurmmail_cli_delete_spool_file,
         mock_slurmmail_cli_process_spool_file_options,
         mock_slurmmail_cli_run_command,
@@ -1354,9 +1398,11 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
+            check_template_used(mock_get_file_contents, "ended.tpl")
 
     def test_job_timelimit_50pc_reached(
         self,
+        mock_get_file_contents,
         mock_slurmmail_cli_delete_spool_file,
         mock_slurmmail_cli_process_spool_file_options,
         mock_slurmmail_cli_run_command,
@@ -1389,6 +1435,44 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
+            check_template_used(mock_get_file_contents, "time.tpl")
+
+    def test_job_invalid_dependency(
+        self,
+        mock_get_file_contents,
+        mock_slurmmail_cli_delete_spool_file,
+        mock_slurmmail_cli_process_spool_file_options,
+        mock_slurmmail_cli_run_command,
+        mock_smtp_sendmail,
+    ):
+        with patch(
+            "pathlib.Path.open",
+            new_callable=mock_open,
+            read_data="""{
+                "job_id": 3,
+                "email": "root",
+                "state": "Invalid dependency",
+                "array_summary": false
+                }
+                """,
+        ):
+            sacct_output = "3|root|root|all|1674770321|Unknown|PENDING|500M||1|0|00:00:00|1|/root|00:00:00|0:0|||test|node01|00:00:00|4|3|test.jcf\n"  # noqa
+            sacct_output += "3.batch||||1674770321|Unknown|PENDING|||1|0|00:00:00|1||00:00:00|0:0|||test|node01|||3.batch|batch"  # noqa
+            mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
+            slurmmail.cli.__dict__["__process_spool_file"](
+                pathlib.Path("/tmp/foo"),
+                smtplib.SMTP(),
+                mock_slurmmail_cli_process_spool_file_options,
+            )
+            mock_slurmmail_cli_run_command.assert_called_once()
+            mock_slurmmail_cli_delete_spool_file.assert_called_once()
+            mock_smtp_sendmail.assert_called_once()
+            assert (
+                mock_smtp_sendmail.call_args[0][0]
+                == mock_slurmmail_cli_process_spool_file_options.email_from_address
+            )
+            assert mock_smtp_sendmail.call_args[0][1] == ["root"]
+            check_template_used(mock_get_file_contents, "invalid-dependency.tpl")
 
 
 @pytest.mark.usefixtures(
