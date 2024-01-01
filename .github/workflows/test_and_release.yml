@@ -26,11 +26,23 @@ on:
   workflow_dispatch:
 
 jobs:
+  generate_python_matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v3
+      - id: set-matrix
+        name: set-matrix
+        run: |
+          matrix=$(cat ./supported_python_versions.json)
+          echo "matrix=${matrix}" >> $GITHUB_OUTPUT
   unit_tests:
+    needs: generate_python_matrix
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ${{fromJson(needs.generate_python_matrix.outputs.matrix)}}
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
