@@ -2,8 +2,5 @@
     "python.envFile": "${workspaceFolder}/.env",
     "python.testing.pytestPath": "~/.local/bin/pytest",
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true,
-    "flake8.args": [
-        "--max-line-length=88"
-    ],
+    "python.testing.pytestEnabled": true
 }
