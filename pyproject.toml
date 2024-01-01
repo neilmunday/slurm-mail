@@ -12,3 +12,7 @@ preview-string-processing = true
 
 [tool.coverage.run]
 relative_files = true
+
+[tool.mypy]
+files = ["src", "tests/unit"]
+strict_optional = false
