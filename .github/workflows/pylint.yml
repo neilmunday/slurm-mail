@@ -44,6 +44,7 @@ jobs:
         pip install pytest
         pip install PyYAML
         pip install requests
+        pip install setuptools
         pip install typing-extensions
     - name: Analysing the code with pylint for Python 3.6
       run: |
