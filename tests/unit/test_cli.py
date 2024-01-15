@@ -237,8 +237,9 @@ def mock_slurmmail_cli_tail_file():
 def set_slurmmail_cli_values():
     with patch("slurmmail.cli.conf_dir", CONF_DIR):
         with patch("slurmmail.cli.conf_file", CONF_FILE):
-            with patch("slurmmail.cli.tpl_dir", TEMPLATES_DIR):
-                yield
+            with patch("slurmmail.cli.html_tpl_dir", HTML_TEMPLATES_DIR):
+                with patch("slurmmail.cli.text_tpl_dir", TEXT_TEMPLATES_DIR):
+                    yield
 
 
 #
