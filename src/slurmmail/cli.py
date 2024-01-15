@@ -1,4 +1,4 @@
-# pylint: disable=invalid-name,broad-except,consider-using-f-string,line-too-long
+# pylint: disable=invalid-name,broad-except,consider-using-f-string,line-too-long,too-many-lines
 
 #
 #  This file is part of Slurm-Mail.
