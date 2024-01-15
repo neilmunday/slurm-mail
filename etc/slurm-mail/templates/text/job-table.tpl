@@ -1,0 +1,21 @@
+ID:                         $JOB_ID
+Name:                       $JOB_NAME
+Partition:                  $PARTITION
+Nodes:                      $NODES
+Memory per node:            $MEMORY
+Wallclock:                  $WALLCLOCK
+Std out:                    $STDOUT
+Std err:                    $STDERR
+Work dir:                   $WORKDIR
+Admin Comment:              $ADMIN_COMMENT
+Comment:                    $COMMENT
+Start:                      $START
+End:                        $END
+Elapsed:                    $ELAPSED
+CPU Time:                   $CPU_TIME
+CPU Efficiency:             $CPU_EFFICIENCY
+Max memory usage per node:  $MAX_MEMORY
+Wallclock Accuracy:         $WALLCLOCK_ACCURACY
+Node List:                  $NODE_LIST
+Exit Code:                  $EXIT_CODE
+Exit state:                 $EXIT_STATE

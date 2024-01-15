@@ -66,19 +66,34 @@ install -m 644 etc/logrotate.d/slurm-mail %{buildroot}/etc/logrotate.d/
 %defattr(-,root,root,0600)
 %config /etc/slurm-mail/style.css
 %dir %attr(0700,root,root) /etc/slurm-mail/templates
-%config /etc/slurm-mail/templates/ended-array-summary.tpl
-%config /etc/slurm-mail/templates/ended-array.tpl
-%config /etc/slurm-mail/templates/ended.tpl
-%config /etc/slurm-mail/templates/invalid-dependency.tpl
-%config /etc/slurm-mail/templates/job-output.tpl
-%config /etc/slurm-mail/templates/job-table.tpl
-%config /etc/slurm-mail/templates/never-ran.tpl
-%config /etc/slurm-mail/templates/signature.tpl
-%config /etc/slurm-mail/templates/staged-out.tpl
-%config /etc/slurm-mail/templates/started-array-summary.tpl
-%config /etc/slurm-mail/templates/started-array.tpl
-%config /etc/slurm-mail/templates/started.tpl
-%config /etc/slurm-mail/templates/time.tpl
+%dir %attr(0700,root,root) /etc/slurm-mail/templates/html
+%config /etc/slurm-mail/templates/html/ended-array-summary.tpl
+%config /etc/slurm-mail/templates/html/ended-array.tpl
+%config /etc/slurm-mail/templates/html/ended.tpl
+%config /etc/slurm-mail/templates/html/invalid-dependency.tpl
+%config /etc/slurm-mail/templates/html/job-output.tpl
+%config /etc/slurm-mail/templates/html/job-table.tpl
+%config /etc/slurm-mail/templates/html/never-ran.tpl
+%config /etc/slurm-mail/templates/html/signature.tpl
+%config /etc/slurm-mail/templates/html/staged-out.tpl
+%config /etc/slurm-mail/templates/html/started-array-summary.tpl
+%config /etc/slurm-mail/templates/html/started-array.tpl
+%config /etc/slurm-mail/templates/html/started.tpl
+%config /etc/slurm-mail/templates/html/time.tpl
+%dir %attr(0700,root,root) /etc/slurm-mail/templates/text
+%config /etc/slurm-mail/templates/text/ended-array-summary.tpl
+%config /etc/slurm-mail/templates/text/ended-array.tpl
+%config /etc/slurm-mail/templates/text/ended.tpl
+%config /etc/slurm-mail/templates/text/invalid-dependency.tpl
+%config /etc/slurm-mail/templates/text/job-output.tpl
+%config /etc/slurm-mail/templates/text/job-table.tpl
+%config /etc/slurm-mail/templates/text/never-ran.tpl
+%config /etc/slurm-mail/templates/text/signature.tpl
+%config /etc/slurm-mail/templates/text/staged-out.tpl
+%config /etc/slurm-mail/templates/text/started-array-summary.tpl
+%config /etc/slurm-mail/templates/text/started-array.tpl
+%config /etc/slurm-mail/templates/text/started.tpl
+%config /etc/slurm-mail/templates/text/time.tpl
 #%defattr(-,root,root,0644)
 %doc /usr/share/doc/slurm-mail/CHANGELOG.md
 %doc /usr/share/doc/slurm-mail/LICENSE

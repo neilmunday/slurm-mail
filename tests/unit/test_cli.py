@@ -44,6 +44,8 @@ DUMMY_PATH = pathlib.Path("/tmp")
 CONF_DIR = pathlib.Path(__file__).parents[2] / "etc/slurm-mail"
 CONF_FILE = CONF_DIR / "slurm-mail.conf"
 TEMPLATES_DIR = CONF_DIR / "templates"
+HTML_TEMPLATES_DIR = TEMPLATES_DIR / "html"
+TEXT_TEMPLATES_DIR = TEMPLATES_DIR / "text"
 
 #
 # Fixtures
@@ -59,7 +61,6 @@ def clear_sys_argv():
     used by the CLI main methods.
     """
     sys.argv = [""]
-
 
 @pytest.fixture
 def mock_get_file_contents():
@@ -121,7 +122,9 @@ def mock_raw_config_parser():
 
 @pytest.fixture
 def mock_raw_config_parser_missing_section():
-    with patch("configparser.RawConfigParser.has_section", return_value=False) as the_mock:
+    with patch(
+        "configparser.RawConfigParser.has_section", return_value=False
+    ) as the_mock:
         yield the_mock
 
 
@@ -182,20 +185,38 @@ def mock_slurmmail_cli_process_spool_file_options():
     options.smtp_server = "localhost"
     options.smtp_port = 25
     options.tail_lines = 0
-    options.templates = {}
-    options.templates["array_ended"] = TEMPLATES_DIR / "ended-array.tpl"
-    options.templates["array_started"] = TEMPLATES_DIR / "started-array.tpl"
-    options.templates["array_summary_started"] = TEMPLATES_DIR / "started-array-summary.tpl"
-    options.templates["array_summary_ended"] = TEMPLATES_DIR / "ended-array-summary.tpl"
-    options.templates["ended"] = TEMPLATES_DIR / "ended.tpl"
-    options.templates["invalid_dependency"] = TEMPLATES_DIR / "invalid-dependency.tpl"
-    options.templates["job_output"] = TEMPLATES_DIR / "job-output.tpl"
-    options.templates["job_table"] = TEMPLATES_DIR / "job-table.tpl"
-    options.templates["never_ran"] = TEMPLATES_DIR / "never-ran.tpl"
-    options.templates["signature"] = TEMPLATES_DIR / "signature.tpl"
-    options.templates["staged_out"] = TEMPLATES_DIR / "staged-out.tpl"
-    options.templates["started"] = TEMPLATES_DIR / "started.tpl"
-    options.templates["time"] = TEMPLATES_DIR / "time.tpl"
+    options.html_templates = {}
+    options.html_templates["array_ended"] = HTML_TEMPLATES_DIR / "ended-array.tpl"
+    options.html_templates["array_started"] = HTML_TEMPLATES_DIR / "started-array.tpl"
+    options.html_templates["array_summary_started"] = (
+        HTML_TEMPLATES_DIR / "started-array-summary.tpl"
+    )
+    options.html_templates["array_summary_ended"] = HTML_TEMPLATES_DIR / "ended-array-summary.tpl"
+    options.html_templates["ended"] = HTML_TEMPLATES_DIR / "ended.tpl"
+    options.html_templates["invalid_dependency"] = HTML_TEMPLATES_DIR / "invalid-dependency.tpl"
+    options.html_templates["job_output"] = HTML_TEMPLATES_DIR / "job-output.tpl"
+    options.html_templates["job_table"] = HTML_TEMPLATES_DIR / "job-table.tpl"
+    options.html_templates["never_ran"] = HTML_TEMPLATES_DIR / "never-ran.tpl"
+    options.html_templates["signature"] = HTML_TEMPLATES_DIR / "signature.tpl"
+    options.html_templates["staged_out"] = HTML_TEMPLATES_DIR / "staged-out.tpl"
+    options.html_templates["started"] = HTML_TEMPLATES_DIR / "started.tpl"
+    options.html_templates["time"] = HTML_TEMPLATES_DIR / "time.tpl"
+    options.text_templates = {}
+    options.text_templates["array_ended"] = HTML_TEMPLATES_DIR / "ended-array.tpl"
+    options.text_templates["array_started"] = HTML_TEMPLATES_DIR / "started-array.tpl"
+    options.text_templates["array_summary_started"] = (
+        HTML_TEMPLATES_DIR / "started-array-summary.tpl"
+    )
+    options.text_templates["array_summary_ended"] = TEXT_TEMPLATES_DIR / "ended-array-summary.tpl"
+    options.text_templates["ended"] = TEXT_TEMPLATES_DIR / "ended.tpl"
+    options.text_templates["invalid_dependency"] = TEXT_TEMPLATES_DIR / "invalid-dependency.tpl"
+    options.text_templates["job_output"] = TEXT_TEMPLATES_DIR / "job-output.tpl"
+    options.text_templates["job_table"] = TEXT_TEMPLATES_DIR / "job-table.tpl"
+    options.text_templates["never_ran"] = TEXT_TEMPLATES_DIR / "never-ran.tpl"
+    options.text_templates["signature"] = TEXT_TEMPLATES_DIR / "signature.tpl"
+    options.text_templates["staged_out"] = TEXT_TEMPLATES_DIR / "staged-out.tpl"
+    options.text_templates["started"] = TEXT_TEMPLATES_DIR / "started.tpl"
+    options.text_templates["time"] = TEXT_TEMPLATES_DIR / "time.tpl"
     options.validate_email = False
     yield options
 
@@ -242,11 +263,9 @@ def mock_smtp_sendmail():
     with patch("smtplib.SMTP.sendmail") as the_mock:
         yield the_mock
 
-
 #
 # Helpers
 #
-
 
 def check_template_used(the_mock: MagicMock, template_name: str):
     call_found = False
@@ -316,7 +335,9 @@ class MockRawConfigParser(configparser.RawConfigParser):
     _UNSET = object()
 
     @staticmethod
-    def add_mock_value(section: str, option: str, value: Union[str, int, bool, None]) -> None:
+    def add_mock_value(
+        section: str, option: str, value: Union[str, int, bool, None]
+    ) -> None:
         if section not in MockRawConfigParser.__mock_values:
             MockRawConfigParser.__mock_values[section] = {}
         MockRawConfigParser.__mock_values[section][option] = value
@@ -326,14 +347,35 @@ class MockRawConfigParser(configparser.RawConfigParser):
         MockRawConfigParser.__mock_values = {}
 
     def get(  # type: ignore
-        self, section: str, option: str, *, raw=False, vars=None, fallback=_UNSET  # type: ignore
+        self,
+        section: str,
+        option: str,
+        *,
+        raw=False,  # type: ignore
+        vars=None,
+        fallback=_UNSET
     ) -> str:
-        if section in MockRawConfigParser.__mock_values and option in MockRawConfigParser.__mock_values[section]:
+        if (
+            section in MockRawConfigParser.__mock_values
+            and option in MockRawConfigParser.__mock_values[section]
+        ):
             return str(MockRawConfigParser.__mock_values[section][option])
         return super().get(section, option)
 
-    def getboolean(self, section: str, option: str, *, raw=False, vars=None, fallback=_UNSET, **kwargs) -> bool:
-        if section in MockRawConfigParser.__mock_values and option in MockRawConfigParser.__mock_values[section]:
+    def getboolean(
+        self,
+        section: str,
+        option: str,
+        *,
+        raw=False,
+        vars=None,
+        fallback=_UNSET,
+        **kwargs
+    ) -> bool:
+        if (
+            section in MockRawConfigParser.__mock_values
+            and option in MockRawConfigParser.__mock_values[section]
+        ):
             return bool(MockRawConfigParser.__mock_values[section][option])
         return super().getboolean(section, option)
 
@@ -483,7 +525,8 @@ class TestProcessSpoolFile:
             mock_slurmmail_cli_delete_spool_file.assert_called_once()
             mock_smtp_sendmail.assert_called_once()
             assert (
-                mock_smtp_sendmail.call_args[0][0] == mock_slurmmail_cli_process_spool_file_options.email_from_address
+                mock_smtp_sendmail.call_args[0][0]
+                == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
             check_template_used(mock_get_file_contents, "started.tpl")
@@ -542,7 +585,8 @@ class TestProcessSpoolFile:
             mock_slurmmail_cli_delete_spool_file.assert_called_once()
             mock_smtp_sendmail.assert_called_once()
             assert (
-                mock_smtp_sendmail.call_args[0][0] == mock_slurmmail_cli_process_spool_file_options.email_from_address
+                mock_smtp_sendmail.call_args[0][0]
+                == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
             check_template_used(mock_get_file_contents, "ended.tpl")
@@ -601,7 +645,8 @@ class TestProcessSpoolFile:
             mock_slurmmail_cli_delete_spool_file.assert_called_once()
             mock_smtp_sendmail.assert_called_once()
             assert (
-                mock_smtp_sendmail.call_args[0][0] == mock_slurmmail_cli_process_spool_file_options.email_from_address
+                mock_smtp_sendmail.call_args[0][0]
+                == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
             check_template_used(mock_get_file_contents, "ended.tpl")
@@ -660,7 +705,8 @@ class TestProcessSpoolFile:
             mock_slurmmail_cli_delete_spool_file.assert_called_once()
             mock_smtp_sendmail.assert_called_once()
             assert (
-                mock_smtp_sendmail.call_args[0][0] == mock_slurmmail_cli_process_spool_file_options.email_from_address
+                mock_smtp_sendmail.call_args[0][0]
+                == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
             check_template_used(mock_get_file_contents, "ended.tpl")
@@ -690,7 +736,9 @@ class TestProcessSpoolFile:
         ):
             mock_slurmmail_cli_check_job_output_file_path.return_value = True
             mock_slurmmail_cli_process_spool_file_options.tail_lines = 10
-            mock_slurmmail_cli_process_spool_file_options.tail_exe = pathlib.Path("/usr/bin/tail")
+            mock_slurmmail_cli_process_spool_file_options.tail_exe = pathlib.Path(
+                "/usr/bin/tail"
+            )
             sacct_output = "2|root|root|all|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|test.jcf\n"  # noqa
             sacct_output += "2.batch||||1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|batch"  # noqa
             scontrol_output = (
@@ -729,7 +777,8 @@ class TestProcessSpoolFile:
             mock_slurmmail_cli_delete_spool_file.assert_called_once()
             mock_smtp_sendmail.assert_called_once()
             assert (
-                mock_smtp_sendmail.call_args[0][0] == mock_slurmmail_cli_process_spool_file_options.email_from_address
+                mock_smtp_sendmail.call_args[0][0]
+                == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
             check_template_used(mock_get_file_contents, "ended.tpl")
@@ -769,7 +818,8 @@ class TestProcessSpoolFile:
             mock_slurmmail_cli_delete_spool_file.assert_called_once()
             mock_smtp_sendmail.assert_called_once()
             assert (
-                mock_smtp_sendmail.call_args[0][0] == mock_slurmmail_cli_process_spool_file_options.email_from_address
+                mock_smtp_sendmail.call_args[0][0]
+                == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
             check_template_used(mock_get_file_contents, "started-array-summary.tpl")
@@ -868,7 +918,8 @@ class TestProcessSpoolFile:
             mock_slurmmail_cli_delete_spool_file.assert_called_once()
             mock_smtp_sendmail.assert_called_once()
             assert (
-                mock_smtp_sendmail.call_args[0][0] == mock_slurmmail_cli_process_spool_file_options.email_from_address
+                mock_smtp_sendmail.call_args[0][0]
+                == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
             check_template_used(mock_get_file_contents, "ended-array-summary.tpl")
@@ -969,7 +1020,10 @@ class TestProcessSpoolFile:
             # Note: call.args was added in Python 3.8 so we can't use it here.
             for call in mock_smtp_sendmail.mock_calls:
                 _, args, _ = call
-                assert args[0] == mock_slurmmail_cli_process_spool_file_options.email_from_address
+                assert (
+                    args[0]
+                    == mock_slurmmail_cli_process_spool_file_options.email_from_address
+                )
                 assert args[1] == ["root"]
             check_template_used(mock_get_file_contents, "ended-array.tpl")
 
@@ -1067,13 +1121,14 @@ class TestProcessSpoolFile:
             )
             assert mock_slurmmail_cli_run_command.call_count == 3
             mock_slurmmail_cli_delete_spool_file.assert_called_once()
-            assert (
-                mock_smtp_sendmail.call_count == mock_slurmmail_cli_process_spool_file_options.array_max_notifications
-            )
+            assert mock_smtp_sendmail.call_count == mock_slurmmail_cli_process_spool_file_options.array_max_notifications
             # Note: call.args was added in Python 3.8 so we can't use it here.
             for call in mock_smtp_sendmail.mock_calls:
                 _, args, _ = call
-                assert args[0] == mock_slurmmail_cli_process_spool_file_options.email_from_address
+                assert (
+                    args[0]
+                    == mock_slurmmail_cli_process_spool_file_options.email_from_address
+                )
                 assert args[1] == ["root"]
             check_template_used(mock_get_file_contents, "ended-array.tpl")
 
@@ -1113,7 +1168,8 @@ class TestProcessSpoolFile:
             mock_slurmmail_cli_delete_spool_file.assert_called_once()
             mock_smtp_sendmail.assert_called_once()
             assert (
-                mock_smtp_sendmail.call_args[0][0] == mock_slurmmail_cli_process_spool_file_options.email_from_address
+                mock_smtp_sendmail.call_args[0][0]
+                == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
             check_template_used(mock_get_file_contents, "ended.tpl")
@@ -1172,7 +1228,8 @@ class TestProcessSpoolFile:
             mock_slurmmail_cli_delete_spool_file.assert_called_once()
             mock_smtp_sendmail.assert_called_once()
             assert (
-                mock_smtp_sendmail.call_args[0][0] == mock_slurmmail_cli_process_spool_file_options.email_from_address
+                mock_smtp_sendmail.call_args[0][0]
+                == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
             check_template_used(mock_get_file_contents, "ended.tpl")
@@ -1233,7 +1290,8 @@ class TestProcessSpoolFile:
             mock_slurmmail_cli_delete_spool_file.assert_called_once()
             mock_smtp_sendmail.assert_called_once()
             assert (
-                mock_smtp_sendmail.call_args[0][0] == mock_slurmmail_cli_process_spool_file_options.email_from_address
+                mock_smtp_sendmail.call_args[0][0]
+                == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
             check_template_used(mock_get_file_contents, "ended.tpl")
@@ -1294,7 +1352,8 @@ class TestProcessSpoolFile:
             mock_slurmmail_cli_delete_spool_file.assert_called_once()
             mock_smtp_sendmail.assert_called_once()
             assert (
-                mock_smtp_sendmail.call_args[0][0] == mock_slurmmail_cli_process_spool_file_options.email_from_address
+                mock_smtp_sendmail.call_args[0][0]
+                == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
             check_template_used(mock_get_file_contents, "ended.tpl")
@@ -1353,7 +1412,8 @@ class TestProcessSpoolFile:
             mock_slurmmail_cli_delete_spool_file.assert_called_once()
             mock_smtp_sendmail.assert_called_once()
             assert (
-                mock_smtp_sendmail.call_args[0][0] == mock_slurmmail_cli_process_spool_file_options.email_from_address
+                mock_smtp_sendmail.call_args[0][0]
+                == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
             check_template_used(mock_get_file_contents, "ended.tpl")
@@ -1389,7 +1449,8 @@ class TestProcessSpoolFile:
             mock_slurmmail_cli_delete_spool_file.assert_called_once()
             mock_smtp_sendmail.assert_called_once()
             assert (
-                mock_smtp_sendmail.call_args[0][0] == mock_slurmmail_cli_process_spool_file_options.email_from_address
+                mock_smtp_sendmail.call_args[0][0]
+                == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
             check_template_used(mock_get_file_contents, "time.tpl")
@@ -1425,7 +1486,8 @@ class TestProcessSpoolFile:
             mock_slurmmail_cli_delete_spool_file.assert_called_once()
             mock_smtp_sendmail.assert_called_once()
             assert (
-                mock_smtp_sendmail.call_args[0][0] == mock_slurmmail_cli_process_spool_file_options.email_from_address
+                mock_smtp_sendmail.call_args[0][0]
+                == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
             check_template_used(mock_get_file_contents, "invalid-dependency.tpl")
@@ -1464,9 +1526,13 @@ class TestSendMailMain:
         slurmmail.cli.send_mail_main()
 
     @pytest.mark.usefixtures("mock_raw_config_parser")
-    def test_spool_files_present_smtp_ok(self, mock_path_glob, mock_slurmmail_cli__process_spool_file, mock_smtp):
+    def test_spool_files_present_smtp_ok(
+        self, mock_path_glob, mock_slurmmail_cli__process_spool_file, mock_smtp
+    ):
         slurmmail.cli.send_mail_main()
-        assert mock_slurmmail_cli__process_spool_file.call_count == len(mock_path_glob.return_value)
+        assert mock_slurmmail_cli__process_spool_file.call_count == len(
+            mock_path_glob.return_value
+        )
         mock_smtp.assert_called_once()
 
     @pytest.mark.usefixtures("mock_raw_config_parser")
@@ -1479,7 +1545,9 @@ class TestSendMailMain:
         smtp_instance_mock.noop = smtp_noop_mock
         mock_smtp.return_value = smtp_instance_mock
         slurmmail.cli.send_mail_main()
-        assert mock_slurmmail_cli__process_spool_file.call_count == len(mock_path_glob.return_value)
+        assert mock_slurmmail_cli__process_spool_file.call_count == len(
+            mock_path_glob.return_value
+        )
         # smtplib.SMTP will be called for each file due to noop exceptions
         assert mock_smtp.call_count == len(mock_path_glob.return_value)
 
@@ -1491,9 +1559,13 @@ class TestSendMailMain:
         mock_smtp,
         mock_smtp_ssl,
     ):
-        mock_raw_config_parser.side_effect.add_mock_value("slurm-send-mail", "smtpUseSsl", "yes")
+        mock_raw_config_parser.side_effect.add_mock_value(
+            "slurm-send-mail", "smtpUseSsl", "yes"
+        )
         slurmmail.cli.send_mail_main()
-        assert mock_slurmmail_cli__process_spool_file.call_count == len(mock_path_glob.return_value)
+        assert mock_slurmmail_cli__process_spool_file.call_count == len(
+            mock_path_glob.return_value
+        )
         mock_smtp_ssl.assert_called_once()
         mock_smtp.assert_not_called()
 
@@ -1507,9 +1579,13 @@ class TestSendMailMain:
         smtp_instance = MagicMock()
         smtp_instance.starttls = MagicMock()
         mock_smtp.return_value = smtp_instance
-        mock_raw_config_parser.side_effect.add_mock_value("slurm-send-mail", "smtpUseTls", "yes")
+        mock_raw_config_parser.side_effect.add_mock_value(
+            "slurm-send-mail", "smtpUseTls", "yes"
+        )
         slurmmail.cli.send_mail_main()
-        assert mock_slurmmail_cli__process_spool_file.call_count == len(mock_path_glob.return_value)
+        assert mock_slurmmail_cli__process_spool_file.call_count == len(
+            mock_path_glob.return_value
+        )
         mock_smtp.assert_called_once()
         smtp_instance.starttls.assert_called_once()
 
@@ -1525,10 +1601,16 @@ class TestSendMailMain:
         smtp_instance = MagicMock()
         smtp_instance.login = MagicMock()
         mock_smtp.return_value = smtp_instance
-        mock_raw_config_parser.side_effect.add_mock_value("slurm-send-mail", "smtpUserName", smtp_username)
-        mock_raw_config_parser.side_effect.add_mock_value("slurm-send-mail", "smtpPassword", smtp_password)
+        mock_raw_config_parser.side_effect.add_mock_value(
+            "slurm-send-mail", "smtpUserName", smtp_username
+        )
+        mock_raw_config_parser.side_effect.add_mock_value(
+            "slurm-send-mail", "smtpPassword", smtp_password
+        )
         slurmmail.cli.send_mail_main()
-        assert mock_slurmmail_cli__process_spool_file.call_count == len(mock_path_glob.return_value)
+        assert mock_slurmmail_cli__process_spool_file.call_count == len(
+            mock_path_glob.return_value
+        )
         mock_smtp.assert_called_once()
         smtp_instance.login.assert_called_once_with(smtp_username, smtp_password)
 
@@ -1552,18 +1634,26 @@ class TestSpoolMailMain:
             ["spool_mail_main", "-s", "Slurm Job_id=1000 Began", "test@example.com"],
         ):
             with patch("configparser.RawConfigParser.read") as mock_configparser_read:
-                mock_configparser_read.side_effect = Exception("Failed to read config file")
+                mock_configparser_read.side_effect = Exception(
+                    "Failed to read config file"
+                )
                 with pytest.raises(SystemExit):
                     slurmmail.cli.spool_mail_main()
 
-    @pytest.mark.usefixtures("mock_raw_config_parser_missing_section", "mock_sys_argv_job_began")
+    @pytest.mark.usefixtures(
+        "mock_raw_config_parser_missing_section", "mock_sys_argv_job_began"
+    )
     def test_config_file_missing_section(self):
         with pytest.raises(SystemExit):
             slurmmail.cli.spool_mail_main()
 
     @pytest.mark.usefixtures("mock_slurmmail_cli_check_dir", "mock_sys_argv_job_began")
-    def test_config_file_verbose_logging(self, mock_json_dump, mock_path_open, mock_raw_config_parser):
-        mock_raw_config_parser.side_effect.add_mock_value("slurm-spool-mail", "verbose", True)
+    def test_config_file_verbose_logging(
+        self, mock_json_dump, mock_path_open, mock_raw_config_parser
+    ):
+        mock_raw_config_parser.side_effect.add_mock_value(
+            "slurm-spool-mail", "verbose", True
+        )
         slurmmail.cli.spool_mail_main()
         mock_path_open.assert_called_once_with(mode="w", encoding="utf-8")
         mock_json_dump.assert_called_once()

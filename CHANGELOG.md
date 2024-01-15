@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 4.10
+------------
+
+Date: 2024-01-16
+
+* Add support for plain text e-mails (issue #108).
+
 Version 4.9
 -----------
 

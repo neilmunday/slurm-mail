@@ -55,7 +55,7 @@ from email.mime.text import MIMEText
 from string import Template
 from typing import Dict, Optional
 
-from slurmmail import conf_dir, conf_file, tpl_dir
+from slurmmail import conf_dir, conf_file, html_tpl_dir, text_tpl_dir
 from slurmmail.common import (
     check_dir,
     check_file,
@@ -91,7 +91,8 @@ class ProcessSpoolFileOptions:
         self.smtp_server: str
         self.tail_exe: pathlib.Path
         self.tail_lines: int
-        self.templates: Dict[str, pathlib.Path]
+        self.html_templates: Dict[str, pathlib.Path]
+        self.text_templates: Dict[str, pathlib.Path]
 
 
 def get_scontrol_values(input_str: str) -> Dict[str, str]:
@@ -370,8 +371,35 @@ def __process_spool_file(
         # "began" state. For jobs that have ended there can be mulitple
         # jobs objects if it is an array.
         logging.debug("Creating template for job %s", job.id)
-        tpl = Template(get_file_contents(options.templates["job_table"]))
-        job_table = tpl.substitute(
+        tpl = Template(get_file_contents(options.html_templates["job_table"]))
+        job_table_html = tpl.substitute(
+            JOB_ID=job.id,
+            JOB_NAME=job.name,
+            PARTITION=job.partition,
+            START=job.start,
+            END=job.end,
+            WORKDIR=job.workdir,
+            START_TS=job.start_ts,
+            END_TS=job.end_ts,
+            ELAPSED=str(timedelta(seconds=job.elapsed)),
+            EXIT_STATE=job.state,
+            EXIT_CODE=job.exit_code,
+            ADMIN_COMMENT=job.admin_comment,
+            COMMENT=job.comment,
+            MEMORY=job.requested_mem_str,
+            MAX_MEMORY=job.max_rss_str,
+            NODES=job.nodes,
+            NODE_LIST=job.nodelist,
+            STDOUT=job.stdout,
+            STDERR=job.stderr,
+            CPU_EFFICIENCY=job.cpu_efficiency,
+            CPU_TIME=job.used_cpu_str,
+            WALLCLOCK=job.wc_string,
+            WALLCLOCK_ACCURACY=job.wc_accuracy,
+        )
+
+        tpl = Template(get_file_contents(options.text_templates["job_table"]))
+        job_table_text = tpl.substitute(
             JOB_ID=job.id,
             JOB_NAME=job.name,
             PARTITION=job.partition,
@@ -398,40 +426,68 @@ def __process_spool_file(
         )
 
         logging.debug("Creating e-mail signature template")
-        tpl = Template(get_file_contents(options.templates["signature"]))
-        signature = tpl.substitute(EMAIL_FROM=options.email_from_name)
+        tpl = Template(get_file_contents(options.html_templates["signature"]))
+        signature_html = tpl.substitute(EMAIL_FROM=options.email_from_name)
+        tpl = Template(get_file_contents(options.text_templates["signature"]))
+        signature_text = tpl.substitute(EMAIL_FROM=options.email_from_name)
 
-        body = ""
+        body_html = ""
+        body_text = ""
+
         if state == "Began":
             if job.is_array():
-                tpl = None  # type: ignore
+                tpl_html = None  # type: ignore
+                tpl_text = None  # type: ignore
 
                 if array_summary:
-                    tpl = Template(
-                        get_file_contents(options.templates["array_summary_started"])
+                    tpl_html = Template(
+                        get_file_contents(options.html_templates["array_summary_started"])
+                    )
+                    tpl_text = Template(
+                        get_file_contents(options.text_templates["array_summary_started"])
                     )
                 else:
-                    tpl = Template(
-                        get_file_contents(options.templates["array_started"])
+                    tpl_html = Template(
+                        get_file_contents(options.html_templates["array_started"])
+                    )
+                    text_tpl = Template(
+                        get_file_contents(options.text_templates["array_started"])
                     )
 
-                body = tpl.substitute(
+                body_html = tpl.substitute(
                     CSS=options.css,
                     JOB_ID=job.id,
                     ARRAY_JOB_ID=job.array_id,
                     USER=job.user_real_name,
-                    JOB_TABLE=job_table,
+                    JOB_TABLE=job_table_html,
                     CLUSTER=job.cluster,
-                    SIGNATURE=signature,
+                    SIGNATURE=signature_html,
+                )
+
+                body_text = tpl.substitute(
+                    JOB_ID=job.id,
+                    ARRAY_JOB_ID=job.array_id,
+                    USER=job.user_real_name,
+                    JOB_TABLE=job_table_text,
+                    CLUSTER=job.cluster,
+                    SIGNATURE=signature_text,
                 )
             else:
-                tpl = Template(get_file_contents(options.templates["started"]))
-                body = tpl.substitute(
+                body_tpl = Template(get_file_contents(options.html_templates["started"]))
+                body_html = body_tpl.substitute(
                     CSS=options.css,
                     JOB_ID=job.id,
-                    SIGNATURE=signature,
+                    SIGNATURE=signature_html,
                     USER=job.user_real_name,
-                    JOB_TABLE=job_table,
+                    JOB_TABLE=job_table_html,
+                    CLUSTER=job.cluster,
+                )
+                text_tpl = Template(get_file_contents(options.text_templates["started"]))
+                body_text = text_tpl.substitute(
+                    JOB_ID=job.id,
+                    SIGNATURE=signature_text,
+                    USER=job.user_real_name,
+                    JOB_TABLE=job_table_text,
                     CLUSTER=job.cluster,
                 )
         elif state in ["Ended", "Failed", "Requeued", "Time limit reached"]:
@@ -439,28 +495,38 @@ def __process_spool_file(
                 end_txt = state.lower()
                 if end_txt == "time limit reached":
                     end_txt = "reached its time limit"
-                job_output = ""
+                job_output_html = ""
+                job_output_text = ""
 
                 if (
                     options.tail_lines > 0
                     and job.stdout not in ["?", "N/A"]
                     and check_job_output_file_path(job.stdout)
                 ):
-                    tpl = Template(get_file_contents(options.templates["job_output"]))
+                    tpl_html = Template(get_file_contents(options.html_templates["job_output"]))
+                    tpl_text = Template(get_file_contents(options.text_templates["job_output"]))
 
                     # Drop privileges prior to tailing output
                     os.setegid(grp.getgrnam(job.group).gr_gid)
                     os.seteuid(pwd.getpwnam(job.user).pw_uid)
 
-                    job_output = tpl.substitute(
+                    tail_output = tail_file(
+                        job.stdout, options.tail_lines, options.tail_exe
+                    )
+
+                    job_output_html = tpl_html.substitute(
                         OUTPUT_LINES=options.tail_lines,
                         OUTPUT_FILE=job.stdout,
-                        JOB_OUTPUT=tail_file(
-                            job.stdout, options.tail_lines, options.tail_exe
-                        ),
+                        JOB_OUTPUT=tail_output,
                     )
+                    job_output_text = tpl_text.substitute(
+                        OUTPUT_LINES=options.tail_lines,
+                        OUTPUT_FILE=job.stdout,
+                        JOB_OUTPUT=tail_output,
+                    )
+
                     if not job.separate_output() and job.stderr not in ["?", "N/A"]:
-                        job_output += tpl.substitute(
+                        job_output_text += tpl_text.substitute(
                             OUTPUT_LINES=options.tail_lines,
                             OUTPUT_FILE=job.stderr,
                             JOB_OUTPUT=tail_file(
@@ -474,94 +540,164 @@ def __process_spool_file(
 
                 if job.is_array():
                     if array_summary:
-                        tpl = Template(
-                            get_file_contents(options.templates["array_summary_ended"])
+                        tpl_html = Template(
+                            get_file_contents(options.html_templates["array_summary_ended"])
                         )
-                        body = tpl.substitute(
+                        body_html = tpl_html.substitute(
                             CSS=options.css,
                             END_TXT=end_txt,
                             JOB_ID=job.id,
                             ARRAY_JOB_ID=job.array_id,
-                            SIGNATURE=signature,
+                            SIGNATURE=signature_html,
                             USER=job.user_real_name,
-                            JOB_TABLE=job_table,
-                            JOB_OUTPUT=job_output,
+                            JOB_TABLE=job_table_html,
+                            JOB_OUTPUT=job_output_html,
+                            CLUSTER=job.cluster,
+                        )
+                        tpl_text = Template(
+                            get_file_contents(options.text_templates["array_summary_ended"])
+                        )
+                        body_text = tpl_text.substitute(
+                            END_TXT=end_txt,
+                            JOB_ID=job.id,
+                            ARRAY_JOB_ID=job.array_id,
+                            SIGNATURE=signature_text,
+                            USER=job.user_real_name,
+                            JOB_TABLE=job_table_text,
+                            JOB_OUTPUT=job_output_text,
                             CLUSTER=job.cluster,
                         )
                     else:
-                        tpl = Template(
-                            get_file_contents(options.templates["array_ended"])
+                        tpl_html = Template(
+                            get_file_contents(options.html_templates["array_ended"])
                         )
-                        body = tpl.substitute(
+                        body_html = tpl_html.substitute(
                             CSS=options.css,
                             END_TXT=end_txt,
                             JOB_ID=job.id,
                             ARRAY_JOB_ID=job.array_id,
-                            SIGNATURE=signature,
+                            SIGNATURE=signature_html,
                             USER=job.user_real_name,
-                            JOB_TABLE=job_table,
-                            JOB_OUTPUT=job_output,
+                            JOB_TABLE=job_table_html,
+                            JOB_OUTPUT=job_output_html,
+                            CLUSTER=job.cluster,
+                        )
+                        tpl_text = Template(
+                            get_file_contents(options.text_templates["array_ended"])
+                        )
+                        body_text = tpl_text.substitute(
+                            END_TXT=end_txt,
+                            JOB_ID=job.id,
+                            ARRAY_JOB_ID=job.array_id,
+                            SIGNATURE=signature_text,
+                            USER=job.user_real_name,
+                            JOB_TABLE=job_table_text,
+                            JOB_OUTPUT=job_output_text,
                             CLUSTER=job.cluster,
                         )
                 else:
-                    tpl = Template(get_file_contents(options.templates["ended"]))
-                    body = tpl.substitute(
+                    tpl_html = Template(get_file_contents(options.html_templates["ended"]))
+                    body_html = tpl_html.substitute(
                         CSS=options.css,
                         END_TXT=end_txt,
                         JOB_ID=job.id,
                         USER=job.user_real_name,
-                        JOB_TABLE=job_table,
-                        JOB_OUTPUT=job_output,
+                        JOB_TABLE=job_table_html,
+                        JOB_OUTPUT=job_output_html,
                         CLUSTER=job.cluster,
-                        SIGNATURE=signature,
+                        SIGNATURE=signature_html,
+                    )
+                    tpl_text = Template(get_file_contents(options.text_templates["ended"]))
+                    body_text = tpl_text.substitute(
+                        END_TXT=end_txt,
+                        JOB_ID=job.id,
+                        USER=job.user_real_name,
+                        JOB_TABLE=job_table_text,
+                        JOB_OUTPUT=job_output_text,
+                        CLUSTER=job.cluster,
+                        SIGNATURE=signature_text,
                     )
             else:
                 # job was cancelled whilst pending
-                tpl = Template(get_file_contents(options.templates["never_ran"]))
-                body = tpl.substitute(
+                tpl_html = Template(get_file_contents(options.html_templates["never_ran"]))
+                body_html = tpl_html.substitute(
                     CSS=options.css,
                     JOB_ID=job.id,
                     USER=job.user_real_name,
-                    JOB_TABLE=job_table,
+                    JOB_TABLE=job_table_html,
                     CLUSTER=job.cluster,
-                    SIGNATURE=signature,
+                    SIGNATURE=signature_html,
+                )
+                tpl_text = Template(get_file_contents(options.text_templates["never_ran"]))
+                body_text = tpl_text.substitute(
+                    JOB_ID=job.id,
+                    USER=job.user_real_name,
+                    JOB_TABLE=job_table_text,
+                    CLUSTER=job.cluster,
+                    SIGNATURE=signature_text,
                 )
         elif state in ["Time reached 50%", "Time reached 80%", "Time reached 90%"]:
             reached = int(state[-3:-1])
             remaining = (1 - (reached / 100)) * job.wallclock
             remaining_str = str(timedelta(seconds=remaining))
-            tpl = Template(get_file_contents(options.templates["time"]))
-            body = tpl.substitute(
+            tpl_html = Template(get_file_contents(options.html_templates["time"]))
+            body_html = tpl_html.substitute(
                 CSS=options.css,
                 REACHED=reached,
                 JOB_ID=job.id,
                 REMAINING=remaining_str,
                 USER=job.user_real_name,
-                JOB_TABLE=job_table,
+                JOB_TABLE=job_table_html,
                 CLUSTER=job.cluster,
-                SIGNATURE=signature,
+                SIGNATURE=signature_html,
+            )
+            tpl_text = Template(get_file_contents(options.text_templates["time"]))
+            body_text = tpl_text.substitute(
+                REACHED=reached,
+                JOB_ID=job.id,
+                REMAINING=remaining_str,
+                USER=job.user_real_name,
+                JOB_TABLE=job_table_text,
+                CLUSTER=job.cluster,
+                SIGNATURE=signature_text,
             )
             # change state value for upcomming e-mail send
             state = "{0}% of time limit reached".format(reached)
         elif state == "Invalid dependency":
-            tpl = Template(get_file_contents(options.templates["invalid_dependency"]))
-            body = tpl.substitute(
+            tpl_html = Template(get_file_contents(options.html_templates["invalid_dependency"]))
+            body_html = tpl_html.substitute(
                 CSS=options.css,
                 CLUSTER=job.cluster,
                 JOB_ID=job.id,
-                SIGNATURE=signature,
+                SIGNATURE=signature_html,
                 USER=job.user_real_name,
-                JOB_TABLE=job_table,
+                JOB_TABLE=job_table_html,
+            )
+            tpl_text = Template(get_file_contents(options.text_templates["invalid_dependency"]))
+            body_text = tpl_text.substitute(
+                CLUSTER=job.cluster,
+                JOB_ID=job.id,
+                SIGNATURE=signature_text,
+                USER=job.user_real_name,
+                JOB_TABLE=job_table_text,
             )
         elif state == "Staged Out":
-            tpl = Template(get_file_contents(options.templates["staged_out"]))
-            body = tpl.substitute(
+            tpl_html = Template(get_file_contents(options.html_templates["staged_out"]))
+            body_html = tpl_html.substitute(
                 CSS=options.css,
                 CLUSTER=job.cluster,
                 JOB_ID=job.id,
-                SIGNATURE=signature,
+                SIGNATURE=signature_html,
                 USER=job.user_real_name,
-                JOB_TABLE=job_table,
+                JOB_TABLE=job_table_html,
+            )
+            tpl_text = Template(get_file_contents(options.text_templates["staged_out"]))
+            body_text = tpl_text.substitute(
+                CLUSTER=job.cluster,
+                JOB_ID=job.id,
+                SIGNATURE=signature_text,
+                USER=job.user_real_name,
+                JOB_TABLE=job_table_text,
             )
 
         if job.cancelled:
@@ -577,7 +713,8 @@ def __process_spool_file(
         msg["From"] = options.email_from_address
         msg["Date"] = email.utils.formatdate(localtime=True)
         msg["Message-ID"] = email.utils.make_msgid()
-        msg.attach(MIMEText(body, "html"))
+        msg.attach(MIMEText(body_html, "html"))
+        msg.attach(MIMEText(body_text, "text"))
         logging.info(
             "Sending e-mail to: %s using %s for job %s (%s) via SMTP server %s:%s",
             job.user,
@@ -621,24 +758,43 @@ def send_mail_main():
 
     check_dir(conf_dir)
     check_file(conf_file)
-    check_dir(tpl_dir)
+    check_dir(html_tpl_dir)
+    check_dir(text_tpl_dir)
 
-    options.templates = {}
-    options.templates["array_ended"] = tpl_dir / "ended-array.tpl"
-    options.templates["array_started"] = tpl_dir / "started-array.tpl"
-    options.templates["array_summary_started"] = tpl_dir / "started-array-summary.tpl"
-    options.templates["array_summary_ended"] = tpl_dir / "ended-array-summary.tpl"
-    options.templates["ended"] = tpl_dir / "ended.tpl"
-    options.templates["invalid_dependency"] = tpl_dir / "invalid-dependency.tpl"
-    options.templates["job_output"] = tpl_dir / "job-output.tpl"
-    options.templates["job_table"] = tpl_dir / "job-table.tpl"
-    options.templates["never_ran"] = tpl_dir / "never-ran.tpl"
-    options.templates["signature"] = tpl_dir / "signature.tpl"
-    options.templates["staged_out"] = tpl_dir / "staged-out.tpl"
-    options.templates["started"] = tpl_dir / "started.tpl"
-    options.templates["time"] = tpl_dir / "time.tpl"
+    options.html_templates = {}
+    options.html_templates["array_ended"] = html_tpl_dir / "ended-array.tpl"
+    options.html_templates["array_started"] = html_tpl_dir / "started-array.tpl"
+    options.html_templates["array_summary_started"] = html_tpl_dir / "started-array-summary.tpl"
+    options.html_templates["array_summary_ended"] = html_tpl_dir / "ended-array-summary.tpl"
+    options.html_templates["ended"] = html_tpl_dir / "ended.tpl"
+    options.html_templates["invalid_dependency"] = html_tpl_dir / "invalid-dependency.tpl"
+    options.html_templates["job_output"] = html_tpl_dir / "job-output.tpl"
+    options.html_templates["job_table"] = html_tpl_dir / "job-table.tpl"
+    options.html_templates["never_ran"] = html_tpl_dir / "never-ran.tpl"
+    options.html_templates["signature"] = html_tpl_dir / "signature.tpl"
+    options.html_templates["staged_out"] = html_tpl_dir / "staged-out.tpl"
+    options.html_templates["started"] = html_tpl_dir / "started.tpl"
+    options.html_templates["time"] = html_tpl_dir / "time.tpl"
 
-    for _, tpl_file in options.templates.items():
+    options.text_templates = {}
+    options.text_templates["array_ended"] = text_tpl_dir / "ended-array.tpl"
+    options.text_templates["array_started"] = text_tpl_dir / "started-array.tpl"
+    options.text_templates["array_summary_started"] = text_tpl_dir / "started-array-summary.tpl"
+    options.text_templates["array_summary_ended"] = text_tpl_dir / "ended-array-summary.tpl"
+    options.text_templates["ended"] = text_tpl_dir / "ended.tpl"
+    options.text_templates["invalid_dependency"] = text_tpl_dir / "invalid-dependency.tpl"
+    options.text_templates["job_output"] = text_tpl_dir / "job-output.tpl"
+    options.text_templates["job_table"] = text_tpl_dir / "job-table.tpl"
+    options.text_templates["never_ran"] = text_tpl_dir / "never-ran.tpl"
+    options.text_templates["signature"] = text_tpl_dir / "signature.tpl"
+    options.text_templates["staged_out"] = text_tpl_dir / "staged-out.tpl"
+    options.text_templates["started"] = text_tpl_dir / "started.tpl"
+    options.text_templates["time"] = text_tpl_dir / "time.tpl"
+
+    for _, tpl_file in options.html_templates.items():
+        check_file(tpl_file)
+
+    for _, tpl_file in options.text_templates.items():
         check_file(tpl_file)
 
     stylesheet = conf_dir / "style.css"

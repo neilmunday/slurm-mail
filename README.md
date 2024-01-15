@@ -160,7 +160,7 @@ For SMTP servers that use SSL rather than starttls please set `smtpUseSsl = yes`
 
 ### Templates
 
-Slurm-Mail uses Python's [string.Template](https://docs.python.org/3/library/string.html#template-strings) class to create the e-mails it sends. Under Slurm-Mail's `/etc/slurm-mail/templates` directory you will find the following files that you can edit to customise e-mails to your needs.
+Slurm-Mail uses Python's [string.Template](https://docs.python.org/3/library/string.html#template-strings) class to create the e-mails it sends. Under Slurm-Mail's `/etc/slurm-mail/templates` directory you will find the following files that you can edit to customise e-mails to your needs under the `html` and `text` directories. Templates under the `html` directory are used for HTML e-mails and the templates under `text` are used for plain text e-mails.
 
 | Filename                  | Template Purpose                                                  |
 | ------------------------- | ----------------------------------------------------------------- |
@@ -253,8 +253,10 @@ If not, then proceed as follows:
 2. If you **have not** modified any template files you can skip this step.
 
 ```bash
-cp /opt/slurm-mail/conf.d/templates/* /etc/slurm-mail/templates/
+cp /opt/slurm-mail/conf.d/templates/* /etc/slurm-mail/templates/html/
 ```
+
+Now check the contents of the plain text templates located at `/etc/slurm-mail/templates/text` and adjust as necessary to meet your requirements.
 
 3. If you **have not** modified Slurm-Mail's `style.css` file you can skip this step.
 
@@ -287,6 +289,10 @@ systemctl restart slurmctld
 ```
 rm -rf /opt/slurm-mail
 ```
+
+## Upgrading from Slurm-Mail version 4.0-4.9 to 4.10
+
+Starting from version 4.10, HTML and plain text e-mail templates are provided. If you have adjusted any templates please copy them from `/etc/slurm-mail/templates` to `/etc/slurm-mail/templates/html` and adjust any of the plain text templates as necessary under `/etc/slurm-mail/templates/text`.
 
 ## Troubleshooting
 

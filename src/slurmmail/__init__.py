@@ -30,6 +30,8 @@ import pathlib
 conf_dir = pathlib.Path("/etc/slurm-mail")
 conf_file = conf_dir / "slurm-mail.conf"
 tpl_dir = conf_dir / "templates"
+html_tpl_dir = tpl_dir / "html"
+text_tpl_dir = tpl_dir / "text"
 
 # defaults
 DEFAULT_DATETIME_FORMAT = "%d/%m/%Y %H:%M:%S"
