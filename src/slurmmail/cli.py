@@ -450,11 +450,11 @@ def __process_spool_file(
                     tpl_html = Template(
                         get_file_contents(options.html_templates["array_started"])
                     )
-                    text_tpl = Template(
+                    tpl_text = Template(
                         get_file_contents(options.text_templates["array_started"])
                     )
 
-                body_html = tpl.substitute(
+                body_html = tpl_html.substitute(
                     CSS=options.css,
                     JOB_ID=job.id,
                     ARRAY_JOB_ID=job.array_id,
@@ -464,7 +464,7 @@ def __process_spool_file(
                     SIGNATURE=signature_html,
                 )
 
-                body_text = tpl.substitute(
+                body_text = tpl_text.substitute(
                     JOB_ID=job.id,
                     ARRAY_JOB_ID=job.array_id,
                     USER=job.user_real_name,
@@ -473,8 +473,8 @@ def __process_spool_file(
                     SIGNATURE=signature_text,
                 )
             else:
-                body_tpl = Template(get_file_contents(options.html_templates["started"]))
-                body_html = body_tpl.substitute(
+                tpl_html = Template(get_file_contents(options.html_templates["started"]))
+                body_html = tpl_html.substitute(
                     CSS=options.css,
                     JOB_ID=job.id,
                     SIGNATURE=signature_html,
@@ -482,8 +482,8 @@ def __process_spool_file(
                     JOB_TABLE=job_table_html,
                     CLUSTER=job.cluster,
                 )
-                text_tpl = Template(get_file_contents(options.text_templates["started"]))
-                body_text = text_tpl.substitute(
+                tpl_text = Template(get_file_contents(options.text_templates["started"]))
+                body_text = tpl_text.substitute(
                     JOB_ID=job.id,
                     SIGNATURE=signature_text,
                     USER=job.user_real_name,
