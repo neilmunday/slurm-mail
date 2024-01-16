@@ -1,24 +1,9 @@
-<html>
-<head>
-<style>
-	$CSS
+Dear $USER,
 
-	tr.jobEnd {
-		display: none;
-	}
-</style>
-</head>
-<body>
+Your job $JOB_ID in array $ARRAY_JOB_ID has started on $CLUSTER.
 
-<p>Dear $USER,</p>
-
-<p>Your job $JOB_ID in array $ARRAY_JOB_ID has started on $CLUSTER.</p>
-
-<p>Details about this job can be found in the table below:</p>
+Details about this job can be found in the table below:
 
 $JOB_TABLE
 
 $SIGNATURE
-
-</body>
-</html>
