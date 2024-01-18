@@ -5,6 +5,8 @@ on:
     paths:
       - '.github/workflows/test_and_release.yml'
       - 'build-tools/*'
+      - 'etc/slurm-mail/templates/html'
+      - 'etc/slurm-mail/templates/text'
       - 'setup.py'
       - 'src/slurmmail/*.py'
       - 'supported_slurm_versions.json'
@@ -16,6 +18,8 @@ on:
     paths:
       - '.github/workflows/test_and_release.yml'
       - 'build-tools/*'
+      - 'etc/slurm-mail/templates/html'
+      - 'etc/slurm-mail/templates/text'
       - 'setup.py'
       - 'src/slurmmail/*.py'
       - 'supported_slurm_versions.json'
