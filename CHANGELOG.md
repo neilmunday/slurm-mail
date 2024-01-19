@@ -7,6 +7,7 @@ Version 4.10
 Date: 2024-01-16
 
 * Add support for plain text e-mails (issue #108).
+* Fix job array states in e-mails (issue #109).
 
 Version 4.9
 -----------

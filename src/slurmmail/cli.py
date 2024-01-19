@@ -233,10 +233,17 @@ def __process_spool_file(
                         job.max_rss_str = sacct_dict["MaxRSS"]
                     continue
 
-                if "{0}".format(first_job_id) not in sacct_dict["JobId"]:
+                job_id = int(sacct_dict["JobIdRaw"])
+
+                if not array_summary and job_id != int(first_job_id):
+                    logging.debug("skipping %s, it does not equal %s", job_id, first_job_id)
+                    print("skipping %s, it does not equal %s" % (job_id, first_job_id))
                     continue
 
-                job_id = int(sacct_dict["JobIdRaw"])
+                if array_summary and "{0}".format(first_job_id) not in sacct_dict["JobId"]:
+                    logging.debug("skipping %s for job array summary", sacct_dict["JobId"])
+                    continue
+
                 if "_" in sacct_dict["JobId"]:
                     job = Job(
                         options.datetime_format,
