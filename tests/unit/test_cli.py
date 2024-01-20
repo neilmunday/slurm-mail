@@ -62,6 +62,7 @@ def clear_sys_argv():
     """
     sys.argv = [""]
 
+
 @pytest.fixture
 def mock_get_file_contents():
     with patch("slurmmail.cli.get_file_contents", wraps=slurmmail.cli.get_file_contents) as the_mock:
@@ -267,6 +268,7 @@ def mock_smtp_sendmail():
 #
 # Helpers
 #
+
 
 def check_template_used(the_mock: MagicMock, template_name: str):
     call_found = False
@@ -1044,7 +1046,10 @@ class TestProcessSpoolFile:
             )
             assert mock_slurmmail_cli_run_command.call_count == 2
             mock_slurmmail_cli_delete_spool_file.assert_called_once()
-            assert mock_smtp_sendmail.call_count == mock_slurmmail_cli_process_spool_file_options.array_max_notifications
+            assert (
+                mock_smtp_sendmail.call_count ==
+                mock_slurmmail_cli_process_spool_file_options.array_max_notifications
+            )
             # Note: call.args was added in Python 3.8 so we can't use it here.
             for call in mock_smtp_sendmail.mock_calls:
                 _, args, _ = call
