@@ -721,7 +721,7 @@ def __process_spool_file(
         msg["Date"] = email.utils.formatdate(localtime=True)
         msg["Message-ID"] = email.utils.make_msgid()
         msg.attach(MIMEText(body_html, "html"))
-        msg.attach(MIMEText(body_text, "text"))
+        msg.attach(MIMEText(body_text, "plain"))
         logging.info(
             "Sending e-mail to: %s using %s for job %s (%s) via SMTP server %s:%s",
             job.user,
