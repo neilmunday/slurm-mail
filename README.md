@@ -21,9 +21,10 @@ Repository: https://github.com/neilmunday/slurm-mail
 10. [Development](#development)
 11. [Linting](#linting)
 12. [Testing](#testing)
-13. [Upgrading from Slurm-Mail version 4.0-4.9 to 4.10](#upgrading-from-slurm-mail-version-4.0-to-4.10)
-14. [Troubleshooting](#troubleshooting)
-15. [Contributors](#contributors)
+13. [Upgrading from Slurm-Mail version 3 to 4](#upgrading-from-slurm-mail-version-3-to-4)
+14. [Upgrading from Slurm-Mail version 4.0-4.9 to 4.10](#upgrading-from-slurm-mail-version-40-to-410)
+15. [Troubleshooting](#troubleshooting)
+16. [Contributors](#contributors)
 
 ## Introduction
 
