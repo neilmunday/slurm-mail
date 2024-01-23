@@ -18,10 +18,12 @@ Repository: https://github.com/neilmunday/slurm-mail
 7. [Validating E-mails](#validating-e-mails)
 8. [Including Job Output in E-mails](#including-job-output-in-e-mails)
 9. [Job Arrays](#job-arrays)
-10. [Testing](#testing)
-11. [Upgrading from Slurm-Mail version 3 to 4](#upgrading-from-slurm-mail-version-3-to-4)
-12. [Troubleshooting](#troubleshooting)
-13. [Contributors](#contributors)
+10. [Development](#development)
+11. [Linting](#linting)
+12. [Testing](#testing)
+13. [Upgrading from Slurm-Mail version 4.0-4.9 to 4.10](#upgrading-from-slurm-mail-version-4.0-to-4.10)
+14. [Troubleshooting](#troubleshooting)
+15. [Contributors](#contributors)
 
 ## Introduction
 
@@ -226,18 +228,32 @@ Pull requests are welcome!
 
 A VSCode settings file is provided in this repository and is configured to allow you to run unit tests from the GUI.
 
-# Testing
+## Linting
 
-In order to run the unit tests you will need to install `pylint`, e.g.
+`pylint` is used to check that the Slurm-Mail Python source code is formatted correctly.
 
 ```bash
-pip3 install --user pylint
+pip3 install --user pytest
+```
+
+Once install you can run `pylint` against the Slurm-Mail source code:
+
+```bash
+pylint setup.py src/slurmmail/*.py tests/unit/*.py tests/integration/docker-slurm/*.py tests/integration/*.py
+```
+
+## Testing
+
+In order to run the unit tests you will need to install `pytest`, e.g.
+
+```bash
+pip3 install --user pytest
 ```
 
 The unit tests can be found at [tests/unit](tests/unit) and can be invoked from either VSCode or from the command line, e.g.
 
 ```bash
-pylint setup.py src/slurmmail/*.py tests/unit/*.py tests/integration/docker-slurm/*.py tests/integration/*.py
+pytest
 ```
 
 Integration tests can be found at [tests/integration](tests/integration) which also contains a Docker compose file which allows you to experiment with a demo of Slurm-Mail complete with [MailHog](https://hub.docker.com/r/mailhog/mailhog/) as a working mail server and webmail client.
