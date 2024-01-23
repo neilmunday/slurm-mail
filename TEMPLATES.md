@@ -2,6 +2,8 @@
 
 Each template has a number of variables which are are used during e-mail generation. The following sub sections detail which variables are available to which templates. You can use these to customise the templates to your individual requirements.
 
+HTML and plain text templates can be found at: `/etc/slurm-mail/templates/html` and `/etc/slurm-mail/templates/text`
+
 ## ended-array.tpl, ended-array_summary.tpl
 
 | Variable      | Purpose                                                      |
