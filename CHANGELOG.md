@@ -4,7 +4,7 @@ Change Log
 Version 4.10
 ------------
 
-Date: 2024-01-16
+Date: 2024-01-23
 
 * Add support for plain text e-mails (issue #108).
 * Fix job array states in e-mails (issue #109).
