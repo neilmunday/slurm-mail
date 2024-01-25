@@ -5,7 +5,7 @@ LABEL org.opencontainers.image.source="https://github.com/neilmunday/slurm-mail"
       org.opencontainers.image.title="opensuse8-slurm" \
       maintainer="Neil Munday"
 
-ARG SLURM_VER=23.11.1
+ARG SLURM_VER=23.11.3
 ARG MARIADB_VER=11.3
 
 RUN zypper update -y && \
