@@ -68,7 +68,7 @@ jobs:
           pytest -v
 
       - name: Store coverage file
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage
           path: .coverage.${{ matrix.python-version }}
@@ -93,7 +93,7 @@ jobs:
           MERGE_COVERAGE_FILES: true
 
       - name: Store Pull Request comment to be posted
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: steps.coverage_comment.outputs.COMMENT_FILE_WRITTEN == 'true'
         with:
           name: python-coverage-comment-action
@@ -123,14 +123,14 @@ jobs:
       - name: Create md5sum for tar file
         run: md5sum ${{ env.TAR_NAME }} | awk '{ print $1}' > ${{ env.TAR_NAME }}.md5sum
       - name: Store tar file
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: tar_file
           path: ${{ env.TAR_NAME }}
           if-no-files-found: error
           retention-days: 5
       - name: Store tar file md5sum
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: tar_file
           path: ${{ env.TAR_NAME }}.md5sum
@@ -155,14 +155,14 @@ jobs:
       - name: Create md5sum for RHEL 7 RPM
         run: md5sum ${{ env.RHEL7_RPM }} > ${{ env.RHEL7_RPM }}.md5sum
       - name: Store RHEL 7 RPM
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: rhel7_pkg
           path: ${{ env.RHEL7_RPM }}
           if-no-files-found: error
           retention-days: 5
       - name: Store RHEL 7 RPM md5sum
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: rhel7_pkg
           path: ${{ env.RHEL7_RPM }}.md5sum
@@ -187,14 +187,14 @@ jobs:
       - name: Create md5sum for RHEL 8 RPM
         run: md5sum ${{ env.RHEL8_RPM }} > ${{ env.RHEL8_RPM }}.md5sum
       - name: Store RHEL 8 RPM
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: rhel8_pkg
           path: ${{ env.RHEL8_RPM }}
           if-no-files-found: error
           retention-days: 5
       - name: Store RHEL 8 RPM md5sum
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: rhel8_pkg
           path: ${{ env.RHEL8_RPM }}.md5sum
@@ -219,14 +219,14 @@ jobs:
       - name: Create md5sum for RHEL 9 RPM
         run: md5sum ${{ env.RHEL9_RPM }} > ${{ env.RHEL9_RPM }}.md5sum
       - name: Store RHEL 9 RPM
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: rhel9_pkg
           path: ${{ env.RHEL9_RPM }}
           if-no-files-found: error
           retention-days: 5
       - name: Store RHEL 9 RPM md5sum
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: rhel9_pkg
           path: ${{ env.RHEL9_RPM }}.md5sum
@@ -251,14 +251,14 @@ jobs:
       - name: Create md5sum for SUSE 15 RPM
         run: md5sum ${{ env.SUSE15_RPM }} > ${{ env.SUSE15_RPM }}.md5sum
       - name: Store SUSE 15 RPM
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: suse15_pkg
           path: ${{ env.SUSE15_RPM }}
           if-no-files-found: error
           retention-days: 5
       - name: Store SUSE 15 RPM md5sum
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: suse15_pkg
           path: ${{ env.SUSE15_RPM }}.md5sum
@@ -283,14 +283,14 @@ jobs:
       - name: Create md5sum for Ubuntu 20 package
         run: md5sum ${{ env.UBUNTU20_PKG }} > ${{ env.UBUNTU20_PKG }}.md5sum
       - name: Store Ubuntu 20 package
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ubuntu20_pkg
           path: ${{ env.UBUNTU20_PKG }}
           if-no-files-found: error
           retention-days: 5
       - name: Store Ubuntu 20 package md5sum
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ubuntu20_pkg
           path: ${{ env.UBUNTU20_PKG }}.md5sum
@@ -315,14 +315,14 @@ jobs:
       - name: Create md5sum for Ubuntu 22 package
         run: md5sum ${{ env.UBUNTU22_PKG }} > ${{ env.UBUNTU22_PKG }}.md5sum
       - name: Store Ubuntu 22 package
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ubuntu22_pkg
           path: ${{ env.UBUNTU22_PKG }}
           if-no-files-found: error
           retention-days: 5
       - name: Store Ubuntu 22 package md5sum
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ubuntu22_pkg
           path: ${{ env.UBUNTU22_PKG }}.md5sum
