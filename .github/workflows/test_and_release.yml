@@ -352,7 +352,7 @@ jobs:
         slurm-version: ${{fromJson(needs.generate_slurm_matrix.outputs.matrix)}}
     steps:
       - name: Log in to the container registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -377,7 +377,7 @@ jobs:
         slurm-version: ${{fromJson(needs.generate_slurm_matrix.outputs.matrix)}}
     steps:
       - name: Log in to the container registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -402,7 +402,7 @@ jobs:
         slurm-version: ${{fromJson(needs.generate_slurm_matrix.outputs.matrix)}}
     steps:
       - name: Log in to the container registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -427,7 +427,7 @@ jobs:
         slurm-version: ${{fromJson(needs.generate_slurm_matrix.outputs.matrix)}}
     steps:
       - name: Log in to the container registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -452,7 +452,7 @@ jobs:
         slurm-version: ${{fromJson(needs.generate_slurm_matrix.outputs.matrix)}}
     steps:
       - name: Log in to the container registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -477,7 +477,7 @@ jobs:
         slurm-version: ${{fromJson(needs.generate_slurm_matrix.outputs.matrix)}}
     steps:
       - name: Log in to the container registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
