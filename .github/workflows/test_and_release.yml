@@ -83,7 +83,6 @@ jobs:
       - uses: actions/download-artifact@v4
         id: download
         with:
-          name: 'coverage'
           pattern: coverage-*
           merge-multiple: true
 
@@ -134,7 +133,7 @@ jobs:
       - name: Store tar file md5sum
         uses: actions/upload-artifact@v4
         with:
-          name: tar_file
+          name: tar_file_md5sum
           path: ${{ env.TAR_NAME }}.md5sum
           if-no-files-found: error
           retention-days: 5
@@ -166,7 +165,7 @@ jobs:
       - name: Store RHEL 7 RPM md5sum
         uses: actions/upload-artifact@v4
         with:
-          name: rhel7_pkg
+          name: rhel7_pkg_md5sum
           path: ${{ env.RHEL7_RPM }}.md5sum
           if-no-files-found: error
           retention-days: 5
@@ -198,7 +197,7 @@ jobs:
       - name: Store RHEL 8 RPM md5sum
         uses: actions/upload-artifact@v4
         with:
-          name: rhel8_pkg
+          name: rhel8_pkg_md5sum
           path: ${{ env.RHEL8_RPM }}.md5sum
           if-no-files-found: error
           retention-days: 5
@@ -230,7 +229,7 @@ jobs:
       - name: Store RHEL 9 RPM md5sum
         uses: actions/upload-artifact@v4
         with:
-          name: rhel9_pkg
+          name: rhel9_pkg_md5sum
           path: ${{ env.RHEL9_RPM }}.md5sum
           if-no-files-found: error
           retention-days: 5
@@ -262,7 +261,7 @@ jobs:
       - name: Store SUSE 15 RPM md5sum
         uses: actions/upload-artifact@v4
         with:
-          name: suse15_pkg
+          name: suse15_pkg_md5sum
           path: ${{ env.SUSE15_RPM }}.md5sum
           if-no-files-found: error
           retention-days: 5
@@ -294,7 +293,7 @@ jobs:
       - name: Store Ubuntu 20 package md5sum
         uses: actions/upload-artifact@v4
         with:
-          name: ubuntu20_pkg
+          name: ubuntu20_pkg_md5sum
           path: ${{ env.UBUNTU20_PKG }}.md5sum
           if-no-files-found: error
           retention-days: 5
@@ -326,7 +325,7 @@ jobs:
       - name: Store Ubuntu 22 package md5sum
         uses: actions/upload-artifact@v4
         with:
-          name: ubuntu22_pkg
+          name: ubuntu22_pkg_md5sum
           path: ${{ env.UBUNTU22_PKG }}.md5sum
           if-no-files-found: error
           retention-days: 5
@@ -514,31 +513,31 @@ jobs:
           mkdir downloads
       - uses: actions/download-artifact@v4
         with:
-          name: 'rhel7_pkg'
+          pattern: 'rhel7_pkg*'
           path: downloads
       - uses: actions/download-artifact@v4
         with:
-          name: 'rhel8_pkg'
+          pattern: 'rhel8_pkg*'
           path: downloads
       - uses: actions/download-artifact@v4
         with:
-          name: 'rhel9_pkg'
+          pattern: 'rhel9_pkg*'
           path: downloads
       - uses: actions/download-artifact@v4
         with:
-          name: 'suse15_pkg'
+          pattern: 'suse15_pkg*'
           path: downloads
       - uses: actions/download-artifact@v4
         with:
-          name: 'tar_file'
+          pattern: 'tar_file*'
           path: downloads
       - uses: actions/download-artifact@v4
         with:
-          name: 'ubuntu20_pkg'
+          pattern: 'ubuntu20_pkg*'
           path: downloads
       - uses: actions/download-artifact@v4
         with:
-          name: 'ubuntu22_pkg'
+          pattern: 'ubuntu22_pkg*'
           path: downloads
       - name: GH Release
         uses: softprops/action-gh-release@v0.1.15
