@@ -159,6 +159,18 @@ smtpPassword =
 
 For SMTP servers that use SSL rather than starttls please set `smtpUseSsl = yes`.
 
+## E-mail retries
+
+By default Slurm-Mail will attempt to resend e-mails when a previous attempt failed. This can result repeated failed e-mail attempts if for example a user has specified an invalid e-mail address.
+
+If you would prefer to disable this feature, set the following option in `/etc/slurm-mail/slurm-mail.conf`:
+
+```
+retryOnFailure = no
+```
+
+In either case, errors for failed e-mail delivery will always be logged in `/var/log/slurm-mail/slurm-send-mail.log`
+
 ## Customising E-mails
 
 ### Templates
@@ -337,4 +349,5 @@ Thank you to the following people who have contributed code improvements, featur
 * [Neil Prockter (@mrgum)](https://github.com/mrgum)
 * [sdx23 (@sdx23)](https://www.github.com/sdx23)
 * [Simon Feltman (@sfeltman)](https://www.github.com/sfeltman)
+* [Thanasis Georgiou (@thgeorgiou)](https://www.github.com/thgeorgiou)
 * [Woody Chang (@jitkang)](https://github.com/jitkang)
