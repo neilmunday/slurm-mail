@@ -7,7 +7,7 @@
 #  much more information about their jobs compared to the standard Slurm
 #  e-mails.
 #
-#   Copyright (C) 2018-2023 Neil Munday (neil@mundayweb.com)
+#   Copyright (C) 2018-2024 Neil Munday (neil@mundayweb.com)
 #
 #  Slurm-Mail is free software: you can redistribute it and/or modify it
 #  under the terms of the GNU General Public License as published by the
