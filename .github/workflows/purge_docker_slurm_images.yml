@@ -11,7 +11,7 @@ jobs:
     outputs:
       versions: ${{ join(fromJson(steps.set-versions.outputs.versions), '|') }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - id: set-versions
         name: set-versions
         run: |
