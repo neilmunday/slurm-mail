@@ -93,6 +93,7 @@ class ProcessSpoolFileOptions:
         self.tail_lines: int
         self.html_templates: Dict[str, pathlib.Path]
         self.text_templates: Dict[str, pathlib.Path]
+        self.retry_on_failure: bool = True
 
 
 def get_scontrol_values(input_str: str) -> Dict[str, str]:
@@ -732,9 +733,22 @@ def __process_spool_file(
             options.smtp_port,
         )
 
-        smtp_conn.sendmail(
-            options.email_from_address, user_email.split(","), msg.as_string()
-        )
+        try:
+            smtp_conn.sendmail(
+                options.email_from_address, user_email.split(","), msg.as_string()
+            )
+        except (
+            smtplib.SMTPHeloError,
+            smtplib.SMTPRecipientsRefused,
+            smtplib.SMTPSenderRefused,
+            smtplib.SMTPNotSupportedError
+        ) as e:
+            logging.error("Failed to send e-mail: %s", e)
+            if options.retry_on_failure:
+                # Raise the original exception to prevent `delete_spool_file` from being
+                # executed at the end of the function. This way the spool file will be
+                # retried on the next run.
+                raise e
 
     delete_spool_file(json_file)
 
@@ -840,6 +854,7 @@ def send_mail_main():
         smtp_password = config.get(section, "smtpPassword")
         options.tail_exe = pathlib.Path(config.get(section, "tailExe"))
         options.tail_lines = config.getint(section, "includeOutputLines")
+        options.retry_on_failure = config.getboolean(section, "retryOnFailure")
 
         if config.has_option(section, "emailRegEx"):
             options.mail_regex = config.get(section, "emailRegEx")
