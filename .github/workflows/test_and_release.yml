@@ -515,30 +515,38 @@ jobs:
         with:
           pattern: 'rhel7_pkg*'
           path: downloads
+          merge-multiple: true
       - uses: actions/download-artifact@v4
         with:
           pattern: 'rhel8_pkg*'
           path: downloads
+          merge-multiple: true
       - uses: actions/download-artifact@v4
         with:
           pattern: 'rhel9_pkg*'
           path: downloads
+          merge-multiple: true
       - uses: actions/download-artifact@v4
         with:
           pattern: 'suse15_pkg*'
           path: downloads
+          merge-multiple: true
       - uses: actions/download-artifact@v4
         with:
           pattern: 'tar_file*'
           path: downloads
+          merge-multiple: true
       - uses: actions/download-artifact@v4
         with:
           pattern: 'ubuntu20_pkg*'
           path: downloads
+          merge-multiple: true
       - uses: actions/download-artifact@v4
         with:
           pattern: 'ubuntu22_pkg*'
           path: downloads
+          merge-multiple: true
+      - run: ls -1 downloads
       - name: GH Release
         uses: softprops/action-gh-release@v0.1.15
         with:
