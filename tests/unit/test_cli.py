@@ -185,6 +185,7 @@ def mock_slurmmail_cli_process_spool_file_options():
     options.scontrol_exe = pathlib.Path("/tmp/scontrol")
     options.smtp_server = "localhost"
     options.smtp_port = 25
+    options.retry_on_failure = True
     options.tail_lines = 0
     options.html_templates = {}
     options.html_templates["array_ended"] = HTML_TEMPLATES_DIR / "ended-array.tpl"
@@ -519,6 +520,84 @@ class TestProcessSpoolFile:
             sacct_output = "1|root|root|all|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|test.jcf\n"  # noqa
             sacct_output += "1.batch||||1674333232|Unknown|RUNNING|||1|0|00:00:00|1||00:00:11|0:0|||test|node01|||1.batch|batch"  # noqa
             mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
+            slurmmail.cli.__dict__["__process_spool_file"](
+                pathlib.Path("/tmp/foo"),
+                smtplib.SMTP(),
+                mock_slurmmail_cli_process_spool_file_options,
+            )
+            assert mock_slurmmail_cli_run_command.call_count == 1
+            mock_slurmmail_cli_delete_spool_file.assert_called_once()
+            mock_smtp_sendmail.assert_called_once()
+            assert (
+                mock_smtp_sendmail.call_args[0][0]
+                == mock_slurmmail_cli_process_spool_file_options.email_from_address
+            )
+            assert mock_smtp_sendmail.call_args[0][1] == ["root"]
+            check_template_used(mock_get_file_contents, "started.tpl")
+
+    def test_job_began_sendmail_fail_retry_on_failure(
+        self,
+        mock_get_file_contents,
+        mock_slurmmail_cli_delete_spool_file,
+        mock_slurmmail_cli_process_spool_file_options,
+        mock_slurmmail_cli_run_command,
+        mock_smtp_sendmail,
+    ):
+        with patch(
+            "pathlib.Path.open",
+            new_callable=mock_open,
+            read_data="""{
+                "job_id": 1,
+                "email": "root",
+                "state": "Began",
+                "array_summary": false
+                }
+                """,
+        ):
+            sacct_output = "1|root|root|all|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|test.jcf\n"  # noqa
+            sacct_output += "1.batch||||1674333232|Unknown|RUNNING|||1|0|00:00:00|1||00:00:11|0:0|||test|node01|||1.batch|batch"  # noqa
+            mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
+            mock_smtp_sendmail.side_effect = smtplib.SMTPSenderRefused(503, b'Error', 'root')
+            with pytest.raises(smtplib.SMTPSenderRefused):
+                slurmmail.cli.__dict__["__process_spool_file"](
+                    pathlib.Path("/tmp/foo"),
+                    smtplib.SMTP(),
+                    mock_slurmmail_cli_process_spool_file_options,
+                )
+            assert mock_slurmmail_cli_run_command.call_count == 1
+            mock_slurmmail_cli_delete_spool_file.assert_not_called()
+            mock_smtp_sendmail.assert_called_once()
+            assert (
+                mock_smtp_sendmail.call_args[0][0]
+                == mock_slurmmail_cli_process_spool_file_options.email_from_address
+            )
+            assert mock_smtp_sendmail.call_args[0][1] == ["root"]
+            check_template_used(mock_get_file_contents, "started.tpl")
+
+    def test_job_began_sendmail_fail_no_retry_failure(
+        self,
+        mock_get_file_contents,
+        mock_slurmmail_cli_delete_spool_file,
+        mock_slurmmail_cli_process_spool_file_options,
+        mock_slurmmail_cli_run_command,
+        mock_smtp_sendmail,
+    ):
+        with patch(
+            "pathlib.Path.open",
+            new_callable=mock_open,
+            read_data="""{
+                "job_id": 1,
+                "email": "root",
+                "state": "Began",
+                "array_summary": false
+                }
+                """,
+        ):
+            sacct_output = "1|root|root|all|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|test.jcf\n"  # noqa
+            sacct_output += "1.batch||||1674333232|Unknown|RUNNING|||1|0|00:00:00|1||00:00:11|0:0|||test|node01|||1.batch|batch"  # noqa
+            mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
+            mock_slurmmail_cli_process_spool_file_options.retry_on_failure = False
+            mock_smtp_sendmail.side_effect = smtplib.SMTPSenderRefused(503, b'Error', 'root')
             slurmmail.cli.__dict__["__process_spool_file"](
                 pathlib.Path("/tmp/foo"),
                 smtplib.SMTP(),
