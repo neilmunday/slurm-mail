@@ -3,7 +3,7 @@ Change Log
 
 Version 4.11
 
-Date: 2024-02-01
+Date: 2024-02-02
 
 * Added support for new retryOnFailure configuration option (pull #112, @thgeorgiou).
 * Updated github workflows to use action versions that support NodeJS 20 (issue #114).
