@@ -721,8 +721,9 @@ def __process_spool_file(
         msg["From"] = options.email_from_address
         msg["Date"] = email.utils.formatdate(localtime=True)
         msg["Message-ID"] = email.utils.make_msgid()
-        msg.attach(MIMEText(body_html, "html"))
+        # prefer HTML to plain text, so we add the plain text attachment first (see rfc2046 5.1.4)
         msg.attach(MIMEText(body_text, "plain"))
+        msg.attach(MIMEText(body_html, "html"))
         logging.info(
             "Sending e-mail to: %s using %s for job %s (%s) via SMTP server %s:%s",
             job.user,
