@@ -11,6 +11,8 @@ on:
       - 'tests/integration/docker-slurm/Dockerfile*'
       - 'tests/integration/docker-slurm/*.conf'
       - 'tests/integration/docker-slurm/entrypoint.sh'
+    tags-ignore:
+      - '**'
   workflow_dispatch:
 
 jobs:
