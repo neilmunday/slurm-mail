@@ -2,6 +2,14 @@ Change Log
 ==========
 
 Version 4.11
+------------
+
+Date: 2024-02-17
+
+* Adjusted e-mail attachement order as per RFC 2046 so that HTML format is preferred (pull #115, @Hugoch)
+
+Version 4.11
+------------
 
 Date: 2024-02-02
 
