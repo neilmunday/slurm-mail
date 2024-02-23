@@ -45,8 +45,8 @@ mysql -e "GRANT ALL ON slurm_acct_db.* TO 'slurm'@'localhost';" || die "failed t
 if [ ! -e /etc/munge/munge.key ]; then
   create-munge-key
 fi
-supervisorctl start munged
 
+supervisorctl start munged
 supervisorctl start slurmdbd || die "slurmdbd failed to start" /var/log/slurm/slurmdbd.log
 supervisorctl start slurmctld || die "slurmctld failed to start" /var/log/slurm/slurmctld.log
 supervisorctl start slurmd || die "slurmd failed to start" /var/log/slurm/slurmd.log
