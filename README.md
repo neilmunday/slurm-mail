@@ -161,7 +161,7 @@ For SMTP servers that use SSL rather than starttls please set `smtpUseSsl = yes`
 
 ## E-mail retries
 
-By default Slurm-Mail will attempt to resend e-mails when a previous attempt failed. This can result repeated failed e-mail attempts if for example a user has specified an invalid e-mail address.
+By default Slurm-Mail will attempt to resend e-mails when a previous attempt failed. This can result in repeated failed e-mail attempts if for example a user has specified an invalid e-mail address.
 
 If you would prefer to disable this feature, set the following option in `/etc/slurm-mail/slurm-mail.conf`:
 
@@ -246,7 +246,7 @@ A VSCode settings file is provided in this repository and is configured to allow
 `pylint` is used to check that the Slurm-Mail Python source code is formatted correctly.
 
 ```bash
-pip3 install --user pytest
+pip3 install --user pylint
 ```
 
 Once install you can run `pylint` against the Slurm-Mail source code:
