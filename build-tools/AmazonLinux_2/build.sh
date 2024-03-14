@@ -1,3 +1,5 @@
+#!/bin/bash
+
 #
 #  This file is part of Slurm-Mail.
 #
@@ -21,29 +23,31 @@
 #  along with Slurm-Mail.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""
-Slurm Mail global variables
-"""
+set -e
 
-import pathlib
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+NAME="slurm-mail-builder-al2"
+CONTAINER_NAME="${NAME}-${RANDOM}"
 
-conf_dir = pathlib.Path("/etc/slurm-mail")
-conf_file = conf_dir / "slurm-mail.conf"
-tpl_dir = conf_dir / "templates"
-html_tpl_dir = tpl_dir / "html"
-text_tpl_dir = tpl_dir / "text"
+cd $DIR
+source ../common.sh
 
-# defaults
-DEFAULT_DATETIME_FORMAT = "%d/%m/%Y %H:%M:%S"
+rm -f ./slurm-mail*.rpm
 
-# properties
-ARCHITECTURE = 'any'
-EMAIL = 'neil@mundayweb.com'
-DESCRIPTION = 'Provides enhanced e-mails for Slurm.'
-LONG_DESCRIPTION = 'Slurm-Mail is a drop in replacement for Slurm\'s ' + \
-    ' e-mails to give users much more information about their jobs ' + \
-    ' compared to the standard Slurm e-mails.'
-MAINTAINER = 'Neil Munday'
-NAME = 'slurmmail'
-VERSION = '4.13'
-URL = 'https://www.github.com/neilmunday/slurm-mail'
+docker build -t ${NAME}:latest .
+
+tmp_file=`mktemp /tmp/XXXXXX.tar.gz`
+echo "Temporary tar file: $tmp_file"
+tar cvfz $tmp_file ../../*
+
+docker run -h slurm-mail-buildhost -d --name ${CONTAINER_NAME} ${NAME}
+docker cp $tmp_file ${CONTAINER_NAME}:$tmp_file
+rm -f $tmp_file
+docker exec ${CONTAINER_NAME} /bin/bash -c "cd /root/slurm-mail && tar xvf $tmp_file"
+docker exec ${CONTAINER_NAME} /bin/bash -c "/root/slurm-mail/build-tools/build-rpm.sh"
+rpm=`docker exec ${CONTAINER_NAME} /bin/bash -c "ls -1 /root/rpmbuild/RPMS/noarch/slurm-mail*.rpm"`
+docker cp ${CONTAINER_NAME}:$rpm .
+
+echo "Created: "`ls -1 slurm-mail*.rpm`
+
+tidyup ${CONTAINER_NAME}

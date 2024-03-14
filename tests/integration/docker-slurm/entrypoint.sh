@@ -36,6 +36,8 @@ fi
 mysql -e "CREATE DATABASE IF NOT EXISTS slurm_acct_db;" || die "failed to create database"
 if [ -e /etc/redhat-release ] && grep -q 'release 7' /etc/redhat-release; then
   mysql -e "GRANT ALL ON slurm_acct_db.* TO 'slurm'@'localhost' IDENTIFIED BY 'password'" || die "failed to create slurm mysql user"
+elif [ -e /etc/system-release ] && grep -q 'Amazon Linux release 2' /etc/system-release; then
+  mysql -e "GRANT ALL ON slurm_acct_db.* TO 'slurm'@'localhost' IDENTIFIED BY 'password'" || die "failed to create slurm mysql user"
 else
   mysql -e "CREATE USER IF NOT EXISTS 'slurm'@'localhost' identified by 'password';" || die "failed to create slurm mysql user"
 fi

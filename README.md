@@ -64,7 +64,7 @@ You can also opt to include a number of lines from the end of the job's output f
 
 ## Installation
 
-### RedHat and SUSE Based Operating Systems
+### Amazon Linux, RedHat and SUSE Based Operating Systems
 
 For each release of Slurm-Mail, RPMs for RedHat 7/8/9 and SUSE 15 based operating systems are provided at [releases](https://github.com/neilmunday/slurm-mail/releases).
 
@@ -72,6 +72,12 @@ Once downloaded, install using your appropriate package manager, e.g. for Rocky 
 
 ```bash
 dnf localinstall ./slurm-mail-*.noarch.rpm
+```
+
+Or for RedHat 7 and Amazon Linux 2:
+
+```bash
+yum localinstall ./slurm-mail-*.noarch.rpm
 ```
 
 For other operating systems that use RPM packages you can create a package for your OS like so:

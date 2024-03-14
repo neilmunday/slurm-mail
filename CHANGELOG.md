@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 4.14
+------------
+
+Date: 2024-03-14
+
+* Add support for Amazon Linux 2 (issue #118)
+
 Version 4.12
 ------------
 

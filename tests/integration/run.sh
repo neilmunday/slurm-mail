@@ -24,7 +24,8 @@
 
 function catch {
   if [ "$1" != "0" ]; then
-    #echo "Error $1 occurred on line $2" 1>&2
+    echo "Error $1 occurred" 1>&2
+    docker container logs $NAME
     tidyup $NAME
   fi
 }
@@ -147,7 +148,7 @@ docker exec $NAME /bin/bash -c \
 if [ $PKG_EXT == ".rpm" ]; then
   if [[ $OS == sl* ]]; then
     docker exec $NAME /bin/bash -c "zypper remove -y slurm-mail"
-  elif [ $OS == "el7" ]; then
+  elif [ $OS == "el7" ] || [ $OS == "amzn2" ]; then
     docker exec $NAME /bin/bash -c "yum erase -y slurm-mail"
   else
     docker exec $NAME /bin/bash -c "dnf erase -y slurm-mail"
