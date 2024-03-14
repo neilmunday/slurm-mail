@@ -1,7 +1,7 @@
 Change Log
 ==========
 
-Version 4.11
+Version 4.12
 ------------
 
 Date: 2024-02-17
