@@ -5,7 +5,11 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
-
+  
+  workflow_run:
+    workflows: ["Test and release"]
+    types:
+      - completed
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -32,18 +36,29 @@ jobs:
         run: |
           cp README.md pages/index.md
           cp CHANGELOG.md TEMPLATES.md pages/
-          mkdir -p pages/tests/unit pages/tests/integration pages/tests/integration/docker-slurm
+          mkdir -p pages/repo pages/tests/unit pages/tests/integration pages/tests/integration/docker-slurm
           cp tests/unit/README.md pages/tests/unit/index.md
           cp tests/integration/README.md pages/tests/integration/index.md
           cp tests/integration/docker-slurm/README.md pages/tests/integration/docker-slurm/index.md
           sed -i 's#../../#https://github.com/neilmunday/slurm-mail/blob/main/#g' pages/tests/integration/index.md
       - name: Setup Pages
         uses: actions/configure-pages@v4
+      - name: Install required packages
+        run: |
+          sudo apt update
+          sudo apt install -y jq createrepo-c
+      - name: Create repos
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          build-tools/create-repos.sh -o $(realpath pages/repo)
       - name: Build with Jekyll
         uses: actions/jekyll-build-pages@v1
         with:
           source: ./pages
           destination: ./_site
+      - name: Set permissions on the _site directory
+        run: sudo chown -R runner:docker _site
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
 
