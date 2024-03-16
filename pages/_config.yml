@@ -2,7 +2,7 @@ title: Slurm-Mail
 email: neilmunday@users.noreply.github.com
 description: >- 
   Github web site for Slurm-Mail
-baseurl: ""
+baseurl: "/slurm-mail"
 url: "https://neilmunday.github.io/slurm-mail"
 github_username: neilmunday
 show_downloads: true
