@@ -32,6 +32,9 @@ jobs:
         run: |
           cp README.md pages/index.md
           cp CHANGELOG.md TEMPLATES.md pages/
+          mkdir -p pages/tests/unit pages/tests/integration
+          cp tests/unit/README.md tests/unit/index.md
+          cp tests/integration/README.md tests/integration/index.md
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Build with Jekyll
