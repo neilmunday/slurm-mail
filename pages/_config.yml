@@ -1,7 +1,7 @@
 title: Slurm-Mail
 email: neilmunday@users.noreply.github.com
 description: >- 
-  Github web site for Slurm-Mail
+  Provides customisable HTML5 e-mails for SLURM
 baseurl: "/slurm-mail"
 url: "https://neilmunday.github.io/slurm-mail"
 github_username: neilmunday
