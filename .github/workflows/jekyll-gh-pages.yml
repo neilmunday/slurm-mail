@@ -32,9 +32,10 @@ jobs:
         run: |
           cp README.md pages/index.md
           cp CHANGELOG.md TEMPLATES.md pages/
-          mkdir -p pages/tests/unit pages/tests/integration
+          mkdir -p pages/tests/unit pages/tests/integration pages/tests/integration/docker-slurm
           cp tests/unit/README.md pages/tests/unit/index.md
           cp tests/integration/README.md pages/tests/integration/index.md
+          cp tests/integration/docker-slurm/README.md pages/tests/integration/docker-slurm/index.md
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Build with Jekyll
