@@ -1,0 +1,17 @@
+title: Slurm-Mail
+email: neilmunday@users.noreply.github.com
+description: >- 
+  Github web site for Slurm-Mail
+baseurl: ""
+url: "https://neilmunday.github.io/slurm-mail"
+github_username: neilmunday
+show_downloads: true
+
+# Build settings
+remote_theme: pages-themes/hacker@v0.2.0
+plugins:
+  - jekyll-feed
+  - jekyll-remote-theme
+exclude:
+  - tools/
+  - doc/
