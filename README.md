@@ -66,19 +66,37 @@ You can also opt to include a number of lines from the end of the job's output f
 
 ### Amazon Linux, RedHat and SUSE Based Operating Systems
 
-For each release of Slurm-Mail, RPMs for Amazon Linux 2, RedHat 7/8/9 and SUSE 15 based operating systems are provided at [releases](https://github.com/neilmunday/slurm-mail/releases).
+For each release of Slurm-Mail, RPMs for Amazon Linux 2, RedHat 7/8/9 and SUSE 15 based operating systems are provided at [neilmunday.github.io/slurm-mail/repo](https://neilmunday.github.io/slurm-mail/repo/).
 
-Once downloaded, install using your appropriate package manager, e.g. for Rocky Linux 8:
-
-```bash
-dnf localinstall ./slurm-mail-*.noarch.rpm
-```
-
-Or for RedHat 7 and Amazon Linux 2:
+#### Amazon Linux 2
 
 ```bash
-yum localinstall ./slurm-mail-*.noarch.rpm
+sudo wget -O /etc/yum.repos.d/slurm-mail.repo https://neilmunday.github.io/slurm-mail/repo/slurm-mail.amnz2.repo
+sudo yum install slurm-mail
 ```
+
+#### RedHat 7 / CentOS 7
+
+```bash
+sudo wget -O /etc/yum.repos.d/slurm-mail.repo https://neilmunday.github.io/slurm-mail/repo/slurm-mail.el7.repo
+sudo yum install slurm-mail
+```
+
+#### RedHat 8 / Rocky Linux 8
+
+```bash
+sudo wget -O /etc/yum.repos.d/slurm-mail.repo https://neilmunday.github.io/slurm-mail/repo/slurm-mail.el8.repo
+sudo dnf install slurm-mail
+```
+
+#### RedHat 9 / Rocky Linux 9
+
+```bash
+sudo wget -O /etc/yum.repos.d/slurm-mail.repo https://neilmunday.github.io/slurm-mail/repo/slurm-mail.el9.repo
+sudo dnf install slurm-mail
+```
+
+#### Other RPM Based Operating Systems
 
 For other operating systems that use RPM packages you can create a package for your OS like so:
 
@@ -92,7 +110,23 @@ The RPM will be written to `~/rpmbuild/RPMS/noarch`.
 
 ### Ubuntu 20 and 22
 
-Pre-built Ubuntu 20 and 22 packages are provided at [releases](https://github.com/neilmunday/slurm-mail/releases).
+Pre-built Ubuntu 20 and 22 packages are provided at [neilmunday.github.io/slurm-mail/repo](https://neilmunday.github.io/slurm-mail/repo/).
+
+Add to your \`/etc/apt/sources.list\` file the following line depending on your OS.
+
+#### Ubuntu 20
+
+```
+deb [trusted=yes] https://neilmunday.github.io/slurm-mail/repo/ub20 ./
+```
+
+#### Ubuntu22
+
+```
+deb [trusted=yes] https://neilmunday.github.io/slurm-mail/repo/ub22 ./
+```
+
+#### Other Debian based Operating Systems
 
 For other Debian variants you can create a package for your OS like so:
 
