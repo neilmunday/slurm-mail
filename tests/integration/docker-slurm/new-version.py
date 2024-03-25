@@ -65,7 +65,7 @@ if __name__ == "__main__":
     with open(version_file, mode="r", encoding="utf-8") as f:
         current_version = f.readline().strip()
 
-    url = "https://schedmd.com/downloads.php"
+    url = "https://www.schedmd.com/download-slurm/"
     logging.debug("loading %s", url)
     reqs = requests.get(url, timeout=20)
     soup = BeautifulSoup(reqs.text, "html.parser")
