@@ -106,7 +106,7 @@ for OS in $DEB_OSES; do
   echo "downloading DEB..."
   gh release download --pattern "*${OS}-ubuntu1_all.deb" -D $REPO_DIR
   cd $REPO_DIR
-  dpkg-scanpackages . /dev/null > Release
+  dpkg-scanpackages -m . | gzip -c > Packages.gz
 done
 
 # create index page
