@@ -26,7 +26,7 @@
 set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-NAME="slurm-mail-builder-al2"
+NAME="slurm-mail-builder-amzn2"
 CONTAINER_NAME="${NAME}-${RANDOM}"
 
 cd $DIR
