@@ -1,5 +1,6 @@
-#!/usr/bin/bash
+#!/bin/bash
 
+#
 #  This file is part of Slurm-Mail.
 #
 #  Slurm-Mail is a drop in replacement for Slurm's e-mails to give users
@@ -22,38 +23,31 @@
 #  along with Slurm-Mail.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-#
-# A helper script to build all docker images for a particular
-# version of SLURM.
-#
-
-if [ -z $1 ]; then
-    echo "Please provide a SLURM version"
-    exit 1
-fi
-
-SLURM_VER=$1
-
-OSES="
-amzn2
-amzn2023
-el7
-el8
-el9
-sl15
-ub20
-ub22"
+set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+NAME="slurm-mail-builder-amzn2023"
+CONTAINER_NAME="${NAME}-${RANDOM}"
 
 cd $DIR
+source ../common.sh
 
-for OS in $OSES; do
-    echo "Building: $OS"
-    dockerfile="Dockerfile.$OS"
-    if [ ! -f $dockerfile ]; then
-        echo "$dockerfile does not exist"
-        exit 1
-    fi
-    docker build --build-arg SLURM_VER=${SLURM_VER} -f ${dockerfile} -t ghcr.io/neilmunday/slurm-mail/slurm-${OS}:${SLURM_VER} .
-done
+rm -f ./slurm-mail*.rpm
+
+docker build -t ${NAME}:latest .
+
+tmp_file=`mktemp /tmp/XXXXXX.tar.gz`
+echo "Temporary tar file: $tmp_file"
+tar cvfz $tmp_file ../../*
+
+docker run -h slurm-mail-buildhost -d --name ${CONTAINER_NAME} ${NAME}
+docker cp $tmp_file ${CONTAINER_NAME}:$tmp_file
+rm -f $tmp_file
+docker exec ${CONTAINER_NAME} /bin/bash -c "cd /root/slurm-mail && tar xvf $tmp_file"
+docker exec ${CONTAINER_NAME} /bin/bash -c "/root/slurm-mail/build-tools/build-rpm.sh"
+rpm=`docker exec ${CONTAINER_NAME} /bin/bash -c "ls -1 /root/rpmbuild/RPMS/noarch/slurm-mail*.rpm"`
+docker cp ${CONTAINER_NAME}:$rpm .
+
+echo "Created: "`ls -1 slurm-mail*.rpm`
+
+tidyup ${CONTAINER_NAME}

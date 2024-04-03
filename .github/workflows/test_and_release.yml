@@ -202,6 +202,38 @@ jobs:
           if-no-files-found: error
           retention-days: 5
 
+  build_amzn2023:
+    needs: unit_tests
+    permissions:
+      contents: read
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create Amazon Linux 2023 RPM
+        run: build-tools/AmazonLinux_2/build.sh
+      - name: Get package name
+        id: pkg_path
+        run: |
+          echo "AMZN2023_RPM=$(
+            ls -1 build-tools/AmazonLinux_2/slurm-mail*.rpm
+          )" >> $GITHUB_ENV
+      - name: Create md5sum for Amazon Linux 2023 RPM
+        run: md5sum ${{ env.AMZN2023_RPM }} > ${{ env.AMZN2023_RPM }}.md5sum
+      - name: Store Amazon Linux 2023 RPM
+        uses: actions/upload-artifact@v4
+        with:
+          name: amzn2_pkg
+          path: ${{ env.AMZN2023_RPM }}
+          if-no-files-found: error
+          retention-days: 5
+      - name: Store Amazon Linux 2023 RPM md5sum
+        uses: actions/upload-artifact@v4
+        with:
+          name: amzn2_pkg_md5sum
+          path: ${{ env.AMZN2023_RPM }}.md5sum
+          if-no-files-found: error
+          retention-days: 5
+
   build_rhel8:
     needs: unit_tests
     permissions:
@@ -399,6 +431,31 @@ jobs:
         run: |
           tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o amzn2 -p
   
+  integration_tests_amzn2023:
+    needs: [build_amzn2023, generate_slurm_matrix]
+    permissions:
+      contents: read
+      packages: read
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        slurm-version: ${{fromJson(needs.generate_slurm_matrix.outputs.matrix)}}
+    steps:
+      - name: Log in to the container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: 'amzn2023_pkg'
+          path: tests/integration/
+      - name: Run integration tests
+        run: |
+          tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o amzn2023 -p
+
   integration_tests_rhel7:
     needs: [build_rhel7, generate_slurm_matrix]
     permissions:
@@ -554,6 +611,7 @@ jobs:
     needs: [
       build_tar,
       integration_tests_amzn2,
+      integration_tests_amzn2023,
       integration_tests_rhel7,
       integration_tests_rhel8,
       integration_tests_rhel9,
@@ -572,6 +630,11 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           pattern: 'amzn2_pkg*'
+          path: downloads
+          merge-multiple: true
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: 'amzn2023_pkg*'
           path: downloads
           merge-multiple: true
       - uses: actions/download-artifact@v4

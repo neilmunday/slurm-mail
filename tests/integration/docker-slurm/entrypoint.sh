@@ -15,7 +15,7 @@ chown munge. /var/lib/munge
 mkdir -p /var/run/munge
 chown munge. /var/run/munge
 
-/usr/bin/supervisord --configuration /etc/supervisord.conf
+supervisord --configuration /etc/supervisord.conf
 
 supervisorctl start mysqld
 
@@ -45,7 +45,9 @@ mysql -e "GRANT ALL ON slurm_acct_db.* TO 'slurm'@'localhost';" || die "failed t
 
 # create munge key
 if [ ! -e /etc/munge/munge.key ]; then
-  create-munge-key
+  dd if=/dev/urandom bs=1 count=1024 > /etc/munge/munge.key 2>/dev/null
+  chown munge:munge /etc/munge/munge.key
+  chmod 0400 /etc/munge/munge.key
 fi
 
 supervisorctl start munged
