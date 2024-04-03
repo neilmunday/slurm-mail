@@ -215,7 +215,7 @@ jobs:
         id: pkg_path
         run: |
           echo "AMZN2023_RPM=$(
-            ls -1 build-tools/AmazonLinux_2/slurm-mail*.rpm
+            ls -1 build-tools/AmazonLinux_2O23/slurm-mail*.rpm
           )" >> $GITHUB_ENV
       - name: Create md5sum for Amazon Linux 2023 RPM
         run: md5sum ${{ env.AMZN2023_RPM }} > ${{ env.AMZN2023_RPM }}.md5sum
