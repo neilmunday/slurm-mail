@@ -96,7 +96,7 @@ sudo wget -O /etc/yum.repos.d/slurm-mail.repo https://neilmunday.github.io/slurm
 sudo dnf install slurm-mail
 ```
 
-#### OpenSuSE 15 / SLES 15
+#### OpenSUSE 15 / SLES 15
 
 ```bash
 sudo zypper addrepo --no-gpgcheck  --refresh https://neilmunday.github.io/slurm-mail/repo/sl15 slurm-mail
@@ -119,7 +119,7 @@ The RPM will be written to `~/rpmbuild/RPMS/noarch`.
 
 Pre-built Ubuntu 20 and 22 packages are provided at [neilmunday.github.io/slurm-mail/repo](https://neilmunday.github.io/slurm-mail/repo/).
 
-Add to your \`/etc/apt/sources.list\` file the following line depending on your OS.
+Add to your `/etc/apt/sources.list` file the following line depending on your OS.
 
 #### Ubuntu 20
 
