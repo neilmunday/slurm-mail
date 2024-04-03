@@ -96,6 +96,13 @@ sudo wget -O /etc/yum.repos.d/slurm-mail.repo https://neilmunday.github.io/slurm
 sudo dnf install slurm-mail
 ```
 
+#### OpenSuSE 15 / SLES 15
+
+```bash
+sudo zypper addrepo --no-gpgcheck  --refresh https://neilmunday.github.io/slurm-mail/repo/sl15 slurm-mail
+sudo zypper install slurm-mail
+```
+
 #### Other RPM Based Operating Systems
 
 For other operating systems that use RPM packages you can create a package for your OS like so:
