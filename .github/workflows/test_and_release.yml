@@ -222,14 +222,14 @@ jobs:
       - name: Store Amazon Linux 2023 RPM
         uses: actions/upload-artifact@v4
         with:
-          name: amzn2_pkg
+          name: amzn2023_pkg
           path: ${{ env.AMZN2023_RPM }}
           if-no-files-found: error
           retention-days: 5
       - name: Store Amazon Linux 2023 RPM md5sum
         uses: actions/upload-artifact@v4
         with:
-          name: amzn2_pkg_md5sum
+          name: amzn2023_pkg_md5sum
           path: ${{ env.AMZN2023_RPM }}.md5sum
           if-no-files-found: error
           retention-days: 5
