@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+Version 4.14
+------------
+
+Date: 2024-04-04
+
+* Add workflow to generate github pages including package repositories (issues #119, #122)
+* Add support for Amazon Linux 2023 (issue #121)
+* Documentation updates (issue #123)
+
 Version 4.13
 ------------
 
