@@ -133,6 +133,14 @@ deb [trusted=yes] https://neilmunday.github.io/slurm-mail/repo/ub20 ./
 deb [trusted=yes] https://neilmunday.github.io/slurm-mail/repo/ub22 ./
 ```
 
+#### Install
+
+Then install using `apt-get`:
+
+```bash
+apt-get install slurm-mail
+```
+
 #### Other Debian based Operating Systems
 
 For other Debian variants you can create a package for your OS like so:
