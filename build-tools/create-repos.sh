@@ -69,6 +69,7 @@ echo "repos will be written to: $OUTPUT_DIR"
 
 RHEL_OSES="
 amzn2
+amzn2023
 el7
 el8
 el9
