@@ -72,10 +72,13 @@ amzn2
 el7
 el8
 el9
+"
+
+SLES_OSES="
 sl15
 "
 
-for OS in $RHEL_OSES; do
+for OS in $RHEL_OSES $SLES_OSES; do
   cd $DIR
   echo "processing: $OS"
   REPO_DIR="$OUTPUT_DIR/$OS"
@@ -115,7 +118,7 @@ cat << EOF_INDEX > $OUTPUT_DIR/index.md
 
 Here you will find installation instructions for the operating systems supported by Slurm-Mail.
 
-## RPM based operating systems
+## RHEL based operating systems
 
 EOF_INDEX
 
@@ -124,6 +127,22 @@ for OS in $RHEL_OSES; do
 ### $OS
 \`\`\`bash
 sudo wget -O /etc/yum.repos.d/slurm-mail.repo $SITE_URL/repo/slurm-mail.$OS.repo
+yum install -y slurm-mail
+\`\`\`
+EOF_INDEX
+done
+
+cat << EOF_INDEX >> $OUTPUT_DIR/index.md
+## SLES operating systems
+
+EOF_INDEX
+
+for OS in $SLES_OSES; do
+  cat << EOF_INDEX >> $OUTPUT_DIR/index.md
+### $OS
+\`\`\`bash
+sudo zypper addrepo --no-gpgcheck  --refresh https://neilmunday.github.io/slurm-mail/repo/$OS slurm-mail
+sudo zypper install slurm-mail
 \`\`\`
 EOF_INDEX
 done
