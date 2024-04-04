@@ -210,7 +210,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Create Amazon Linux 2023 RPM
-        run: build-tools/AmazonLinux_2/build.sh
+        run: build-tools/AmazonLinux_2023/build.sh
       - name: Get package name
         id: pkg_path
         run: |
