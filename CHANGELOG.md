@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 4.15
+------------
+
+Date: 2024-04-10
+
+* Fix for check_dir when checking directories that do not need to be writeable (issue #124)
+
 Version 4.14
 ------------
 
