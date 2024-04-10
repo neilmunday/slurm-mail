@@ -1687,8 +1687,6 @@ class TestSpoolMailMain:
     Test spool_mail_main.
     """
 
-    pytest.mark.usefixtures("mock_slurmmail_cli_check_dir")
-
     def test_incorrect_args(self):
         with patch("sys.argv", []):
             with pytest.raises(SystemExit):
