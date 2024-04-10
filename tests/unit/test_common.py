@@ -130,6 +130,12 @@ class TestCommon:
         with pytest.raises(SystemExit):
             check_dir(DUMMY_PATH)
 
+    def test_check_dir_read_only(self, mock_path_is_dir, mock_os_access, mock_die):
+        mock_path_is_dir.return_value = True
+        mock_os_access.return_value = False
+        check_dir(DUMMY_PATH, False)
+        mock_die.assert_not_called()
+
     def test_check_dir_ok(self, mock_path_is_dir, mock_die, mock_os_system):
         mock_path_is_dir.return_value = True
         mock_os_system.return_value = True

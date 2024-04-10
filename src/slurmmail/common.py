@@ -38,15 +38,16 @@ import sys
 from typing import NoReturn
 
 
-def check_dir(path: pathlib.Path):
+def check_dir(path: pathlib.Path, check_writeable=True):
     """
-    Check if the given directory exists and is writeable,
-    otherwise exit.
+    Check if the given directory exists. Set check_writeable
+    to True to check if the directory is also writeable.
+    Exit if conditions fail.
     """
     if not path.is_dir():
         die("Error: {0} is not a directory".format(path))
     # can we write to the log directory?
-    if not os.access(path, os.W_OK):
+    if check_writeable and not os.access(path, os.W_OK):
         die("Error: {0} is not writeable".format(path))
 
 

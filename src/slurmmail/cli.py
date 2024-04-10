@@ -778,10 +778,10 @@ def send_mail_main():
 
     options = ProcessSpoolFileOptions()
 
-    check_dir(conf_dir)
+    check_dir(conf_dir, False)
     check_file(conf_file)
-    check_dir(html_tpl_dir)
-    check_dir(text_tpl_dir)
+    check_dir(html_tpl_dir, False)
+    check_dir(text_tpl_dir, False)
 
     options.html_templates = {}
     options.html_templates["array_ended"] = html_tpl_dir / "ended-array.tpl"
