@@ -47,6 +47,8 @@ fi
 
 SLURM_VERSIONS=$(cat ../../../supported_slurm_versions.json | jq -r 'map("\""+.+"\"")|join(",")')
 
+echo "keeping: ${SLURM_VERSIONS}"
+
 gh api -H "Accept: application/vnd.github+json" \
 -H "X-GitHub-Api-Version: 2022-11-28" \
 /users/neilmunday/packages?package_type=container \
