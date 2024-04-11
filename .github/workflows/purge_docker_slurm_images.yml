@@ -6,29 +6,13 @@ on:
   workflow_dispatch:
 
 jobs:
-  generate_slurm_versions:
-    runs-on: ubuntu-latest
-    outputs:
-      versions: ${{ join(fromJson(steps.set-versions.outputs.versions), '|') }}
-    steps:
-      - uses: actions/checkout@v4
-      - id: set-versions
-        name: set-versions
-        run: |
-          versions=$(cat ./supported_slurm_versions.json)
-          echo "versions=${versions}" >> $GITHUB_OUTPUT
   purge_images:
-    needs: generate_slurm_versions
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        os: ["el7", "el8", "el9", "sl15", "ub20", "ub22"]
     steps:
-      - name: "Purge old slurm-${{ matrix.os }} versions"
-        uses: actions/delete-package-versions@v4
-        with: 
-          package-name: "slurm-mail/slurm-${{ matrix.os }}"
-          package-type: 'container'
-          min-versions-to-keep: 3
-          ignore-versions: '^(${{ needs.generate_slurm_versions.outputs.versions }})$'
-          token: ${{ secrets.PACKAGE_REPO }}
+      - name: checkout repo
+        uses: actions/checkout@v4
+      - name: purge images
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tests/integration/docker-slurm/image-purge.sh
