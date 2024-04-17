@@ -5,7 +5,7 @@ LABEL org.opencontainers.image.source="https://github.com/neilmunday/slurm-mail"
       org.opencontainers.image.title="amzn2-slurm" \
       maintainer="Neil Munday"
 
-ARG SLURM_VER=23.11.5
+ARG SLURM_VER=23.11.6
 ARG MARIADB_VER=11.3
 
 COPY <<EOF /etc/yum.repos.d/mariab.repo
