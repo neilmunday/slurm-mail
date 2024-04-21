@@ -2,7 +2,7 @@ FROM amazonlinux:2023
 
 LABEL org.opencontainers.image.source="https://github.com/neilmunday/slurm-mail" \
       org.opencontainers.image.description="An Amazon Linux 2023 Slurm container intended for testing Slurm-Mail" \
-      org.opencontainers.image.title="amzn2-slurm" \
+      org.opencontainers.image.title="amzn2023-slurm" \
       maintainer="Neil Munday"
 
 ARG SLURM_VER=23.11.6
