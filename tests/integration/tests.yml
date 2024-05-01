@@ -82,3 +82,17 @@ tests:
     send_errors: false
     spool_errors: false
     spool_file_total: 1
+  test7:
+    commands: |
+      srun hostname
+      sleep 20
+    description: simple job, mem-per-cpu, 2 nodes
+    job_fail: false
+    options:
+      mail-type: ALL
+      mem-per-cpu: 100M
+      nodes: 2
+      time: "01:00"
+    send_errors: false
+    spool_errors: false
+    spool_file_total: 2
