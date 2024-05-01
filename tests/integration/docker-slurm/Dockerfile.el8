@@ -39,7 +39,10 @@ RUN dnf install -y dnf-plugins-core && \
     useradd -r -g slurm -d /var/empty/slurm -m -s /bin/bash slurm && \
     groupadd test && \
     useradd -g test -d /home/test -m test && \
-    install -d -o slurm -g slurm /etc/slurm /var/spool/slurm /var/log/slurm
+    install -d -o slurm -g slurm /etc/slurm /var/spool/slurm /var/log/slurm && \
+    dd if=/dev/urandom bs=1 count=1024 > /etc/munge/munge.key 2>/dev/null && \
+    chown munge:munge /etc/munge/munge.key && \
+    chmod 0400 /etc/munge/munge.key
 
 COPY supervisord.conf /etc/
 COPY --chown=slurm slurm.*.conf /etc/slurm/
