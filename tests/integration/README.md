@@ -82,20 +82,20 @@ Enable verbose logging:
 
 ## Testing e-mails
 
-If you want to see how the e-mails will look in an e-mail client you can use the provided Docker compose file to start-up a Slurm-Mail container together with a [MailHog](https://hub.docker.com/r/mailhog/mailhog/) container.
+If you want to see how the e-mails will look in an e-mail client you can use the provided Docker compose file `docker-compose-demo.yml` to start-up a Slurm-Mail container together with a [MailHog](https://hub.docker.com/r/mailhog/mailhog/) container.
 
-A helper `compose-up.sh` script is provided in this directory for ease of use.
+A helper `compose-up-demo.sh` script is provided in this directory for ease of use.
 
 Usage:
 
 ```bash
-./compose-up.sh -s SLURM_VERSION [-r]
+./compose-up-demo.sh -s SLURM_VERSION [-r]
 ```
 
 If the Slurm-Mail RPM has already been built and exists in this directory you can use `-r` option to skip building the RPM.
 
 ```bash
-./compose-up.sh -s 22.05.6
+./compose-up-demo.sh -s 22.05.6
 ```
 
 Once the containers are up and running you can access the [MailHog](https://hub.docker.com/r/mailhog/mailhog/) web GUI at http://localhost:8025
@@ -103,5 +103,5 @@ Once the containers are up and running you can access the [MailHog](https://hub.
 To submit jobs you can run the following command to launch an interactive bash shell:
 
 ```bash
-docker exec -it slurm-mail /usr/bin/bash -i
+docker exec -it slurm-mail-head /usr/bin/bash -i
 ```
