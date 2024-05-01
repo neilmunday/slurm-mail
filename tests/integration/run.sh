@@ -140,7 +140,7 @@ docker build \
   -t neilmunday/slurm-mail:${SLURM_VER} \
   -f Dockerfile.slurm-mail.${OS} .
 
-docker run -d -h compute --name $NAME neilmunday/slurm-mail:${SLURM_VER}
+docker run -d -h compute01 --name $NAME neilmunday/slurm-mail:${SLURM_VER}
 
 docker exec $NAME /bin/bash -c \
   "/root/testing/run-tests.py -i /root/testing/tests.yml -o /root/testing/output $OPTS"
