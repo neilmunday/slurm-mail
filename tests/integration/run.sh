@@ -32,12 +32,13 @@ function catch {
 
 function tidyup {
   if [ $KEEP_CONTAINER -eq 0 ]; then
-    echo "stopping container..."
-    docker container stop $1
-    echo "deleting container..."
-    docker container rm $1
+    echo "stopping containers..."
+    docker compose -f $COMPOSE_FILE down
+    docker image rm $NAME
     echo "done"
   fi
+  echo "deleting: $TMP_DIR"
+  rm -rf $TMP_DIR
 }
 
 function usage {
@@ -133,28 +134,54 @@ fi
 cd $DIR
 PKG=`ls -1 slurm-mail*${OS}*${PKG_EXT}`
 
-docker build \
-  --build-arg DISABLE_CRON=1 \
-  --build-arg SLURM_MAIL_PKG=${PKG} \
-  --build-arg SLURM_VER=${SLURM_VER} \
-  -t neilmunday/slurm-mail:${SLURM_VER} \
-  -f Dockerfile.slurm-mail.${OS} .
+TMP_DIR=`mktemp -d`
+COMPOSE_FILE="${TMP_DIR}/docker-compose-tests.yml"
 
-docker run -d -h compute01 --name $NAME neilmunday/slurm-mail:${SLURM_VER}
+# create docker-compose file
+cat << EOF > $COMPOSE_FILE
+# auto generated
+services:
+  slurm-mail-head:
+    build:
+      args:
+        DISABLE_CRON: 1
+        SLURM_VER: $SLURM_VER
+        SLURM_MAIL_PKG: $PKG
+      context: $DIR
+      dockerfile: Dockerfile.slurm-mail.${OS}
+    container_name: ${NAME}-head
+    environment:
+      - ROLE=HEAD
+      - NODE_PREFIX=compute0
+      - NODES=2
+    hostname: compute01
+    image: $NAME
+  slurm-mail-compute:
+    container_name: ${NAME}-compute
+    environment:
+      - ROLE=COMPUTE
+      - NODE_PREFIX=compute0
+      - NODES=2
+    hostname: compute02
+    image: ghcr.io/neilmunday/slurm-mail/slurm-el8:$SLURM_VER
+EOF
 
-docker exec $NAME /bin/bash -c \
+docker compose -f $COMPOSE_FILE build
+docker compose -f $COMPOSE_FILE up --detach
+
+docker exec "${NAME}-head" /bin/bash -c \
   "/root/testing/run-tests.py -i /root/testing/tests.yml -o /root/testing/output $OPTS"
 
 if [ $PKG_EXT == ".rpm" ]; then
   if [[ $OS == sl* ]]; then
-    docker exec $NAME /bin/bash -c "zypper remove -y slurm-mail"
+    docker exec "${NAME}-head" /bin/bash -c "zypper remove -y slurm-mail"
   elif [ $OS == "el7" ] || [ $OS == "amzn2" ]; then
-    docker exec $NAME /bin/bash -c "yum erase -y slurm-mail"
+    docker exec "${NAME}-head" /bin/bash -c "yum erase -y slurm-mail"
   else
-    docker exec $NAME /bin/bash -c "dnf erase -y slurm-mail"
+    docker exec "${NAME}-head" /bin/bash -c "dnf erase -y slurm-mail"
   fi
 elif [ $PKG_EXT == ".deb" ]; then
-  docker exec $NAME /bin/bash -c "apt remove -y slurm-mail"
+  docker exec "${NAME}-head" /bin/bash -c "apt remove -y slurm-mail"
 fi
 
 tidyup $NAME
