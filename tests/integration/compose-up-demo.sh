@@ -24,12 +24,19 @@
 
 set -e
 
+function catch {
+  # tidy-up
+  docker compose -f $COMPOSE_FILE down --volumes
+}
+
 function usage {
   echo "Usage: $0 -s SLURM_VERSION [-r]" 1>&2
   echo "  -r                   don't build slurm-mail RPM - use existing file"
   echo "  -s SLURM_VERSION     version of Slurm to test against"
   exit 0
 }
+
+trap 'catch $? $LINENO' EXIT
 
 USE_RPM=0
 
@@ -72,5 +79,7 @@ fi
 cd $DIR
 RPM=`ls -1 slurm-mail*.el8.noarch.rpm`
 
-docker compose -f docker-compose-demo.yml build --build-arg SLURM_VER=$SLURM_VER --build-arg SLURM_MAIL_PKG=$RPM
-docker compose -f docker-compose-demo.yml up
+COMPOSE_FILE="docker-compose-demo.yml"
+
+docker compose -f $COMPOSE_FILE build --build-arg SLURM_VER=$SLURM_VER --build-arg SLURM_MAIL_PKG=$RPM
+docker compose -f $COMPOSE_FILE up

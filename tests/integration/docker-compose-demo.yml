@@ -13,6 +13,9 @@ services:
       - NODES=2
     hostname: compute01
     image: slurm-mail
+    volumes:
+      - slurm-mail-demo-shared:/shared
+
   slurm-mail-compute:
     container_name: slurm-mail-compute
     environment:
@@ -21,8 +24,14 @@ services:
       - NODES=2
     hostname: compute02
     image: slurm-mail
+    volumes:
+      - slurm-mail-demo-shared:/shared
+
   mailhog:
     container_name: mailhog
     image: mailhog/mailhog
     ports:
       - 8025:8025 # web ui
+
+volumes:
+  slurm-mail-demo-shared:

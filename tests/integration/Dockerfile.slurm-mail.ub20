@@ -10,7 +10,8 @@ ARG SLURM_MAIL_PKG
 RUN apt-get update && apt-get install -y cron chrony logrotate python3-yaml python3-aiosmtpd && \
     mkdir -p /root/testing/output && \
     sed -i "s#MailProg=/usr/bin/mailx#MailProg=/usr/bin/slurm-spool-mail#" /etc/slurm/slurm.conf && \
-    echo "alias ll='ls -l'" >> /root/.bashrc
+    echo "alias ll='ls -l'" >> /root/.bashrc && \
+    mkdir /shared
 
 COPY supervisord.conf /etc/supervisord.conf
 

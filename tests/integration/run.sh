@@ -33,7 +33,7 @@ function catch {
 function tidyup {
   if [ $KEEP_CONTAINER -eq 0 ]; then
     echo "stopping containers..."
-    docker compose -f $COMPOSE_FILE down
+    docker compose -f $COMPOSE_FILE down --volumes
     docker image rm $NAME
     echo "done"
   fi
@@ -136,6 +136,7 @@ PKG=`ls -1 slurm-mail*${OS}*${PKG_EXT}`
 
 TMP_DIR=`mktemp -d`
 COMPOSE_FILE="${TMP_DIR}/docker-compose-tests.yml"
+SHARED_VOLUME=$(echo "${NAME}-shared" | sed 's/\./_/g')
 
 # create docker-compose file
 cat << EOF > $COMPOSE_FILE
@@ -156,6 +157,8 @@ services:
       - NODES=2
     hostname: compute01
     image: $NAME
+    volumes:
+      - ${SHARED_VOLUME}:/shared
   slurm-mail-compute:
     container_name: ${NAME}-compute
     environment:
@@ -164,13 +167,17 @@ services:
       - NODES=2
     hostname: compute02
     image: ghcr.io/neilmunday/slurm-mail/slurm-el8:$SLURM_VER
+    volumes:
+      - ${SHARED_VOLUME}:/shared
+volumes:
+  ${SHARED_VOLUME}:
 EOF
 
 docker compose -f $COMPOSE_FILE build
 docker compose -f $COMPOSE_FILE up --detach
 
 docker exec "${NAME}-head" /bin/bash -c \
-  "/root/testing/run-tests.py -i /root/testing/tests.yml -o /root/testing/output $OPTS"
+  "/root/testing/run-tests.py -i /root/testing/tests.yml -o /shared $OPTS"
 
 if [ $PKG_EXT == ".rpm" ]; then
   if [[ $OS == sl* ]]; then
