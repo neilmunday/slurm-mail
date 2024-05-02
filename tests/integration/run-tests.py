@@ -169,17 +169,26 @@ if __name__ == "__main__":
 
     # check that slurm is up
     logging.info("waiting for Slurm...")
-    slurm_ok = False
+    nodes_found = -1
     for i in range(0, 30):
-        rtn, _, _ = run_command("sinfo")
+        rtn, stdout, _ = run_command("sinfo -h -r -N")
         if rtn == 0:
-            slurm_ok = True
+            nodes_found = len(stdout.strip().split("\n"))
             break
         time.sleep(1)
 
-    if not slurm_ok:
+    if nodes_found == -1:
         die("no response from Slurm")
-    logging.info("Slurm is ready")
+
+    max_nodes = 1
+    for test, fields in dictionary["tests"].items():
+        if "options" in fields and "nodes" in fields["options"] and int(fields["options"]["nodes"]) > max_nodes:
+            max_nodes = fields["options"]["nodes"]
+
+    logging.info("Slurm is responding: %s nodes found", nodes_found)
+
+    if nodes_found < max_nodes:
+        die(f"needed {max_nodes} but only found {nodes_found} available")
 
     error_re = re.compile(r":ERROR:")
     passed = 0
