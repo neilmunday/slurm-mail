@@ -166,7 +166,7 @@ services:
       - NODE_PREFIX=compute0
       - NODES=2
     hostname: compute02
-    image: ghcr.io/neilmunday/slurm-mail/slurm-el8:$SLURM_VER
+    image: ghcr.io/neilmunday/slurm-mail/slurm-${OS}:$SLURM_VER
     volumes:
       - ${SHARED_VOLUME}:/shared
 volumes:
