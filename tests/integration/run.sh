@@ -25,7 +25,7 @@
 function catch {
   if [ "$1" != "0" ]; then
     echo "Error $1 occurred" 1>&2
-    docker container logs $NAME
+    docker compose -f $COMPOSE_FILE logs
     tidyup $NAME
   fi
 }
