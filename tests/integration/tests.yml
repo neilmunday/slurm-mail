@@ -4,6 +4,7 @@ tests:
       srun hostname
       sleep 20
     description: simple job, mem-per-cpu
+    hetjob: false
     job_fail: false
     options:
       mail-type: ALL
@@ -18,6 +19,7 @@ tests:
       srun hostname
       sleep 20
     description: simple job, mem-per-node
+    hetjob: false
     job_fail: false
     options:
       mail-type: ALL
@@ -32,6 +34,7 @@ tests:
       srun hostname
       sleep 20
     description: job array, summary e-mails
+    hetjob: false
     job_fail: false
     options:
       array: 0-1
@@ -46,6 +49,7 @@ tests:
       srun hostname
       sleep 20
     description: job array, e-mail per job
+    hetjob: false
     job_fail: false
     options:
       array: 0-1
@@ -60,6 +64,7 @@ tests:
       srun hostname
       sleep 120
     description: job failure
+    hetjob: false
     job_fail: true
     options:
       mail-type: ALL
@@ -71,6 +76,7 @@ tests:
     commands: |
       srun hostname
     description: cancel pending job
+    hetjob: false
     job_fail: false
     options:
       begin: now+1hour
@@ -87,11 +93,27 @@ tests:
       srun hostname
       sleep 20
     description: simple job, mem-per-cpu, 2 nodes
+    hetjob: false
     job_fail: false
     options:
       mail-type: ALL
       mem-per-cpu: 100M
       nodes: 2
+      time: "01:00"
+    send_errors: false
+    spool_errors: false
+    spool_file_total: 2
+  test8:
+    commands: |
+      srun hostname
+      sleep 20
+    description: het job
+    hetjob: true
+    job_fail: false
+    options:
+      mail-type: ALL
+      mem-per-cpu: 100M
+      nodes: 1
       time: "01:00"
     send_errors: false
     spool_errors: false

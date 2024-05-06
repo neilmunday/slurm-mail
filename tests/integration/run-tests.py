@@ -112,6 +112,11 @@ if __name__ == "__main__":
         dest="input", required=True,
     )
     parser.add_argument(
+        "-k", "--keep-logs", help="Keep log files - can only be used when running a single test",
+        dest="keep_logs",
+        action="store_true"
+    )
+    parser.add_argument(
         "-m", "--mail-log", help="Display mail log", dest="mail_log",
         action="store_true"
     )
@@ -127,6 +132,9 @@ if __name__ == "__main__":
         action="store_true"
     )
     args = parser.parse_args()
+
+    if args.test and args.keep_log:
+        die("--keep-logs can only be used when running one test")
 
     log_date = "%Y/%m/%d %H:%M:%S"
     log_format = "%(asctime)s:%(levelname)s: %(message)s"
@@ -191,6 +199,7 @@ if __name__ == "__main__":
         die(f"needed {max_nodes} but only found {nodes_found} available")
 
     error_re = re.compile(r":ERROR:")
+    send_email_re = re.compile(r":INFO: Sending e-mail to: root using root for job")
     passed = 0
     total = 0
 
@@ -207,13 +216,28 @@ if __name__ == "__main__":
             jcf_file.write("#SBATCH -J {0}\n".format(test))
             jcf_file.write("#SBATCH -o {0}/%j.out\n".format(output_dir))
             if "options" in fields:
-                for sbatch_option, sbatch_value in fields["options"].items():
-                    jcf_file.write(
-                        "#SBATCH --{0}={1}\n".format(
+                if fields["hetjob"]:
+                    slurm_options = []
+                    for sbatch_option, sbatch_value in fields["options"].items():
+                        slurm_options.append("--{0}={1}".format(
                             sbatch_option,
                             sbatch_value
-                        )
+                        ))
+                    sbatch_str = "#SBATCH {0}".format(
+                        " ".join(slurm_options)
                     )
+                    jcf_file.write("{0}\n".format(sbatch_str))
+                    jcf_file.write("#SBATCH hetjob\n")
+                    jcf_file.write("{0}\n".format(sbatch_str))
+                else:
+                    for sbatch_option, sbatch_value in fields["options"].items():
+                        jcf_file.write(
+                            "#SBATCH --{0}={1}\n".format(
+                                sbatch_option,
+                                sbatch_value
+                            )
+                        )
+
             jcf_file.write(fields["commands"])
         # display generated JCF
         with open(jcf_path, mode="r", encoding="utf-8") as jcf_file:
@@ -257,8 +281,10 @@ if __name__ == "__main__":
         )
         spoolOk = False
         WAIT_FOR = 25
+        spool_file_total = 0
         for i in range(0, WAIT_FOR):
-            if len(list(spool_dir.glob("*.mail"))) == fields["spool_file_total"]:  # noqa
+            spool_file_total = len(list(spool_dir.glob("*.mail")))
+            if spool_file_total == fields["spool_file_total"]:  # noqa
                 spoolOk = True
                 break
             time.sleep(1)
@@ -266,7 +292,8 @@ if __name__ == "__main__":
             logging.info("%s: spool files created ok", test)
         else:
             logging.error(
-                "%s failed: no spool files after %ss", test, WAIT_FOR
+                "%s failed: found %s spool files, expected %s after %ss",
+                spool_file_total, fields["spool_file_total"], test, WAIT_FOR
             )
             dictionary["tests"][test]["pass"] = False
             if spool_log.is_file():
@@ -298,6 +325,7 @@ if __name__ == "__main__":
         if not fields["send_errors"]:
             send_log_output = None
             send_log_ok = True
+            send_email_found = False
             with open(send_log, mode="r", encoding="utf-8") as f:
                 send_log_output = f.read().split("\n")
                 for line in send_log_output:
@@ -305,24 +333,37 @@ if __name__ == "__main__":
                     if match:
                         send_log_ok = False
                         break
+                    match = send_email_re.search(line)
+                    if match:
+                        send_email_found = True
 
-            if not send_log_ok:
+            if not send_log_ok or not send_email_found:
                 lines = ""
                 for line in send_log_output:
                     lines += "---> {0}\n".format(line)
-                logging.error(
-                    "%s failed: errors present in %s:\n%s",
-                    test,
-                    send_log,
-                    lines
-                )
+                if not send_log_ok:
+                    logging.error(
+                        "%s failed: errors present in %s:\n%s",
+                        test,
+                        send_log,
+                        lines
+                    )
+                elif not send_email_found:
+                    logging.error(
+                        "%s failed: no evidence of e-mail delivery in %s:\n%s",
+                        test,
+                        send_log,
+                        lines
+                    )
                 dictionary["tests"][test]["pass"] = False
-                remove_logs()
+                if not args.keep_logs:
+                    remove_logs()
                 continue
         dictionary["tests"][test]["pass"] = True
         passed += 1
         logging.info("%s passed: OK", test)
-        remove_logs()
+        if not args.keep_logs:
+            remove_logs()
 
     if args.mail_log:
         logging.info("Mail log:")
