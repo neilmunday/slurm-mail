@@ -133,7 +133,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    if args.test and args.keep_log:
+    if args.test and args.keep_logs:
         die("--keep-logs can only be used when running one test")
 
     log_date = "%Y/%m/%d %H:%M:%S"
