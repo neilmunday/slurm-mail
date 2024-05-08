@@ -214,13 +214,15 @@ def __process_spool_file(
             for line in stdout.split("\n"):
                 data = line.split("|", (field_num - 1))
                 if len(data) != field_num:
+                    logging.debug("sacct field length expected: %s, found %s", field_num, len(data))
                     continue
 
                 sacct_dict = {}
                 for i in range(field_num):
                     sacct_dict[fields[i]] = data[i]
 
-                if not re.match(r"^([0-9]+|[0-9]+_[0-9]+)$", sacct_dict["JobId"]):
+                if not re.match(r"^([0-9]+|[0-9]+_[0-9]+|[0-9]+\+[0-9]+)$", sacct_dict["JobId"]):
+                    logging.debug("job ID %s failed reg ex match", sacct_dict["JobId"])
                     # grab MaxRSS value
                     if (
                         state != "Began"
@@ -238,7 +240,6 @@ def __process_spool_file(
 
                 if not array_summary and job_id != int(first_job_id):
                     logging.debug("skipping %s, it does not equal %s", job_id, first_job_id)
-                    print("skipping %s, it does not equal %s" % (job_id, first_job_id))
                     continue
 
                 if array_summary and "{0}".format(first_job_id) not in sacct_dict["JobId"]:
@@ -249,7 +250,13 @@ def __process_spool_file(
                     job = Job(
                         options.datetime_format,
                         job_id,
-                        int(sacct_dict["JobId"].split("_")[0]),
+                        array_id=int(sacct_dict["JobId"].split("_")[0]),
+                    )
+                elif "+" in sacct_dict["JobId"]:
+                    job = Job(
+                        options.datetime_format,
+                        job_id,
+                        hetjob_id=int(sacct_dict["JobId"].split("+")[0]),
                     )
                 else:
                     job = Job(options.datetime_format, job_id)
@@ -480,6 +487,24 @@ def __process_spool_file(
                     CLUSTER=job.cluster,
                     SIGNATURE=signature_text,
                 )
+            elif job.is_hetjob():
+                tpl_html = Template(get_file_contents(options.html_templates["hetjob_started"]))
+                body_html = tpl_html.substitute(
+                    CSS=options.css,
+                    JOB_ID=job.id,
+                    SIGNATURE=signature_html,
+                    USER=job.user_real_name,
+                    JOB_TABLE=job_table_html,
+                    CLUSTER=job.cluster,
+                )
+                tpl_text = Template(get_file_contents(options.text_templates["hetjob_started"]))
+                body_text = tpl_text.substitute(
+                    JOB_ID=job.id,
+                    SIGNATURE=signature_text,
+                    USER=job.user_real_name,
+                    JOB_TABLE=job_table_text,
+                    CLUSTER=job.cluster,
+                )
             else:
                 tpl_html = Template(get_file_contents(options.html_templates["started"]))
                 body_html = tpl_html.substitute(
@@ -603,6 +628,28 @@ def __process_spool_file(
                             JOB_OUTPUT=job_output_text,
                             CLUSTER=job.cluster,
                         )
+                elif job.is_hetjob():
+                    tpl_html = Template(get_file_contents(options.html_templates["hetjob_ended"]))
+                    body_html = tpl_html.substitute(
+                        CSS=options.css,
+                        END_TXT=end_txt,
+                        JOB_ID=job.id,
+                        USER=job.user_real_name,
+                        JOB_TABLE=job_table_html,
+                        JOB_OUTPUT=job_output_html,
+                        CLUSTER=job.cluster,
+                        SIGNATURE=signature_html,
+                    )
+                    tpl_text = Template(get_file_contents(options.text_templates["hetjob_ended"]))
+                    body_text = tpl_text.substitute(
+                        END_TXT=end_txt,
+                        JOB_ID=job.id,
+                        USER=job.user_real_name,
+                        JOB_TABLE=job_table_text,
+                        JOB_OUTPUT=job_output_text,
+                        CLUSTER=job.cluster,
+                        SIGNATURE=signature_text,
+                    )
                 else:
                     tpl_html = Template(get_file_contents(options.html_templates["ended"]))
                     body_html = tpl_html.substitute(
@@ -789,6 +836,8 @@ def send_mail_main():
     options.html_templates["array_summary_started"] = html_tpl_dir / "started-array-summary.tpl"
     options.html_templates["array_summary_ended"] = html_tpl_dir / "ended-array-summary.tpl"
     options.html_templates["ended"] = html_tpl_dir / "ended.tpl"
+    options.html_templates["hetjob_started"] = html_tpl_dir / "started-hetjob.tpl"
+    options.html_templates["hetjob_ended"] = html_tpl_dir / "ended-hetjob.tpl"
     options.html_templates["invalid_dependency"] = html_tpl_dir / "invalid-dependency.tpl"
     options.html_templates["job_output"] = html_tpl_dir / "job-output.tpl"
     options.html_templates["job_table"] = html_tpl_dir / "job-table.tpl"
@@ -804,6 +853,8 @@ def send_mail_main():
     options.text_templates["array_summary_started"] = text_tpl_dir / "started-array-summary.tpl"
     options.text_templates["array_summary_ended"] = text_tpl_dir / "ended-array-summary.tpl"
     options.text_templates["ended"] = text_tpl_dir / "ended.tpl"
+    options.text_templates["hetjob_started"] = text_tpl_dir / "started-hetjob.tpl"
+    options.text_templates["hetjob_ended"] = text_tpl_dir / "ended-hetjob.tpl"
     options.text_templates["invalid_dependency"] = text_tpl_dir / "invalid-dependency.tpl"
     options.text_templates["job_output"] = text_tpl_dir / "job-output.tpl"
     options.text_templates["job_table"] = text_tpl_dir / "job-table.tpl"

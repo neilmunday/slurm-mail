@@ -195,6 +195,8 @@ def mock_slurmmail_cli_process_spool_file_options():
     )
     options.html_templates["array_summary_ended"] = HTML_TEMPLATES_DIR / "ended-array-summary.tpl"
     options.html_templates["ended"] = HTML_TEMPLATES_DIR / "ended.tpl"
+    options.html_templates["hetjob_started"] = HTML_TEMPLATES_DIR / "started-hetjob.tpl"
+    options.html_templates["hetjob_ended"] = HTML_TEMPLATES_DIR / "ended-hetjob.tpl"
     options.html_templates["invalid_dependency"] = HTML_TEMPLATES_DIR / "invalid-dependency.tpl"
     options.html_templates["job_output"] = HTML_TEMPLATES_DIR / "job-output.tpl"
     options.html_templates["job_table"] = HTML_TEMPLATES_DIR / "job-table.tpl"
@@ -211,6 +213,8 @@ def mock_slurmmail_cli_process_spool_file_options():
     )
     options.text_templates["array_summary_ended"] = TEXT_TEMPLATES_DIR / "ended-array-summary.tpl"
     options.text_templates["ended"] = TEXT_TEMPLATES_DIR / "ended.tpl"
+    options.text_templates["hetjob_started"] = TEXT_TEMPLATES_DIR / "started-hetjob.tpl"
+    options.text_templates["hetjob_ended"] = TEXT_TEMPLATES_DIR / "ended-hetjob.tpl"
     options.text_templates["invalid_dependency"] = TEXT_TEMPLATES_DIR / "invalid-dependency.tpl"
     options.text_templates["job_output"] = TEXT_TEMPLATES_DIR / "job-output.tpl"
     options.text_templates["job_table"] = TEXT_TEMPLATES_DIR / "job-table.tpl"
@@ -273,11 +277,11 @@ def mock_smtp_sendmail():
 
 def check_template_used(the_mock: MagicMock, template_name: str):
     call_found = False
-    print(the_mock.mock_calls)
     for call in the_mock.mock_calls:
         _, args, _ = call
         if args[0].name == template_name:
             call_found = True
+            break
     assert call_found
 
 

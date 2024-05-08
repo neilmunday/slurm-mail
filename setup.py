@@ -51,6 +51,7 @@ setuptools.setup(
             'etc/slurm-mail/templates/html/ended-array-summary.tpl',
             'etc/slurm-mail/templates/html/ended-array.tpl',
             'etc/slurm-mail/templates/html/ended.tpl',
+            'etc/slurm-mail/templates/html/ended-hetjob.tpl',
             'etc/slurm-mail/templates/html/invalid-dependency.tpl',
             'etc/slurm-mail/templates/html/job-output.tpl',
             'etc/slurm-mail/templates/html/job-table.tpl',
@@ -60,12 +61,14 @@ setuptools.setup(
             'etc/slurm-mail/templates/html/started-array-summary.tpl',
             'etc/slurm-mail/templates/html/started-array.tpl',
             'etc/slurm-mail/templates/html/started.tpl',
+            'etc/slurm-mail/templates/html/started-hetjob.tpl',
             'etc/slurm-mail/templates/html/time.tpl'
         ]),
         ('/etc/slurm-mail/templates/text', [
             'etc/slurm-mail/templates/text/ended-array-summary.tpl',
             'etc/slurm-mail/templates/text/ended-array.tpl',
             'etc/slurm-mail/templates/text/ended.tpl',
+            'etc/slurm-mail/templates/text/ended-hetjob.tpl',
             'etc/slurm-mail/templates/text/invalid-dependency.tpl',
             'etc/slurm-mail/templates/text/job-output.tpl',
             'etc/slurm-mail/templates/text/job-table.tpl',
@@ -75,6 +78,7 @@ setuptools.setup(
             'etc/slurm-mail/templates/text/started-array-summary.tpl',
             'etc/slurm-mail/templates/text/started-array.tpl',
             'etc/slurm-mail/templates/text/started.tpl',
+            'etc/slurm-mail/templates/text/started-hetjob.tpl',
             'etc/slurm-mail/templates/text/time.tpl'
         ])
     ],

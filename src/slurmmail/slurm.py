@@ -73,7 +73,10 @@ class Job:
     """
 
     def __init__(
-        self, datetime_format: str, job_id: int, array_id: Optional[int] = None
+        self, datetime_format: str,
+        job_id: int,
+        array_id: Optional[int] = None,
+        hetjob_id: Optional[int] = None
     ):
         self.__cpus: Optional[int] = None
         self.__cpu_efficiency: Optional[float] = None
@@ -93,6 +96,7 @@ class Job:
         self.elapsed: Optional[int] = 0
         self.exit_code: Optional[int] = None
         self.group: Optional[str] = None
+        self.hetjob_id: Optional[int] = hetjob_id
         self.id: int = job_id
         self.max_rss: Optional[int] = None
         self.name: Optional[str] = None
@@ -237,6 +241,9 @@ class Job:
 
     def is_array(self) -> bool:
         return self.array_id is not None
+
+    def is_hetjob(self) -> bool:
+        return self.hetjob_id is not None
 
     def save(self):
         """
