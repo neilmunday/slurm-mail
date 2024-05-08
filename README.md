@@ -242,7 +242,8 @@ Slurm-Mail uses Python's [string.Template](https://docs.python.org/3/library/str
 | Filename                  | Template Purpose                                                  |
 | ------------------------- | ----------------------------------------------------------------- |
 | ended-array.tpl           | Used for jobs in an array that have finished.                     |
-| ended-array_summary       | Used when all jobs in an array have finished.                     |
+| ended-array_summary.tpl   | Used when all jobs in an array have finished.                     |
+| ended-hetjob.tpl          | Used for the leader job in a heterogeneous job that has ended.    |
 | ended.tpl                 | Used for jobs that have finished.                                 |
 | invalid-dependency.tpl    | Used when a job has an invalid dependency.                        |
 | job-table.tpl             | Used to create the job info table in e-mails.                     |
@@ -250,6 +251,7 @@ Slurm-Mail uses Python's [string.Template](https://docs.python.org/3/library/str
 | signature.tpl             | Used to create the e-mail signature.                              |
 | staged-out.tpl            | Used when a job's burst buffer stage has completed.               |
 | started.tpl               | Used for jobs that have started.                                  |
+| started-hetjob.tpl        | Used for the leader job in a heterogeneous job that has started.  |                                 |
 | started-array-summary.tpl | Used when the first job in an array has started.                  |
 | started-array.tpl         | Used for the first job in an array that has started.              |
 | time.tpl                  | Used when a job reaches a percentage of it's time limit.          |

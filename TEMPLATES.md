@@ -17,7 +17,7 @@ HTML and plain text templates can be found at: `/etc/slurm-mail/templates/html` 
 | $SIGNATURE    | E-mail signature                                             |
 | $USER         | The user's name.                                             |
 
-## ended.tpl
+## ended.tpl, ended-hetjob.tpl
 
 | Variable    | Purpose                                                      |
 | ----------- | ------------------------------------------------------------ |
@@ -104,7 +104,7 @@ Note: some variables are only displayed in the e-mail if the job has ended.
 | $SIGNATURE    | E-mail signature                                           |
 | $USER         | The user's name.                                           |
 
-## started.tpl
+## started.tpl, started-hetjob.tpl
 
 | Variable      | Purpose                                                    |
 | ------------- | ---------------------------------------------------------- |
