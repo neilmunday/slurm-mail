@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+Version 4.16
+------------
+
+Date: 2024-05-08
+
+* Add support for heterogeneous jobs (issue #126)
+* Add the ability to run docker Slurm containers on multiple nodes (issue #127)
+
 Version 4.15
 ------------
 
