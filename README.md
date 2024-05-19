@@ -75,7 +75,7 @@ sudo wget -O /etc/yum.repos.d/slurm-mail.repo https://neilmunday.github.io/slurm
 sudo yum install slurm-mail
 ```
 
-### Amazon Linux 2023
+#### Amazon Linux 2023
 
 ```bash
 sudo wget -O /etc/yum.repos.d/slurm-mail.repo https://neilmunday.github.io/slurm-mail/repo/slurm-mail.amnz2023.repo
