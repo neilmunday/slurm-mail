@@ -2,7 +2,7 @@ ID:                         $JOB_ID
 Name:                       $JOB_NAME
 Partition:                  $PARTITION
 Nodes:                      $NODES
-Memory per node:            $MEMORY
+Requested Memory:           $REQ_MEMORY
 Wallclock:                  $WALLCLOCK
 Std out:                    $STDOUT
 Std err:                    $STDERR

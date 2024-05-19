@@ -16,8 +16,8 @@
 		<td>$NODES</td>
 	</tr>
 	<tr>
-		<td>Memory per node:</td>
-		<td>$MEMORY</td>
+		<td>Requested Memory:</td>
+		<td>$REQ_MEMORY</td>
 	</tr>
 	<tr>
 		<td>Wallclock:</td>

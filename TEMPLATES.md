@@ -59,7 +59,7 @@ Note: some variables are only displayed in the e-mail if the job has ended.
 | $CPU_EFFICIENCY     | The CPU efficiency of the job.                        |
 | $CPU_TIME           | The CPU time used by the job.                         |
 | $MAX_MEMORY         | The maximum amount of RAM used by a node in the job.  |
-| $MEMORY             | The amount of RAM used by the job.                    |
+| $REQ_MEMORY         | The amount of memory requested by the job.            |
 | $ELAPSED            | How long the job ran for.                             |
 | $END                | When the job ended as a date string.                  |
 | $END_TS             | When the job started as a Unix timestamp.             |
