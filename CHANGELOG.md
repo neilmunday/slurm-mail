@@ -7,6 +7,7 @@ Version 4.17
 Date: 2024-05-19
 
 * Corrected description in job table to be "Requested Memory" instead of "Memory per node" (issue #129)
+* Updated README to include information about using Slurm-Mail with AWS Parallel Cluster
 
 Version 4.16
 ------------
