@@ -180,6 +180,10 @@ install -d -m 700 -o slurm -g slurm /var/log/slurm-mail
 
 **Note:** Depending on your operating system's Python set-up, it is possible that `setuptools` might install Slurm-Mail to `/usr/local` rather than `/usr`.
 
+### AWS Parallel Cluster
+
+Slurm-Mail can be installed and automatically configured to work with [AWS Parallel Cluster](https://aws.amazon.com/hpc/parallelcluster/) by using the [this recipe](https://github.com/aws-samples/aws-hpc-recipes/tree/main/recipes/pcluster/slurm_accounting_with_email).
+
 ## Configuration
 
 Edit `/etc/slurm-mail/slurm-mail.conf` to suit your needs. For example, check that the location of `sacct` is correct. If you are installing from source check that the log and spool directories are set to your desired values.
