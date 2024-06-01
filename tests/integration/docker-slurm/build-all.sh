@@ -42,7 +42,8 @@ el8
 el9
 sl15
 ub20
-ub22"
+ub22
+ub24"
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
