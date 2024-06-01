@@ -140,6 +140,12 @@ deb [trusted=yes] https://neilmunday.github.io/slurm-mail/repo/ub20 ./
 deb [trusted=yes] https://neilmunday.github.io/slurm-mail/repo/ub22 ./
 ```
 
+#### Ubuntu24
+
+```
+deb [trusted=yes] https://neilmunday.github.io/slurm-mail/repo/ub24 ./
+```
+
 #### Install
 
 Then install using `apt-get`:
