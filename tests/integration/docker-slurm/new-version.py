@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# pylint: disable=duplicate-code,invalid-name,missing-module-
+# pylint: disable=duplicate-code,invalid-name,missing-module-docstring
 
 #
 #  This file is part of Slurm-Mail.
