@@ -101,6 +101,7 @@ done
 DEB_OSES="
 ub20
 ub22
+ub24
 "
 
 for OS in $DEB_OSES; do
