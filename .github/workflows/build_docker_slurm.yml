@@ -26,7 +26,7 @@ jobs:
         working-directory: tests/integration/docker-slurm
     strategy:
       matrix:
-        os: ["amzn2", "amzn2023", "el7", "el8", "el9", "sl15", "ub20", "ub22"]
+        os: ["amzn2", "amzn2023", "el7", "el8", "el9", "sl15", "ub20", "ub22", "ub24"]
     steps:
       - name: Log in to the container registry
         uses: docker/login-action@v3
