@@ -4,6 +4,8 @@ Change Log
 Version 4.18
 ------------
 
+Date: 2024-06-01
+
 * Add support for Slurm 24 (issue #131)
 * Add support for Ubuntu 24.04 LTS (issue #132)
 
