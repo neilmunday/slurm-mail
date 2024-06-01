@@ -13,22 +13,24 @@ RUN zypper update -y && \
     zypper addrepo --gpgcheck --refresh https://yum.mariadb.org/${MARIADB_VER}/sles/15/x86_64 mariadb && \
     zypper --gpg-auto-import-keys refresh && \
     zypper install -y \
-    gcc \
-    MariaDB-devel \
-    MariaDB-client \
-    MariaDB-server \
-    mailx \
-    munge-devel \
-    pam-devel \
-    perl \
-    python3 \
-    python3-setuptools \
-    readline-devel \
-    rpm-build \
-    tar \
-    supervisor \
-    tini \
-    wget && \
+      autoconf \
+      automake \
+      gcc \
+      MariaDB-devel \
+      MariaDB-client \
+      MariaDB-server \
+      mailx \
+      munge-devel \
+      pam-devel \
+      perl \
+      python3 \
+      python3-setuptools \
+      readline-devel \
+      rpm-build \
+      tar \
+      supervisor \
+      tini \
+      wget && \
     wget https://download.schedmd.com/slurm/slurm-${SLURM_VER}.tar.bz2 -O /root/slurm-${SLURM_VER}.tar.bz2 && \
     rpmbuild -tb /root/slurm-${SLURM_VER}.tar.bz2 && \
     zypper install --allow-unsigned-rpm -y \
@@ -37,14 +39,16 @@ RUN zypper update -y && \
     /usr/src/packages/RPMS/x86_64/slurm-slurmd-${SLURM_VER}*.x86_64.rpm \
     /usr/src/packages/RPMS/x86_64/slurm-slurmdbd-${SLURM_VER}*.x86_64.rpm && \
     zypper remove -y \
-    gcc \
-    MariaDB-devel \
-    make \
-    munge-devel \
-    pam-devel \
-    readline-devel \
-    rpm-build \
-    wget && \
+      autoconf \
+      automake \
+      gcc \
+      MariaDB-devel \
+      make \
+      munge-devel \
+      pam-devel \
+      readline-devel \
+      rpm-build \
+      wget && \
     zypper clean && \
     rm -vrf /usr/src/packages/* && \
     groupadd -r slurm && \

@@ -20,22 +20,24 @@ EOF
 RUN dnf update -y && \
     rpm --import https://yum.mariadb.org/RPM-GPG-KEY-MariaDB && \
     dnf install -y \
-    gcc \
-    mailx \
-    make \
-    MariaDB-devel \
-    MariaDB-client \
-    MariaDB-server \
-    munge-devel \
-    pam-devel \
-    perl \
-    perl-ExtUtils-MakeMaker \
-    python3 \
-    python3-pip \
-    readline-devel \
-    rpm-build \
-    systemd \
-    wget && \
+      autoconf \
+      automake \
+      gcc \
+      mailx \
+      make \
+      MariaDB-devel \
+      MariaDB-client \
+      MariaDB-server \
+      munge-devel \
+      pam-devel \
+      perl \
+      perl-ExtUtils-MakeMaker \
+      python3 \
+      python3-pip \
+      readline-devel \
+      rpm-build \
+      systemd \
+      wget && \
     wget https://github.com/krallin/tini/releases/download/v0.19.0/tini_0.19.0.rpm -O /root/tini_0.19.0.rpm && \
     dnf localinstall -y /root/tini_0.19.0.rpm && \
     pip3 install supervisor && \
@@ -47,7 +49,17 @@ RUN dnf update -y && \
     /root/rpmbuild/RPMS/x86_64/slurm-slurmctld-${SLURM_VER}*.amzn2023.x86_64.rpm \
     /root/rpmbuild/RPMS/x86_64/slurm-slurmd-${SLURM_VER}*.amzn2023.x86_64.rpm \
     /root/rpmbuild/RPMS/x86_64/slurm-slurmdbd-${SLURM_VER}*.amzn2023.x86_64.rpm && \
-    dnf -y erase gcc mariab-devel make munge-devel pam-devel readline-devel rpm-build wget && \
+    dnf -y erase \
+      autoconf \
+      automake \
+      gcc \
+      mariab-devel \
+      make \
+      munge-devel \
+      pam-devel \
+      readline-devel \
+      rpm-build \
+      wget && \
     dnf clean all && \
     rm -rf /root/rpmbuild /root/slurm*.tar.bz2 && \
     groupadd -r slurm && \

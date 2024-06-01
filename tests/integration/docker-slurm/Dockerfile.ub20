@@ -11,23 +11,25 @@ RUN ln -fs /usr/share/zoneinfo/Europe/London /etc/localtime
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get update -y && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    bsd-mailx \
-    bzip2 \
-    gcc \
-    libmariadb-dev \
-    libmunge-dev \
-    lsb-release \
-    make \
-    mariadb-client \
-    mariadb-server \
-    munge \
-    perl \
-    python3 \
-    python3-all \
-    supervisor \
-    tar \
-    tini \
-    wget && \
+      autoconf \
+      automake \
+      bsd-mailx \
+      bzip2 \
+      gcc \
+      libmariadb-dev \
+      libmunge-dev \
+      lsb-release \
+      make \
+      mariadb-client \
+      mariadb-server \
+      munge \
+      perl \
+      python3 \
+      python3-all \
+      supervisor \
+      tar \
+      tini \
+      wget && \
     mkdir -p /etc/slurm && \
     wget https://download.schedmd.com/slurm/slurm-${SLURM_VER}.tar.bz2 -O /root/slurm-${SLURM_VER}.tar.bz2 && \
     cd /root && \
@@ -42,9 +44,11 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update -y && \
     useradd -g test -d /home/test -m test && \
     install -d -o slurm -g slurm /etc/slurm /var/spool/slurm /var/log/slurm && \
     apt-get remove -y \
-        gcc \
-        libmariadb-dev \
-        libmunge-dev && \
+      autoconf \
+      automake \
+      gcc \
+      libmariadb-dev \
+      libmunge-dev && \
     apt-get clean && \
     rm -rfv /root/slurm* && \
     dd if=/dev/urandom bs=1 count=1024 > /etc/munge/munge.key 2>/dev/null && \
