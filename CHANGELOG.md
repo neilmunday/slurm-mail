@@ -1,6 +1,12 @@
 Change Log
 ==========
 
+Version 4.18
+------------
+
+* Add support for Slurm 24 (issue #131)
+* Add support for Ubuntu 24.04 LTS (issue #132)
+
 Version 4.17
 ------------
 
