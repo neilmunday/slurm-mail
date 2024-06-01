@@ -37,7 +37,7 @@ These variables can be used when running multiple instances of the container tog
 Run a container in interactive mode:
 
 ```
-docker run -it --name slurm ghcr.io/neilmunday/slurm-mail/slurm-el9 /bin/bash
+docker run -it --name slurm -h compute01 ghcr.io/neilmunday/slurm-mail/slurm-el9 /bin/bash
 ```
 
 ### Detached
@@ -45,7 +45,7 @@ docker run -it --name slurm ghcr.io/neilmunday/slurm-mail/slurm-el9 /bin/bash
 Run the container in detached mode:
 
 ```
-docker run -d --name slurm ghcr.io/neilmunday/slurm-mail/slurm-el9
+docker run -d --name slurm -h compute01 ghcr.io/neilmunday/slurm-mail/slurm-el9
 ```
 
 Check that the container started ok:
