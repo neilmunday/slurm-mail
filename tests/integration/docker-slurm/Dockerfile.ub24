@@ -1,8 +1,8 @@
 FROM ubuntu:24.04
 
 LABEL org.opencontainers.image.source="https://github.com/neilmunday/slurm-mail" \
-      org.opencontainers.image.description="An Ubuntu 22 Slurm container intended for testing Slurm-Mail" \
-      org.opencontainers.image.title="ubuntu22-slurm" \
+      org.opencontainers.image.description="An Ubuntu 24 Slurm container intended for testing Slurm-Mail" \
+      org.opencontainers.image.title="ubuntu24-slurm" \
       maintainer="Neil Munday"
 
 ARG SLURM_VER=24.05.0
