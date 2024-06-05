@@ -110,3 +110,31 @@ To submit jobs you can run the following command to launch an interactive bash s
 ```bash
 docker exec -it slurm-mail-head /usr/bin/bash -i
 ```
+
+### Reverting to /usr/bin/mail
+
+If you want to see how e-mails from Slurm look like instead, perform the following steps:
+
+1. Disable the cron job at `/etc/cron.d/slurm-mail`
+
+2. Install `sendmail`:
+
+```bash
+dnf install -y sendmail
+```
+
+3. Add to the end of `/etc/mail.rc`:
+
+```
+set smtp=mailhog:1025
+```
+
+4. Set `MailProg` in `/etc/slurm/slurm/conf` to `/usr/bin/mail`.
+
+5. Restart `slurmctld`:
+
+```bash
+supervisorctl stop slurmctld
+supervisorctl start slurmctld
+```
+
