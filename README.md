@@ -310,7 +310,7 @@ Slurm-Mail will honour the behaviour of `--mail-type` option of `sbatch` for job
 
 ## GECOS Field Usage
 
-Slurm-Mail uses the [GECOS](https://en.wikipedia.org/wiki/Gecos_field) field of a user's passwd entry to determine their real name to use in e-mails. Slurm-Mail will split the [GECOS](https://en.wikipedia.org/wiki/Gecos_field) by the comma character and will by default use the first (zeroth) element. If your system is set-up to use a different element for the user's real name then you can change the `gecosNameField` parameter in `slurm-mail.conf` to your desired value.
+Slurm-Mail uses the [GECOS](https://en.wikipedia.org/wiki/Gecos_field) field of a user's passwd entry to determine their real name to use in e-mails. Slurm-Mail will split the [GECOS](https://en.wikipedia.org/wiki/Gecos_field) field by the comma character and will by default use the first (zeroth) element. If your system is set-up to use a different element for the user's real name then you can change the `gecosNameField` parameter in `slurm-mail.conf` to your desired value.
 
 For example, if your [GECOS](https://en.wikipedia.org/wiki/Gecos_field) uses the format `Last name, first name` you can set `gecosNameField` to `1` instead of `0`.
 
