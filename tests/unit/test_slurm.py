@@ -68,6 +68,8 @@ def mock_pwd_getpwnam():
                 pw_struct.pw_gecos = "Foo Bar, Building 42, 1234, 5678, foo@bar.com"
             elif username == "jdoe":
                 pw_struct.pw_gecos = "John Doe"
+            elif username == "jsmith":
+                pw_struct.pw_gecos = "Smith, John"
             else:
                 raise KeyError(f"getpwnam(): name not found: '{username}'")
             return pw_struct
@@ -230,6 +232,9 @@ class TestSlurmJob:
         assert job.user_real_name == "Foo Bar"
         job.user = "jdoe"
         assert job.user_real_name == "John Doe"
+        Job.GECOS_NAME_FIELD = 1
+        job.user = "jsmith"
+        assert job.user_real_name == "John"
 
     def test_wc_accuracy_100pc(self, job):
         job.start_ts = 1673384400  # Tue 10 Jan 21:00:00 GMT 2023

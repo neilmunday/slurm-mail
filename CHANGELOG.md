@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 4.19
+------------
+
+Date: 2024-06-11
+
+* Added gecosNameField to Slurm-Mail config to allow admins to specify which part of the GECOS field to used to determine a user's real name (issue #133)
+
 Version 4.18
 ------------
 

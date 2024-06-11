@@ -72,6 +72,8 @@ class Job:
     Helper object to store job data
     """
 
+    GECOS_NAME_FIELD: int = 0
+
     def __init__(
         self, datetime_format: str,
         job_id: int,
@@ -213,7 +215,7 @@ class Job:
     def user_real_name(self) -> Optional[str]:
         if self.user is None:
             return None
-        return pwd.getpwnam(self.user).pw_gecos.split(",", maxsplit=1)[0]
+        return pwd.getpwnam(self.user).pw_gecos.split(",", maxsplit=1)[Job.GECOS_NAME_FIELD].strip()
 
     @property
     def wallclock(self) -> Optional[int]:

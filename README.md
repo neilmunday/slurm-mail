@@ -307,6 +307,12 @@ Notes:
 
 Slurm-Mail will honour the behaviour of `--mail-type` option of `sbatch` for job arrays. If a user specifies `--mail-type=ARRAY_TASKS` then Slurm-Mail will send notification e-mails for all jobs in the array. If you want to limit the number of e-mails that will be sent in this scenario then change the `arrayMaxNotifications` parameter in `slurm-mail.conf` to a value greater than zero.
 
+## GECOS Field Usage
+
+Slurm-Mail uses the [GECOS](https://en.wikipedia.org/wiki/Gecos_field) field of a user's passwd entry to determine their real name to use in e-mails. Slurm-Mail will split the [GECOS](https://en.wikipedia.org/wiki/Gecos_field) by the comma character and will by default use the first (zeroth) element. If your system is set-up to use a different element for the user's real name then you can change the `gecosNameField` parameter in `slurm-mail.conf` to your desired value.
+
+For example, if your [GECOS](https://en.wikipedia.org/wiki/Gecos_field) uses the format `Last name, first name` you can set `gecosNameField` to `1` instead of `0`.
+
 # Development
 
 Clone this repository to your desktop and make sure you have a supported version of Python installed (see *Requirements* above).

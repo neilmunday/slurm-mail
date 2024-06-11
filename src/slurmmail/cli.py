@@ -894,6 +894,10 @@ def send_mail_main():
         options.email_from_address = config.get(section, "emailFromUserAddress")
         options.email_from_name = config.get(section, "emailFromName")
         options.email_subject = config.get(section, "emailSubject")
+
+        if config.has_option(section, "gecosNameField"):
+            Job.GECOS_NAME_FIELD = config.getint(section, "gecosNameField")
+
         options.validate_email = config.getboolean(section, "validateEmail")
         options.sacct_exe = pathlib.Path(config.get(section, "sacctExe"))
         options.scontrol_exe = pathlib.Path(config.get(section, "scontrolExe"))
