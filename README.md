@@ -18,13 +18,14 @@ Repository: [https://github.com/neilmunday/slurm-mail](https://github.com/neilmu
 7. [Validating E-mails](#validating-e-mails)
 8. [Including Job Output in E-mails](#including-job-output-in-e-mails)
 9. [Job Arrays](#job-arrays)
-10. [Development](#development)
-11. [Linting](#linting)
-12. [Testing](#testing)
-13. [Upgrading from Slurm-Mail version 3 to 4](#upgrading-from-slurm-mail-version-3-to-4)
-14. [Upgrading from Slurm-Mail version 4.0-4.9 to 4.10](#upgrading-from-slurm-mail-version-40-49-to-410)
-15. [Troubleshooting](#troubleshooting)
-16. [Contributors](#contributors)
+10. [GECOS Field Usage](#gecos-field-usage)
+11. [Development](#development)
+12. [Linting](#linting)
+13. [Testing](#testing)
+14. [Upgrading from Slurm-Mail version 3 to 4](#upgrading-from-slurm-mail-version-3-to-4)
+15. [Upgrading from Slurm-Mail version 4.0-4.9 to 4.10](#upgrading-from-slurm-mail-version-40-49-to-410)
+16. [Troubleshooting](#troubleshooting)
+17. [Contributors](#contributors)
 
 ## Introduction
 
