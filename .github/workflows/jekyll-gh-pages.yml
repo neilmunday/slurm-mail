@@ -4,8 +4,6 @@ name: Deploy Jekyll with GitHub Pages dependencies preinstalled
 on:  
   workflow_run:
     workflows: ["Test and release"]
-    branches:
-      - main
     types:
       - completed
   # Allows you to run this workflow manually from the Actions tab
@@ -27,8 +25,8 @@ jobs:
   # Build job
   build:
     runs-on: ubuntu-latest
-    # only run the job if the workflow executed OK
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # only run the job if the workflow executed OK and if we are creating a new release or running on the main branch
+    if: ${{ github.event.workflow_run.conclusion == 'success' }} && (contains(github.event.ref, '/tags/') or contains(github.event.ref, 'main'))
     steps:
       - name: Checkout
         uses: actions/checkout@v4
