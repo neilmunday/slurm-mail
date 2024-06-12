@@ -4,6 +4,8 @@ name: Deploy Jekyll with GitHub Pages dependencies preinstalled
 on:  
   workflow_run:
     workflows: ["Test and release"]
+    branches:
+      - main
     types:
       - completed
   # Allows you to run this workflow manually from the Actions tab
