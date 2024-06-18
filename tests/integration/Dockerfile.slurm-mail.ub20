@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y cron chrony logrotate python3-yaml pyth
     echo "alias ll='ls -l'" >> /root/.bashrc && \
     mkdir /shared
 
-COPY supervisord.conf /etc/supervisord.conf
+COPY supervisord.ub.conf /etc/supervisord.conf
 
 COPY mail-server.py /usr/local/sbin/
 
