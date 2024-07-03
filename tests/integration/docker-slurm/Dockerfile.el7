@@ -7,6 +7,10 @@ LABEL org.opencontainers.image.source="https://github.com/neilmunday/slurm-mail"
 
 ARG SLURM_VER=24.05.1
 
+# Note: CentOS 7 is EOL so we have to make use of vault repos
+COPY CentOS-Base.repo /etc/yum.repos.d/
+COPY CentOS-7.9.repo /etc/yum.repos.d/
+
 # download, build, install and clean-up
 RUN yum update -y && \
     yum install -y epel-release && \
