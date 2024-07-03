@@ -175,6 +175,10 @@ if __name__ == "__main__":
     if "tests" not in dictionary:
         die("invalid YAML: could not find \"tests\" definition")
 
+    # check Slurm-Mail cron file is not present
+    if pathlib.Path("/etc/cron.d/slurm-mail").exists():
+        die("/etc/cron.d/slurm-mail exists!")
+
     # check that slurm is up
     logging.info("waiting for Slurm...")
     nodes_found = -1
