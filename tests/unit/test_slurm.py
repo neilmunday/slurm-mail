@@ -54,7 +54,7 @@ class TestCheckJobOuputFilePath:
 
 @pytest.fixture
 def job():
-    job = Job(DEFAULT_DATETIME_FORMAT, 1)
+    job = Job(DEFAULT_DATETIME_FORMAT, "1", 1)
     job.user = "foo"
     yield job
 
@@ -127,8 +127,12 @@ class TestSlurmJob:
         assert not job.is_array()
 
     def test_is_array(self, job):
-        job = Job(DEFAULT_DATETIME_FORMAT, 1, 1)
+        job = Job(DEFAULT_DATETIME_FORMAT, "1_0", 1)
         assert job.is_array()
+
+    def test_is_hetjob(self, job):
+        job = Job(DEFAULT_DATETIME_FORMAT, "1+0", 1)
+        assert job.is_hetjob()
 
     def test_max_rss_str(self, job):
         job.max_rss = 1048576

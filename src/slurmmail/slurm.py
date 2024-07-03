@@ -76,9 +76,8 @@ class Job:
 
     def __init__(
         self, datetime_format: str,
-        job_id: int,
-        array_id: Optional[int] = None,
-        hetjob_id: Optional[int] = None
+        job_id: str,
+        job_raw_id: int,
     ):
         self.__cpus: Optional[int] = None
         self.__cpu_efficiency: Optional[float] = None
@@ -90,7 +89,7 @@ class Job:
         self.__wallclock: Optional[int] = None
         self.__wc_accuracy: Optional[float] = None
 
-        self.array_id: Optional[int] = array_id
+        self.array_id: Optional[int] = None
         self.cluster: Optional[str] = None
         self.admin_comment: Optional[str] = None
         self.comment: Optional[str] = None
@@ -98,19 +97,30 @@ class Job:
         self.elapsed: Optional[int] = 0
         self.exit_code: Optional[int] = None
         self.group: Optional[str] = None
-        self.hetjob_id: Optional[int] = hetjob_id
-        self.id: int = job_id
+        self.hetjob_id: Optional[int] = None
+        self.id: str = job_id
+        self.index: Optional[int] = None
         self.max_rss: Optional[int] = None
         self.name: Optional[str] = None
         self.nodelist: Optional[List[str]] = None
         self.nodes: Optional[int] = None
         self.partition: Optional[str] = None
+        self.raw_id: int = job_raw_id
         self.requested_mem: Optional[int] = None
         self.stderr: str = "?"
         self.stdout: str = "?"
         self.used_cpu_usec: Optional[int] = None
         self.user: Optional[str] = None
         self.workdir: Optional[str] = None
+
+        if "_" in job_id:
+            array_id, index = job_id.split("_")
+            self.array_id = int(array_id)
+            self.index = int(index)
+        elif "+" in job_id:
+            hetjob_id, index = job_id.split("+")
+            self.hetjob_id = int(hetjob_id)
+            self.index = int(index)
 
     def __repr__(self) -> str:
         return "<Job object> ID: {0}".format(self.id)

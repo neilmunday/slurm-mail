@@ -236,30 +236,18 @@ def __process_spool_file(
                         job.max_rss_str = sacct_dict["MaxRSS"]
                     continue
 
-                job_id = int(sacct_dict["JobIdRaw"])
+                job_id = sacct_dict["JobId"]
+                job_raw_id = int(sacct_dict["JobIdRaw"])
 
-                if not array_summary and job_id != int(first_job_id):
-                    logging.debug("skipping %s, it does not equal %s", job_id, first_job_id)
+                if not array_summary and job_raw_id != int(first_job_id):
+                    logging.debug("skipping %s, it does not equal %s", job_raw_id, first_job_id)
                     continue
 
                 if array_summary and "{0}".format(first_job_id) not in sacct_dict["JobId"]:
                     logging.debug("skipping %s for job array summary", sacct_dict["JobId"])
                     continue
 
-                if "_" in sacct_dict["JobId"]:
-                    job = Job(
-                        options.datetime_format,
-                        job_id,
-                        array_id=int(sacct_dict["JobId"].split("_")[0]),
-                    )
-                elif "+" in sacct_dict["JobId"]:
-                    job = Job(
-                        options.datetime_format,
-                        job_id,
-                        hetjob_id=int(sacct_dict["JobId"].split("+")[0]),
-                    )
-                else:
-                    job = Job(options.datetime_format, job_id)
+                job = Job(options.datetime_format, job_id, job_raw_id)
 
                 job.cluster = sacct_dict["Cluster"]
                 job.admin_comment = sacct_dict["AdminComment"]
@@ -299,7 +287,7 @@ def __process_spool_file(
                     except ValueError:
                         logging.warning(
                             "job %s: could not parse '%s' for job start timestamp",
-                            job.id,
+                            job.raw_id,
                             sacct_dict["Start"],
                         )
                 job.used_cpu_usec = get_usec_from_str(sacct_dict["TotalCPU"])
@@ -314,7 +302,7 @@ def __process_spool_file(
                     except ValueError:
                         logging.warning(
                             "job %s: could not parse: '%s' for job time limit",
-                            job.id,
+                            job.raw_id,
                             sacct_dict["TimelimitRaw"],
                         )
                         job.wallclock = 0
@@ -326,7 +314,7 @@ def __process_spool_file(
                     except ValueError:
                         logging.warning(
                             "job %s: could not parse: '%s' for job end timestamp",
-                            job.id,
+                            job.raw_id,
                             sacct_dict["End"],
                         )
                     job.exit_code = sacct_dict["ExitCode"]
@@ -385,7 +373,7 @@ def __process_spool_file(
         # Will only be one job regardless of if it is an array in the
         # "began" state. For jobs that have ended there can be mulitple
         # jobs objects if it is an array.
-        logging.debug("Creating template for job %s", job.id)
+        logging.debug("Creating template for job %s", job.raw_id)
         tpl = Template(get_file_contents(options.html_templates["job_table"]))
         job_table_html = tpl.substitute(
             JOB_ID=job.id,
@@ -775,7 +763,7 @@ def __process_spool_file(
             "Sending e-mail to: %s using %s for job %s (%s) via SMTP server %s:%s",
             job.user,
             user_email,
-            job.id,
+            job.raw_id,
             state,
             options.smtp_server,
             options.smtp_port,
