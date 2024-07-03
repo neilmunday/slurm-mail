@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 4.20
+------------
+
+Date: 2024-07-03
+
+* Swapped use of raw job ID for the job ID in e-mails (issue #135)
+
 Version 4.19
 ------------
 
