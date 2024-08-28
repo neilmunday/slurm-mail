@@ -6,7 +6,7 @@ LABEL org.opencontainers.image.source="https://github.com/neilmunday/slurm-mail"
       maintainer="Neil Munday"
 
 ARG SLURM_VER=24.05.2
-ARG MARIADB_VER=11.3
+ARG MARIADB_VER=11.6
 
 COPY <<EOF /etc/yum.repos.d/mariab.repo
 [mariadb]
