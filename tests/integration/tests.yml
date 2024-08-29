@@ -118,3 +118,22 @@ tests:
     send_errors: false
     spool_errors: false
     spool_file_total: 2
+  test9:
+    commands: |
+      srun hostname
+      sleep 20
+    description: job array, cancel before jobs dispatched (issue 141)
+    hetjob: false
+    job_fail: false
+    options:
+      array: 1-5
+      mail-type: ALL
+      nodes: 1
+      time: "01:00"
+      begin: now+1hour
+    post_submit: |
+      sleep 10
+      scancel -u root
+    send_errors: false
+    spool_errors: false
+    spool_file_total: 1
