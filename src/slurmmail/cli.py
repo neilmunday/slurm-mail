@@ -221,7 +221,15 @@ def __process_spool_file(
                 for i in range(field_num):
                     sacct_dict[fields[i]] = data[i]
 
-                if not re.match(r"^([0-9]+|[0-9]+_[0-9]+|[0-9]+\+[0-9]+)$", sacct_dict["JobId"]):
+                # possible job ID formats:
+                # [0-9]+
+                # [0-9]+_[0-9]+             --> job array
+                # [0-9]+_\[[0-9]+-[0-9]+\]  --> job array, not started
+                # [0-9]+\+[0-9]+            --> HET job
+                if not re.match(
+                    r"^([0-9]+|[0-9]+_[0-9]+|[0-9]+_\[[0-9]+-[0-9]+\]|[0-9]+\+[0-9]+)$",
+                    sacct_dict["JobId"]
+                ):
                     logging.debug("job ID %s failed reg ex match", sacct_dict["JobId"])
                     # grab MaxRSS value
                     if (
@@ -356,7 +364,7 @@ def __process_spool_file(
                 job.save()
                 jobs.append(job)
 
-    if array_summary or len(jobs) == 1:
+    if (array_summary and len(jobs) > 0) or len(jobs) == 1:
         jobs = [jobs[0]]
 
     if not array_summary and 0 < options.array_max_notifications < len(jobs):

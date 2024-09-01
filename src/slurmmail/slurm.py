@@ -73,6 +73,7 @@ class Job:
     """
 
     GECOS_NAME_FIELD: int = 0
+    JOB_ARRAY_NOT_STARTED_RE = re.compile(r"([0-9]+)_\[[0-9]+-[0-9]+\]")
 
     def __init__(
         self, datetime_format: str,
@@ -114,9 +115,15 @@ class Job:
         self.workdir: Optional[str] = None
 
         if "_" in job_id:
-            array_id, index = job_id.split("_")
-            self.array_id = int(array_id)
-            self.index = int(index)
+
+            # has the job array started?
+            match = Job.JOB_ARRAY_NOT_STARTED_RE.match(job_id)
+            if match:
+                self.array_id = match.group(1)
+            else:
+                array_id, index = job_id.split("_")
+                self.array_id = int(array_id)
+                self.index = int(index)
         elif "+" in job_id:
             hetjob_id, index = job_id.split("+")
             self.hetjob_id = int(hetjob_id)
