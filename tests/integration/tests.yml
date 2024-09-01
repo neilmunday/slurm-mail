@@ -122,15 +122,34 @@ tests:
     commands: |
       srun hostname
       sleep 20
-    description: job array, cancel before jobs dispatched (issue 141)
+    description: job array, cancel before jobs dispatched
     hetjob: false
     job_fail: false
     options:
+      begin: now+1hour
       array: 1-5
       mail-type: ALL
       nodes: 1
       time: "01:00"
+    post_submit: |
+      sleep 10
+      scancel -u root
+    send_errors: false
+    spool_errors: false
+    spool_file_total: 1
+  test10:
+    commands: |
+      srun hostname
+      sleep 20
+    description: het job, cancel before job dispatched
+    hetjob: true
+    job_fail: false
+    options:
       begin: now+1hour
+      mail-type: ALL
+      mem-per-cpu: 100M
+      nodes: 1
+      time: "01:00"
     post_submit: |
       sleep 10
       scancel -u root
