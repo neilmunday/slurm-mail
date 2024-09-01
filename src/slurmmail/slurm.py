@@ -119,7 +119,7 @@ class Job:
             # has the job array started?
             match = Job.JOB_ARRAY_NOT_STARTED_RE.match(job_id)
             if match:
-                self.array_id = match.group(1)
+                self.array_id = int(match.group(1))
             else:
                 array_id, index = job_id.split("_")
                 self.array_id = int(array_id)
