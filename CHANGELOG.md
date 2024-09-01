@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 4.21
+------------
+
+Date: 2024-09-01
+
+* Added fix for array jobs that are cancelled before being dispatched (issue #141). Thanks to @mamiller615 for reporting the issue.
+
 Version 4.20
 ------------
 
