@@ -417,7 +417,7 @@ Starting from version 4.10, HTML and plain text e-mail templates are provided. I
 
 ## Contributors
 
-Thank you to the following people who have contributed code improvements, features and aided the development of Slurm-Mail:
+Thank you to the following people who have contributed code improvements, features, found bugs and aided the development of Slurm-Mail:
 
 * [Dan Barker (@danbarke)](https://www.github.com/danbarke)
 * [David Murray (@dajamu)](https://www.github.com/dajamu)
@@ -426,6 +426,7 @@ Thank you to the following people who have contributed code improvements, featur
 * [Hugo Larcher @Hugoch](https://www.github.com/Hugoch)
 * [Jan-Christoph Klie (@jcklie)](https://github.com/jcklie)
 * [langefa (@langefa)](https://github.com/langefa)
+* [mamiller615 (@mamiller615)](https://github.com/mamiller615)
 * [Mehran Khodabandeh (@mkhodabandeh)](https://www.github.com/mkhodabandeh)
 * [Neil Prockter (@mrgum)](https://github.com/mrgum)
 * [rzegson (@rzegson)](https://github.com/rzegson)
