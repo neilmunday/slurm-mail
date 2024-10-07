@@ -106,7 +106,7 @@ Once the containers are up and running you can access the [MailHog](https://hub.
 To submit jobs you can run the following command to launch an interactive bash shell:
 
 ```bash
-docker exec -it slurm-mail-head /usr/bin/bash -i
+docker exec -it slurm-mail-el9-24.05.0-head /usr/bin/bash -i
 ```
 
 ### Reverting to /usr/bin/mail
