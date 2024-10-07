@@ -1,4 +1,5 @@
 {
+    "mypy-type-checker.args": ["--files=src,tests/unit"],
     "python.envFile": "${workspaceFolder}/.env",
     "python.testing.pytestPath": "~/.local/bin/pytest",
     "python.testing.unittestEnabled": false,
