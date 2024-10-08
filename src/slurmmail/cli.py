@@ -83,7 +83,7 @@ class ProcessSpoolFileOptions:
         self.email_from_address: str
         self.email_from_name: Optional[str] = None
         self.email_subject: str
-        self.email_headers: Dict[str, str] = dict()
+        self.email_headers: Dict[str, str] = {}
         self.mail_regex: str = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
         self.validate_email: Optional[bool] = None
         self.sacct_exe: pathlib.Path
