@@ -1,4 +1,4 @@
-# pylint: disable=line-too-long,missing-function-docstring,redefined-outer-name,too-few-public-methods,too-many-arguments,too-many-lines,too-many-public-methods  # noqa
+# pylint: disable=line-too-long,missing-function-docstring,redefined-outer-name,too-few-public-methods,too-many-arguments,too-many-lines,too-many-positional-arguments,too-many-public-methods  # noqa
 
 #
 #  This file is part of Slurm-Mail.
