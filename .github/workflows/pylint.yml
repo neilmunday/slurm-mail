@@ -46,6 +46,10 @@ jobs:
         pip install requests
         pip install setuptools
         pip install typing-extensions
+    - name: Remove too-many-positional-arguments if Python < 3.9
+      run: |
+        sed -i 's/too-many-positional-arguments,//' $(git ls-files '*.py')
+      if: ${{ matrix.python-version == '3.6' || matrix.python-version == '3.7' || matrix.python-version == '3.8' }}
     - name: Analysing the code with pylint for Python 3.6
       run: |
         pylint --disable=duplicate-code,no-self-use $(git ls-files '*.py')
