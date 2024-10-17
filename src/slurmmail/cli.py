@@ -769,6 +769,12 @@ def __process_spool_file(
         # add optional headers
         if options.email_headers:
             for header_name, header_value in options.email_headers.items():
+                if header_name in msg:
+                    logger.warning(
+                        f"Ignoring header_name:{header_name} as header is already set"
+                    )
+                    continue
+
                 msg[header_name] = header_value
 
         # prefer HTML to plain text, so we add the plain text attachment first (see rfc2046 5.1.4)
@@ -899,9 +905,9 @@ def send_mail_main():
         options.email_subject = config.get(section, "emailSubject")
 
         if config.has_option(section, "emailHeaders"):
-            email_headers = [ x.strip().split(":", maxsplit=1) for x in config.get(section, "emailHeaders").split(";") ]
-            for email_header in email_headers:
-                options.email_headers[email_header[0].strip()] = email_header[1].strip()
+            for header in config.get(section, "emailHeaders").split(";"):
+                header_name, header_value = header.split(":", maxsplit=1)
+                options.email_headers[header_name.strip()] = header_value.strip()
 
         if config.has_option(section, "gecosNameField"):
             Job.GECOS_NAME_FIELD = config.getint(section, "gecosNameField")
