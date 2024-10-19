@@ -628,6 +628,7 @@ def __process_spool_file(
                             USER=job.user_real_name,
                             JOB_TABLE=job_table_html,
                             JOB_OUTPUT=job_output_html,
+                            TRES_TABLE=tres_template_result.html,
                             CLUSTER=job.cluster,
                         )
                         tpl_text = Template(
@@ -641,6 +642,7 @@ def __process_spool_file(
                             USER=job.user_real_name,
                             JOB_TABLE=job_table_text,
                             JOB_OUTPUT=job_output_text,
+                            TRES_TABLE=tres_template_result.text,
                             CLUSTER=job.cluster,
                         )
                     else:
