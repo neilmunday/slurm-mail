@@ -62,7 +62,8 @@ setuptools.setup(
             'etc/slurm-mail/templates/html/started-array.tpl',
             'etc/slurm-mail/templates/html/started.tpl',
             'etc/slurm-mail/templates/html/started-hetjob.tpl',
-            'etc/slurm-mail/templates/html/time.tpl'
+            'etc/slurm-mail/templates/html/time.tpl',
+            'etc/slurm-mail/templates/html/tres.tpl'
         ]),
         ('/etc/slurm-mail/templates/text', [
             'etc/slurm-mail/templates/text/ended-array-summary.tpl',
@@ -79,7 +80,8 @@ setuptools.setup(
             'etc/slurm-mail/templates/text/started-array.tpl',
             'etc/slurm-mail/templates/text/started.tpl',
             'etc/slurm-mail/templates/text/started-hetjob.tpl',
-            'etc/slurm-mail/templates/text/time.tpl'
+            'etc/slurm-mail/templates/text/time.tpl',
+            'etc/slurm-mail/templates/text/tres.tpl'
         ])
     ],
     description=DESCRIPTION,

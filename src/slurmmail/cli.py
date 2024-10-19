@@ -49,6 +49,7 @@ import smtplib
 import sys
 import time
 
+from collections import namedtuple
 from datetime import timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -68,6 +69,9 @@ from slurmmail.common import (
     tail_file,
 )
 from slurmmail.slurm import check_job_output_file_path, Job
+
+
+TemplateResult = namedtuple("TemplateResult", ["html", "text"])
 
 
 class ProcessSpoolFileOptions:
@@ -118,6 +122,36 @@ def get_scontrol_values(input_str: str) -> Dict[str, str]:
     for key, value in extractRe.findall(input_str):
         output[key] = value
     return output
+
+
+def get_tres_tables(job: Job, tres_html_tpl: pathlib.Path, tres_text_tpl: pathlib.Path) -> TemplateResult:
+    """
+    Helper function to return TRES tables for use in HTML and plain
+    text e-mails.
+
+    :param job:             the job
+    :type job:              Job
+    :param tres_html_tpl:   path to TRES HTML template
+    :type tres_html_tpl:    pathlib.Path
+    :param tres_text_tpl:   path to TRES text template
+    :type tres_text_tpl:    pathlib.Path
+    :return:                a TemplateResult
+    :rtype:                 TemplateResult
+    """
+
+    tpl_html = Template(get_file_contents(tres_html_tpl))
+    tres_table_html = tpl_html.substitute(
+        TRACKABLE_RESOURCES="\n".join([
+            f"<tr>\n<td>{key}:</td>\n<td>{value}</td>\n</tr>\n" for key, value in job.tres.items()
+        ])
+    )
+
+    tpl_text = Template(get_file_contents(tres_text_tpl))
+    tres_table_text = tpl_text.substitute(
+        TRACKABLE_RESOURCES="\n".join([f"{key}: {value}" for key, value in job.tres.items()])
+    )
+
+    return TemplateResult(tres_table_html, tres_table_text)
 
 
 def __process_spool_file(
@@ -194,6 +228,7 @@ def __process_spool_file(
             "TimeLimit",
             "TimelimitRaw",
             "JobIdRaw",
+            "AllocTRES",
             "JobName",
         ]
         field_num = len(fields)
@@ -314,6 +349,11 @@ def __process_spool_file(
                             sacct_dict["TimelimitRaw"],
                         )
                         job.wallclock = 0
+
+                # were any GPUs used?
+                for item in sacct_dict["AllocTRES"].split(","):
+                    key, value = item.split("=")
+                    job.add_tres(key, value)
 
                 if state in ["Ended", "Failed", "Time limit reached"]:
                     job.state = sacct_dict["State"]
@@ -520,6 +560,13 @@ def __process_spool_file(
                     CLUSTER=job.cluster,
                 )
         elif state in ["Ended", "Failed", "Requeued", "Time limit reached"]:
+
+            tres_template_result = get_tres_tables(
+                job,
+                options.html_templates["tres"],
+                options.text_templates["tres"]
+            )
+
             if job.did_start:
                 end_txt = state.lower()
                 if end_txt == "time limit reached":
@@ -608,6 +655,7 @@ def __process_spool_file(
                             SIGNATURE=signature_html,
                             USER=job.user_real_name,
                             JOB_TABLE=job_table_html,
+                            TRES_TABLE=tres_template_result.html,
                             JOB_OUTPUT=job_output_html,
                             CLUSTER=job.cluster,
                         )
@@ -621,6 +669,7 @@ def __process_spool_file(
                             SIGNATURE=signature_text,
                             USER=job.user_real_name,
                             JOB_TABLE=job_table_text,
+                            TRES_TABLE=tres_template_result.text,
                             JOB_OUTPUT=job_output_text,
                             CLUSTER=job.cluster,
                         )
@@ -633,6 +682,7 @@ def __process_spool_file(
                         USER=job.user_real_name,
                         JOB_TABLE=job_table_html,
                         JOB_OUTPUT=job_output_html,
+                        TRES_TABLE=tres_template_result.html,
                         CLUSTER=job.cluster,
                         SIGNATURE=signature_html,
                     )
@@ -642,6 +692,7 @@ def __process_spool_file(
                         JOB_ID=job.id,
                         USER=job.user_real_name,
                         JOB_TABLE=job_table_text,
+                        TRES_TABLE=tres_template_result.text,
                         JOB_OUTPUT=job_output_text,
                         CLUSTER=job.cluster,
                         SIGNATURE=signature_text,
@@ -654,6 +705,7 @@ def __process_spool_file(
                         JOB_ID=job.id,
                         USER=job.user_real_name,
                         JOB_TABLE=job_table_html,
+                        TRES_TABLE=tres_template_result.html,
                         JOB_OUTPUT=job_output_html,
                         CLUSTER=job.cluster,
                         SIGNATURE=signature_html,
@@ -664,6 +716,7 @@ def __process_spool_file(
                         JOB_ID=job.id,
                         USER=job.user_real_name,
                         JOB_TABLE=job_table_text,
+                        TRES_TABLE=tres_template_result.text,
                         JOB_OUTPUT=job_output_text,
                         CLUSTER=job.cluster,
                         SIGNATURE=signature_text,
@@ -691,6 +744,13 @@ def __process_spool_file(
             reached = int(state[-3:-1])
             remaining = (1 - (reached / 100)) * job.wallclock
             remaining_str = str(timedelta(seconds=remaining))
+
+            tres_template_result = get_tres_tables(
+                job,
+                options.html_templates["tres"],
+                options.text_templates["tres"]
+            )
+
             tpl_html = Template(get_file_contents(options.html_templates["time"]))
             body_html = tpl_html.substitute(
                 CSS=options.css,
@@ -699,6 +759,7 @@ def __process_spool_file(
                 REMAINING=remaining_str,
                 USER=job.user_real_name,
                 JOB_TABLE=job_table_html,
+                TRES_TABLE=tres_template_result.html,
                 CLUSTER=job.cluster,
                 SIGNATURE=signature_html,
             )
@@ -709,6 +770,7 @@ def __process_spool_file(
                 REMAINING=remaining_str,
                 USER=job.user_real_name,
                 JOB_TABLE=job_table_text,
+                TRES_TABLE=tres_template_result.text,
                 CLUSTER=job.cluster,
                 SIGNATURE=signature_text,
             )
@@ -842,6 +904,7 @@ def send_mail_main():
     options.html_templates["staged_out"] = html_tpl_dir / "staged-out.tpl"
     options.html_templates["started"] = html_tpl_dir / "started.tpl"
     options.html_templates["time"] = html_tpl_dir / "time.tpl"
+    options.html_templates["tres"] = html_tpl_dir / "tres.tpl"
 
     options.text_templates = {}
     options.text_templates["array_ended"] = text_tpl_dir / "ended-array.tpl"
@@ -859,6 +922,7 @@ def send_mail_main():
     options.text_templates["staged_out"] = text_tpl_dir / "staged-out.tpl"
     options.text_templates["started"] = text_tpl_dir / "started.tpl"
     options.text_templates["time"] = text_tpl_dir / "time.tpl"
+    options.text_templates["tres"] = text_tpl_dir / "tres.tpl"
 
     for _, tpl_file in options.html_templates.items():
         check_file(tpl_file)

@@ -6,6 +6,8 @@ Details about the job can be found in the table below:
 
 $JOB_TABLE
 
+$TRES_TABLE
+
 $JOB_OUTPUT
 
 $SIGNATURE

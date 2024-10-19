@@ -82,6 +82,7 @@ install -m 644 etc/logrotate.d/slurm-mail %{buildroot}/etc/logrotate.d/
 %config /etc/slurm-mail/templates/html/started.tpl
 %config /etc/slurm-mail/templates/html/started-hetjob.tpl
 %config /etc/slurm-mail/templates/html/time.tpl
+%config /etc/slurm-mail/templates/html/tres.tpl
 %dir %attr(0700,root,root) /etc/slurm-mail/templates/text
 %config /etc/slurm-mail/templates/text/ended-array-summary.tpl
 %config /etc/slurm-mail/templates/text/ended-array.tpl
@@ -98,6 +99,7 @@ install -m 644 etc/logrotate.d/slurm-mail %{buildroot}/etc/logrotate.d/
 %config /etc/slurm-mail/templates/text/started.tpl
 %config /etc/slurm-mail/templates/text/started-hetjob.tpl
 %config /etc/slurm-mail/templates/text/time.tpl
+%config /etc/slurm-mail/templates/text/tres.tpl
 #%defattr(-,root,root,0644)
 %doc /usr/share/doc/slurm-mail/CHANGELOG.md
 %doc /usr/share/doc/slurm-mail/LICENSE

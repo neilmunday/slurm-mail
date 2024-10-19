@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 4.22
+------------
+
+Date: 2024-10-19
+
+* Added trackable resource information to e-mails (issue #142). Thanks to @aav18141 for the suggestion.
+
 Version 4.21
 ------------
 

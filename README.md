@@ -265,7 +265,8 @@ Slurm-Mail uses Python's [string.Template](https://docs.python.org/3/library/str
 | started-hetjob.tpl        | Used for the leader job in a heterogeneous job that has started.  |                                 |
 | started-array-summary.tpl | Used when the first job in an array has started.                  |
 | started-array.tpl         | Used for the first job in an array that has started.              |
-| time.tpl                  | Used when a job reaches a percentage of it's time limit.          |
+| time.tpl                  | Used when a job reaches a percentage of its time limit.           |
+| tres.tpl                  | Used to add trackable resources (TRES) information to e-mails.    |
 
 Each template has a number of variables which can be used in the generation of e-mails. Please see [TEMPLATES](TEMPLATES.md) for futher details.
 

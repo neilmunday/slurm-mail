@@ -31,7 +31,7 @@ import pwd
 import re
 
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from slurmmail.common import get_kbytes_from_str, get_str_from_kbytes
 
@@ -87,6 +87,7 @@ class Job:
         self.__end_ts: Optional[int] = None
         self.__start_ts: Optional[int] = None
         self.__state: Optional[str] = None
+        self.__tres: Dict[str, str] = {}
         self.__wallclock: Optional[int] = None
         self.__wc_accuracy: Optional[float] = None
 
@@ -223,6 +224,10 @@ class Job:
             self.__state = s
 
     @property
+    def tres(self) -> Dict[str, str]:
+        return self.__tres.copy()
+
+    @property
     def used_cpu_str(self) -> Optional[str]:
         if self.used_cpu_usec is not None:
             return str(timedelta(seconds=self.used_cpu_usec / 1000000))
@@ -257,6 +262,9 @@ class Job:
         return str(timedelta(seconds=self.wallclock))
 
     # functions
+
+    def add_tres(self, prop: str, value: str):
+        self.__tres[prop] = value
 
     def is_array(self) -> bool:
         return self.array_id is not None

@@ -127,3 +127,9 @@ Note: some variables are only displayed in the e-mail if the job has ended.
 | $REMAINING  | The amount of time the job has left.                         |
 | $SIGNATURE  | E-mail signature                                             |
 | $USER       | The user's name.                                             |
+
+## tres.pl
+
+| Variable             | Purpose                              |
+| -------------------- | ------------------------------------ |
+| $TRACKABLE_RESOURCES | The trackable resources for the job. |

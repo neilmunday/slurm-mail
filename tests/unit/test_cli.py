@@ -31,7 +31,7 @@ import configparser
 import pathlib
 from os import access
 import smtplib
-from typing import Dict, Union
+from typing import Dict, List, Union
 from unittest.mock import MagicMock, mock_open, patch
 import sys
 
@@ -205,6 +205,8 @@ def mock_slurmmail_cli_process_spool_file_options():
     options.html_templates["staged_out"] = HTML_TEMPLATES_DIR / "staged-out.tpl"
     options.html_templates["started"] = HTML_TEMPLATES_DIR / "started.tpl"
     options.html_templates["time"] = HTML_TEMPLATES_DIR / "time.tpl"
+    options.html_templates["tres"] = HTML_TEMPLATES_DIR / "tres.tpl"
+
     options.text_templates = {}
     options.text_templates["array_ended"] = HTML_TEMPLATES_DIR / "ended-array.tpl"
     options.text_templates["array_started"] = HTML_TEMPLATES_DIR / "started-array.tpl"
@@ -223,6 +225,7 @@ def mock_slurmmail_cli_process_spool_file_options():
     options.text_templates["staged_out"] = TEXT_TEMPLATES_DIR / "staged-out.tpl"
     options.text_templates["started"] = TEXT_TEMPLATES_DIR / "started.tpl"
     options.text_templates["time"] = TEXT_TEMPLATES_DIR / "time.tpl"
+    options.text_templates["tres"] = TEXT_TEMPLATES_DIR / "tres.tpl"
     options.validate_email = False
     yield options
 
@@ -282,7 +285,12 @@ def check_template_used(the_mock: MagicMock, template_name: str):
         if args[0].name == template_name:
             call_found = True
             break
-    assert call_found
+    assert call_found, f"{template_name} not used"
+
+
+def check_templates_used(the_mock: MagicMock, template_names: List[str]):
+    for template_name in template_names:
+        check_template_used(the_mock, template_name)
 
 
 #
@@ -521,8 +529,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "1|root|root|all|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|test.jcf\n"  # noqa
-            sacct_output += "1.batch||||1674333232|Unknown|RUNNING|||1|0|00:00:00|1||00:00:11|0:0|||test|node01|||1.batch|batch"  # noqa
+            sacct_output = "1|root|root|all|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "1.batch||||1674333232|Unknown|RUNNING|||1|0|00:00:00|1||00:00:11|0:0|||test|node01|||1.batch|cpu=1,mem=0,node=1|batch"  # noqa
             mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
             slurmmail.cli.__dict__["__process_spool_file"](
                 pathlib.Path("/tmp/foo"),
@@ -537,7 +545,7 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
-            check_template_used(mock_get_file_contents, "started.tpl")
+            check_templates_used(mock_get_file_contents, ["started.tpl", "job-table.tpl", "signature.tpl"])
 
     def test_job_began_sendmail_fail_retry_on_failure(
         self,
@@ -558,8 +566,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "1|root|root|all|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|test.jcf\n"  # noqa
-            sacct_output += "1.batch||||1674333232|Unknown|RUNNING|||1|0|00:00:00|1||00:00:11|0:0|||test|node01|||1.batch|batch"  # noqa
+            sacct_output = "1|root|root|all|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "1.batch||||1674333232|Unknown|RUNNING|||1|0|00:00:00|1||00:00:11|0:0|||test|node01|||1.batch|cpu=1,mem=0,node=1|batch"  # noqa
             mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
             mock_smtp_sendmail.side_effect = smtplib.SMTPSenderRefused(503, b'Error', 'root')
             with pytest.raises(smtplib.SMTPSenderRefused):
@@ -576,7 +584,7 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
-            check_template_used(mock_get_file_contents, "started.tpl")
+            check_templates_used(mock_get_file_contents, ["started.tpl", "job-table.tpl", "signature.tpl"])
 
     def test_job_began_sendmail_fail_no_retry_failure(
         self,
@@ -597,8 +605,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "1|root|root|all|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|test.jcf\n"  # noqa
-            sacct_output += "1.batch||||1674333232|Unknown|RUNNING|||1|0|00:00:00|1||00:00:11|0:0|||test|node01|||1.batch|batch"  # noqa
+            sacct_output = "1|root|root|all|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "1.batch||||1674333232|Unknown|RUNNING|||1|0|00:00:00|1||00:00:11|0:0|||test|node01|||1.batch|cpu=1,mem=0,node=1|batch"  # noqa
             mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
             mock_slurmmail_cli_process_spool_file_options.retry_on_failure = False
             mock_smtp_sendmail.side_effect = smtplib.SMTPSenderRefused(503, b'Error', 'root')
@@ -615,7 +623,7 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
-            check_template_used(mock_get_file_contents, "started.tpl")
+            check_templates_used(mock_get_file_contents, ["started.tpl", "job-table.tpl", "signature.tpl"])
 
     def test_job_ended(
         self,
@@ -636,8 +644,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "2|root|root|all|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|test.jcf\n"  # noqa
-            sacct_output += "2.batch||||1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|batch"  # noqa
+            sacct_output = "2|root|root|all|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "2.batch||||1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
                 "JobId=2 JobName=test.jcf UserId=root(0) GroupId=root(0) MCS_label=N/A"
                 " Priority=4294901758 Nice=0 Account=root QOS=normal JobState=COMPLETED"
@@ -675,7 +683,10 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
-            check_template_used(mock_get_file_contents, "ended.tpl")
+            check_templates_used(
+                mock_get_file_contents,
+                ["ended.tpl", "job-table.tpl", "tres.tpl", "signature.tpl"]
+            )
 
     def test_interactive_job_ended(
         self,
@@ -696,8 +707,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "2|root|root|all|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|test.jcf\n"  # noqa
-            sacct_output += "2.batch||||1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|batch"  # noqa
+            sacct_output = "2|root|root|all|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "2.batch||||1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
                 "JobId=2 JobName=test.jcf UserId=root(0) GroupId=root(0) MCS_label=N/A"
                 " Priority=4294901758 Nice=0 Account=root QOS=normal JobState=COMPLETED"
@@ -734,7 +745,10 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
-            check_template_used(mock_get_file_contents, "ended.tpl")
+            check_templates_used(
+                mock_get_file_contents,
+                ["ended.tpl", "job-table.tpl", "tres.tpl", "signature.tpl"]
+            )
 
     def test_job_ended_mem_per_node_slurm_less_than_v21(
         self,
@@ -755,8 +769,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "2|root|root|all|1674340451|1674340571|COMPLETED|500n||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|test.jcf\n"  # noqa
-            sacct_output += "2.batch||||1674340451|1674340571|COMPLETED||500n|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|batch"  # noqa
+            sacct_output = "2|root|root|all|1674340451|1674340571|COMPLETED|500n||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "2.batch||||1674340451|1674340571|COMPLETED||500n|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
                 "JobId=2 JobName=test.jcf UserId=root(0) GroupId=root(0) MCS_label=N/A"
                 " Priority=4294901758 Nice=0 Account=root QOS=normal JobState=COMPLETED"
@@ -794,7 +808,10 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
-            check_template_used(mock_get_file_contents, "ended.tpl")
+            check_templates_used(
+                mock_get_file_contents,
+                ["ended.tpl", "job-table.tpl", "tres.tpl", "signature.tpl"]
+            )
 
     def test_job_ended_mem_per_core_slurm_less_than_v21(
         self,
@@ -815,8 +832,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "2|root|root|all|1674340451|1674340571|COMPLETED|500c||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|test.jcf\n"  # noqa
-            sacct_output += "2.batch||||1674340451|1674340571|COMPLETED||500c|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|batch"  # noqa
+            sacct_output = "2|root|root|all|1674340451|1674340571|COMPLETED|500c||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "2.batch||||1674340451|1674340571|COMPLETED||500c|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
                 "JobId=2 JobName=test.jcf UserId=root(0) GroupId=root(0) MCS_label=N/A"
                 " Priority=4294901758 Nice=0 Account=root QOS=normal JobState=COMPLETED"
@@ -854,7 +871,10 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
-            check_template_used(mock_get_file_contents, "ended.tpl")
+            check_templates_used(
+                mock_get_file_contents,
+                ["ended.tpl", "job-table.tpl", "tres.tpl", "signature.tpl"]
+            )
 
     def test_job_ended_tail_file(
         self,
@@ -884,8 +904,8 @@ class TestProcessSpoolFile:
             mock_slurmmail_cli_process_spool_file_options.tail_exe = pathlib.Path(
                 "/usr/bin/tail"
             )
-            sacct_output = "2|root|root|all|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|test.jcf\n"  # noqa
-            sacct_output += "2.batch||||1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|batch"  # noqa
+            sacct_output = "2|root|root|all|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "2.batch||||1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
                 "JobId=2 JobName=test.jcf UserId=root(0) GroupId=root(0) MCS_label=N/A"
                 " Priority=4294901758 Nice=0 Account=root QOS=normal JobState=COMPLETED"
@@ -926,7 +946,10 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
-            check_template_used(mock_get_file_contents, "ended.tpl")
+            check_templates_used(
+                mock_get_file_contents,
+                ["ended.tpl", "job-table.tpl", "tres.tpl", "job-output.tpl", "signature.tpl"]
+            )
 
     def test_job_array_began_summary(
         self,
@@ -947,8 +970,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "7_0|root|root|all|1675460419|Unknown|RUNNING|500M||1|0|00:00:00|1|/root|00:00:43|0:0|||test|node01|00:05:00|5|8|test.jcf\n"  # noqa
-            sacct_output += "7_0.batch||||1675460419|Unknown|RUNNING|||1|0|00:00:00|1||00:00:43|0:0|||test|node01|||8.batch|batch\n"  # noqa
+            sacct_output = "7_0|root|root|all|1675460419|Unknown|RUNNING|500M||1|0|00:00:00|1|/root|00:00:43|0:0|||test|node01|00:05:00|5|8|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "7_0.batch||||1675460419|Unknown|RUNNING|||1|0|00:00:00|1||00:00:43|0:0|||test|node01|||8.batch|cpu=1,mem=0,node=1|batch\n"  # noqa
             sacct_output += (
                 "7_1|root|root|all|Unknown|Unknown|PENDING|500M||1|0|00:00:00|1|/root|00:00:00|0:0||test|None"  # noqa
                 " assigned|00:05:00|5|7|test.jcf"
@@ -967,7 +990,10 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
-            check_template_used(mock_get_file_contents, "started-array-summary.tpl")
+            check_templates_used(
+                mock_get_file_contents,
+                ["started-array-summary.tpl", "job-table.tpl", "signature.tpl"]
+            )
 
     def test_job_array_ended_summary(
         self,
@@ -988,10 +1014,10 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "7_0|root|root|all|1675460419|1675460599|COMPLETED|500M||1|1|00:00.010|1|/root|00:03:00|0:0|||test|node01|00:05:00|5|8|test.jcf\n"  # noqa
-            sacct_output += "7_0.batch||||1675460419|1675460599|COMPLETED||4832K|1|00:00.010|1||00:03:00|0:0|||test|node01|||8.batch|batch\n"  # noqa
-            sacct_output += "7_1|root|root|all|1675460599|1675460779|COMPLETED|500M||1|1|00:00.010|1|/root|00:03:00|0:0|||test|node01|00:05:00|5|7|test.jcf\n"  # noqa
-            sacct_output += "7_1.batch||||1675460599|1675460779|COMPLETED||4784K|1|00:00.010|1||00:03:00|0:0|||test|node01|||7.batch|batch"  # noqa
+            sacct_output = "7_0|root|root|all|1675460419|1675460599|COMPLETED|500M||1|1|00:00.010|1|/root|00:03:00|0:0|||test|node01|00:05:00|5|8|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "7_0.batch||||1675460419|1675460599|COMPLETED||4832K|1|00:00.010|1||00:03:00|0:0|||test|node01|||8.batch|cpu=1,mem=0,node=1|batch\n"  # noqa
+            sacct_output += "7_1|root|root|all|1675460599|1675460779|COMPLETED|500M||1|1|00:00.010|1|/root|00:03:00|0:0|||test|node01|00:05:00|5|7|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "7_1.batch||||1675460599|1675460779|COMPLETED||4784K|1|00:00.010|1||00:03:00|0:0|||test|node01|||7.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output_1 = (
                 "JobId=8 ArrayJobId=7 ArrayTaskId=0 JobName=test.jcf UserId=root(0)"
                 " GroupId=root(0) MCS_label=N/A Priority=4294901756 Nice=0 Account=root"
@@ -1067,7 +1093,10 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
-            check_template_used(mock_get_file_contents, "ended-array-summary.tpl")
+            check_templates_used(
+                mock_get_file_contents,
+                ["ended-array-summary.tpl", "job-table.tpl", "tres.tpl", "signature.tpl"]
+            )
 
     def test_job_array_ended_no_summary(
         self,
@@ -1088,10 +1117,10 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "7_0|root|root|all|1675460419|1675460599|COMPLETED|500M||1|1|00:00.010|1|/root|00:03:00|0:0|||test|node01|00:05:00|5|8|test.jcf\n"  # noqa
-            sacct_output += "7_0.batch||||1675460419|1675460599|COMPLETED||4832K|1|00:00.010|1||00:03:00|0:0|||test|node01|||8.batch|batch\n"  # noqa
-            sacct_output += "7_1|root|root|all|1675460599|1675460779|COMPLETED|500M||1|1|00:00.010|1|/root|00:03:00|0:0|||test|node01|00:05:00|5|7|test.jcf\n"  # noqa
-            sacct_output += "7_1.batch||||1675460599|1675460779|COMPLETED||4784K|1|00:00.010|1||00:03:00|0:0|||test|node01|||7.batch|batch"  # noqa
+            sacct_output = "7_0|root|root|all|1675460419|1675460599|COMPLETED|500M||1|1|00:00.010|1|/root|00:03:00|0:0|||test|node01|00:05:00|5|8|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "7_0.batch||||1675460419|1675460599|COMPLETED||4832K|1|00:00.010|1||00:03:00|0:0|||test|node01|||8.batch|cpu=1,mem=0,node=1|batch\n"  # noqa
+            sacct_output += "7_1|root|root|all|1675460599|1675460779|COMPLETED|500M||1|1|00:00.010|1|/root|00:03:00|0:0|||test|node01|00:05:00|5|7|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "7_1.batch||||1675460599|1675460779|COMPLETED||4784K|1|00:00.010|1||00:03:00|0:0|||test|node01|||7.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
                 "JobId=7 ArrayJobId=7 ArrayTaskId=1 JobName=test.jcf UserId=root(0)"
                 " GroupId=root(0) MCS_label=N/A Priority=4294901756 Nice=0 Account=root"
@@ -1131,7 +1160,10 @@ class TestProcessSpoolFile:
                     == mock_slurmmail_cli_process_spool_file_options.email_from_address
                 )
                 assert args[1] == ["root"]
-            check_template_used(mock_get_file_contents, "ended-array.tpl")
+            check_templates_used(
+                mock_get_file_contents,
+                ["ended-array.tpl", "job-table.tpl", "tres.tpl", "signature.tpl"]
+            )
 
     def test_job_array_ended_no_summary_max_notifications_exceeded(
         self,
@@ -1154,10 +1186,10 @@ class TestProcessSpoolFile:
         ):
             mock_slurmmail_cli_process_spool_file_options.array_max_notifications = 1
 
-            sacct_output = "7_0|root|root|all|1675460419|1675460599|COMPLETED|500M||1|1|00:00.010|1|/root|00:03:00|0:0|||test|node01|00:05:00|5|8|test.jcf\n"  # noqa
-            sacct_output += "7_0.batch||||1675460419|1675460599|COMPLETED||4832K|1|00:00.010|1||00:03:00|0:0|||test|node01|||8.batch|batch\n"  # noqa
-            sacct_output += "7_1|root|root|all|1675460599|1675460779|COMPLETED|500M||1|1|00:00.010|1|/root|00:03:00|0:0|||test|node01|00:05:00|5|7|test.jcf\n"  # noqa
-            sacct_output += "7_1.batch||||1675460599|1675460779|COMPLETED||4784K|1|00:00.010|1||00:03:00|0:0|||test|node01|||7.batch|batch"  # noqa
+            sacct_output = "7_0|root|root|all|1675460419|1675460599|COMPLETED|500M||1|1|00:00.010|1|/root|00:03:00|0:0|||test|node01|00:05:00|5|8|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "7_0.batch||||1675460419|1675460599|COMPLETED||4832K|1|00:00.010|1||00:03:00|0:0|||test|node01|||8.batch|cpu=1,mem=0,node=1|batch\n"  # noqa
+            sacct_output += "7_1|root|root|all|1675460599|1675460779|COMPLETED|500M||1|1|00:00.010|1|/root|00:03:00|0:0|||test|node01|00:05:00|5|7|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "7_1.batch||||1675460599|1675460779|COMPLETED||4784K|1|00:00.010|1||00:03:00|0:0|||test|node01|||7.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
                 "JobId=7 ArrayJobId=7 ArrayTaskId=1 JobName=test.jcf UserId=root(0)"
                 " GroupId=root(0) MCS_label=N/A Priority=4294901756 Nice=0 Account=root"
@@ -1200,7 +1232,10 @@ class TestProcessSpoolFile:
                     == mock_slurmmail_cli_process_spool_file_options.email_from_address
                 )
                 assert args[1] == ["root"]
-            check_template_used(mock_get_file_contents, "ended-array.tpl")
+            check_templates_used(
+                mock_get_file_contents,
+                ["ended-array.tpl", "job-table.tpl", "tres.tpl", "signature.tpl"]
+            )
 
     def test_job_ended_scontrol_failure(
         self,
@@ -1222,8 +1257,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "2|root|root|all|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|test.jcf\n"  # noqa
-            sacct_output += "2.batch||||1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|batch"  # noqa
+            sacct_output = "2|root|root|all|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "2.batch||||1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
             mock_slurmmail_cli_run_command.side_effect = [
                 (0, sacct_output, ""),
                 (1, "error", "error"),
@@ -1242,7 +1277,10 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
-            check_template_used(mock_get_file_contents, "ended.tpl")
+            check_templates_used(
+                mock_get_file_contents,
+                ["ended.tpl", "job-table.tpl", "tres.tpl", "signature.tpl"]
+            )
 
     def test_job_ended_unlimited_wallclock(
         self,
@@ -1263,8 +1301,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "2|root|root|all|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|UNLIMITED||2|test.jcf\n"  # noqa
-            sacct_output += "2.batch||||1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|batch"  # noqa
+            sacct_output = "2|root|root|all|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|UNLIMITED||2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "2.batch||||1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
                 "JobId=2 JobName=test.jcf UserId=root(0) GroupId=root(0) MCS_label=N/A"
                 " Priority=4294901758 Nice=0 Account=root QOS=normal JobState=COMPLETED"
@@ -1302,7 +1340,10 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
-            check_template_used(mock_get_file_contents, "ended.tpl")
+            check_templates_used(
+                mock_get_file_contents,
+                ["ended.tpl", "job-table.tpl", "tres.tpl", "signature.tpl"]
+            )
 
     def test_job_ended_bad_wallclock(
         self,
@@ -1324,8 +1365,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "2|root|root|all|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|bad_wc|2|test.jcf\n"  # noqa
-            sacct_output += "2.batch||||1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|batch"  # noqa
+            sacct_output = "2|root|root|all|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|bad_wc|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "2.batch||||1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
                 "JobId=2 JobName=test.jcf UserId=root(0) GroupId=root(0) MCS_label=N/A"
                 " Priority=4294901758 Nice=0 Account=root QOS=normal JobState=COMPLETED"
@@ -1364,7 +1405,10 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
-            check_template_used(mock_get_file_contents, "ended.tpl")
+            check_templates_used(
+                mock_get_file_contents,
+                ["ended.tpl", "job-table.tpl", "tres.tpl", "signature.tpl"]
+            )
 
     def test_job_ended_bad_end_ts(
         self,
@@ -1386,8 +1430,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "2|root|root|all|1674340451|bad_ts|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|test.jcf\n"  # noqa
-            sacct_output += "2.batch||||1674340451|bad_ts|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|batch"  # noqa
+            sacct_output = "2|root|root|all|1674340451|bad_ts|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "2.batch||||1674340451|bad_ts|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
                 "JobId=2 JobName=test.jcf UserId=root(0) GroupId=root(0) MCS_label=N/A"
                 " Priority=4294901758 Nice=0 Account=root QOS=normal JobState=COMPLETED"
@@ -1426,7 +1470,10 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
-            check_template_used(mock_get_file_contents, "ended.tpl")
+            check_templates_used(
+                mock_get_file_contents,
+                ["ended.tpl", "job-table.tpl", "tres.tpl", "signature.tpl"]
+            )
 
     def test_job_timelimit_reached(
         self,
@@ -1447,8 +1494,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "3|root|root|all|1674340908|1674340980|TIMEOUT|500M||1|1|00:00.009|1|/root|00:01:12|0:0|||test|node01|00:01:00|1|3|test.jcf\n"  # noqa
-            sacct_output += "3.batch||||1674340908|1674340980|CANCELLED||4876K|1|1|00:00.009|1||00:01:12|0:15|||test|node01|||3.batch|batch"  # noqa
+            sacct_output = "3|root|root|all|1674340908|1674340980|TIMEOUT|500M||1|1|00:00.009|1|/root|00:01:12|0:0|||test|node01|00:01:00|1|3|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "3.batch||||1674340908|1674340980|CANCELLED||4876K|1|1|00:00.009|1||00:01:12|0:15|||test|node01|||3.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
                 "JobId=3 JobName=test.jcf UserId=root(0) GroupId=root(0) MCS_label=N/A"
                 " Priority=4294901757 Nice=0 Account=root QOS=normal JobState=TIMEOUT"
@@ -1486,7 +1533,10 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
-            check_template_used(mock_get_file_contents, "ended.tpl")
+            check_templates_used(
+                mock_get_file_contents,
+                ["ended.tpl", "job-table.tpl", "tres.tpl", "signature.tpl"]
+            )
 
     def test_job_timelimit_50pc_reached(
         self,
@@ -1507,8 +1557,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "3|root|root|all|1674770321|Unknown|RUNNING|500M||1|0|00:00:00|1|/root|00:02:22|0:0|||test|node01|00:04:00|4|3|test.jcf\n"  # noqa
-            sacct_output += "3.batch||||1674770321|Unknown|RUNNING|||1|0|00:00:00|1||00:02:22|0:0|||test|node01|||3.batch|batch"  # noqa
+            sacct_output = "3|root|root|all|1674770321|Unknown|RUNNING|500M||1|0|00:00:00|1|/root|00:02:22|0:0|||test|node01|00:04:00|4|3|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "3.batch||||1674770321|Unknown|RUNNING|||1|0|00:00:00|1||00:02:22|0:0|||test|node01|||3.batch|cpu=1,mem=0,node=1|batch"  # noqa
             mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
             slurmmail.cli.__dict__["__process_spool_file"](
                 pathlib.Path("/tmp/foo"),
@@ -1523,7 +1573,10 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
-            check_template_used(mock_get_file_contents, "time.tpl")
+            check_templates_used(
+                mock_get_file_contents,
+                ["time.tpl", "job-table.tpl", "tres.tpl", "signature.tpl"]
+            )
 
     def test_job_invalid_dependency(
         self,
@@ -1544,8 +1597,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "3|root|root|all|1674770321|Unknown|PENDING|500M||1|0|00:00:00|1|/root|00:00:00|0:0|||test|node01|00:00:00|4|3|test.jcf\n"  # noqa
-            sacct_output += "3.batch||||1674770321|Unknown|PENDING|||1|0|00:00:00|1||00:00:00|0:0|||test|node01|||3.batch|batch"  # noqa
+            sacct_output = "3|root|root|all|1674770321|Unknown|PENDING|500M||1|0|00:00:00|1|/root|00:00:00|0:0|||test|node01|00:00:00|4|3|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "3.batch||||1674770321|Unknown|PENDING|||1|0|00:00:00|1||00:00:00|0:0|||test|node01|||3.batch|cpu=1,mem=0,node=1|batch"  # noqa
             mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
             slurmmail.cli.__dict__["__process_spool_file"](
                 pathlib.Path("/tmp/foo"),
@@ -1560,7 +1613,10 @@ class TestProcessSpoolFile:
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
-            check_template_used(mock_get_file_contents, "invalid-dependency.tpl")
+            check_templates_used(
+                mock_get_file_contents,
+                ["invalid-dependency.tpl", "job-table.tpl", "signature.tpl"]
+            )
 
 
 @pytest.mark.usefixtures(

@@ -18,6 +18,8 @@
 
 $JOB_TABLE
 
+$TRES_TABLE
+
 $SIGNATURE
 
 </body>
