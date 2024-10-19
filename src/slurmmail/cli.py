@@ -350,10 +350,10 @@ def __process_spool_file(
                         )
                         job.wallclock = 0
 
-                # were any GPUs used?
-                for item in sacct_dict["AllocTRES"].split(","):
-                    key, value = item.split("=")
-                    job.add_tres(key, value)
+                if len(sacct_dict["AllocTRES"]) > 0:
+                    for item in sacct_dict["AllocTRES"].split(","):
+                        key, value = item.split("=")
+                        job.add_tres(key, value)
 
                 if state in ["Ended", "Failed", "Time limit reached"]:
                     job.state = sacct_dict["State"]
