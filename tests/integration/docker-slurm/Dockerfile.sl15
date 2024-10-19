@@ -1,4 +1,4 @@
-FROM opensuse/leap:15.5
+FROM opensuse/leap:15.6
 
 LABEL org.opencontainers.image.source="https://github.com/neilmunday/slurm-mail" \
       org.opencontainers.image.description="A OpenSuSE 15 Slurm container intended for testing Slurm-Mail" \

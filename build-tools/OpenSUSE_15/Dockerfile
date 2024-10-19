@@ -1,4 +1,4 @@
-FROM opensuse/leap:15.4
+FROM opensuse/leap:15.6
 
 RUN zypper install -y python3 python3-setuptools rpm-build tar
 
