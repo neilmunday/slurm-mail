@@ -67,7 +67,7 @@ class JobException(Exception):
 
 
 class Job:
-    # pylint: disable=too-many-instance-attributes
+    # pylint: disable=too-many-instance-attributes,too-many-public-methods
     """
     Helper object to store job data
     """
