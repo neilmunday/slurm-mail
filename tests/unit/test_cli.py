@@ -402,6 +402,12 @@ class MockRawConfigParser(configparser.RawConfigParser):
             and MockRawConfigParser.__mock_values[section][option] is None
         ):
             return False
+        if (
+            section in MockRawConfigParser.__mock_values
+            and option in MockRawConfigParser.__mock_values[section]
+            and MockRawConfigParser.__mock_values[section][option] is not None
+        ):
+            return True
         return super().has_option(section, option)
 
 
@@ -540,6 +546,54 @@ class TestProcessSpoolFile:
             assert mock_slurmmail_cli_run_command.call_count == 1
             mock_slurmmail_cli_delete_spool_file.assert_called_once()
             mock_smtp_sendmail.assert_called_once()
+            assert (
+                mock_smtp_sendmail.call_args[0][0]
+                == mock_slurmmail_cli_process_spool_file_options.email_from_address
+            )
+            assert mock_smtp_sendmail.call_args[0][1] == ["root"]
+            check_templates_used(mock_get_file_contents, ["started.tpl", "job-table.tpl", "signature.tpl"])
+
+    def test_job_began_additonal_email_headers(
+        self,
+        mock_get_file_contents,
+        mock_slurmmail_cli_delete_spool_file,
+        mock_slurmmail_cli_process_spool_file_options,
+        mock_slurmmail_cli_run_command,
+        mock_smtp_sendmail,
+    ):
+        with patch(
+            "pathlib.Path.open",
+            new_callable=mock_open,
+            read_data="""{
+                "job_id": 1,
+                "email": "root",
+                "state": "Began",
+                "array_summary": false
+                }
+                """,
+        ):
+            email_headers = {
+                "Precedence": "bulk",
+                "X-Auto-Response-Suppress": "DR, OOF, AutoReply"
+            }
+
+            sacct_output = "1|root|root|all|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "1.batch||||1674333232|Unknown|RUNNING|||1|0|00:00:00|1||00:00:11|0:0|||test|node01|||1.batch|cpu=1,mem=0,node=1|batch"  # noqa
+            mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
+            mock_slurmmail_cli_process_spool_file_options.email_headers = email_headers
+            slurmmail.cli.__dict__["__process_spool_file"](
+                pathlib.Path("/tmp/foo"),
+                smtplib.SMTP(),
+                mock_slurmmail_cli_process_spool_file_options,
+            )
+            assert mock_slurmmail_cli_run_command.call_count == 1
+            mock_slurmmail_cli_delete_spool_file.assert_called_once()
+            mock_smtp_sendmail.assert_called_once()
+
+            # check e-mail headers were set
+            for header_name, header_value in email_headers.items():
+                assert f"{header_name}: {header_value}" in mock_smtp_sendmail.call_args[0][2]
+
             assert (
                 mock_smtp_sendmail.call_args[0][0]
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
@@ -1676,6 +1730,49 @@ class TestSendMailMain:
         )
         # smtplib.SMTP will be called for each file due to noop exceptions
         assert mock_smtp.call_count == len(mock_path_glob.return_value)
+
+    def test_spool_files_present_email_headers(
+        self,
+        mock_path_glob,
+        mock_raw_config_parser,
+        mock_slurmmail_cli__process_spool_file,
+        mock_smtp,
+    ):
+        mock_raw_config_parser.side_effect.add_mock_value(
+            "slurm-send-mail", "emailHeaders", "Precedence: bulk;X-Auto-Response-Suppress: DR, OOF, AutoReply"
+        )
+        slurmmail.cli.send_mail_main()
+        assert mock_slurmmail_cli__process_spool_file.call_count == len(
+            mock_path_glob.return_value
+        )
+
+        assert mock_slurmmail_cli__process_spool_file.call_args[0][2].email_headers == {
+            "Precedence": "bulk",
+            "X-Auto-Response-Suppress": "DR, OOF, AutoReply"
+        }
+
+        mock_smtp.assert_called_once()
+
+    def test_spool_files_present_bad_email_headers(
+        self,
+        mock_logging_error,
+        mock_path_glob,
+        mock_raw_config_parser,
+        mock_slurmmail_cli__process_spool_file,
+        mock_smtp,
+    ):
+        mock_raw_config_parser.side_effect.add_mock_value(
+            "slurm-send-mail", "emailHeaders", "Bad option"
+        )
+        slurmmail.cli.send_mail_main()
+        assert mock_slurmmail_cli__process_spool_file.call_count == len(
+            mock_path_glob.return_value
+        )
+
+        mock_logging_error.assert_called()
+        assert mock_slurmmail_cli__process_spool_file.call_args[0][2].email_headers == {}
+
+        mock_smtp.assert_called_once()
 
     def test_spool_files_present_use_ssl(
         self,
