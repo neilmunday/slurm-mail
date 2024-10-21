@@ -244,6 +244,10 @@ retryOnFailure = no
 
 In either case, errors for failed e-mail delivery will always be logged in `/var/log/slurm-mail/slurm-send-mail.log`
 
+## E-mail headers
+
+To add additional e-mail headers to outgoing e-mails please set the `emailHeaders` option in `/etc/slurm-mail/slurm-mail.conf`
+
 ## Customising E-mails
 
 ### Templates
@@ -420,9 +424,10 @@ Starting from version 4.10, HTML and plain text e-mail templates are provided. I
 
 Thank you to the following people who have contributed code improvements, features, found bugs and aided the development of Slurm-Mail:
 
-* [Dan Barker (@danbarke)](https://www.github.com/danbarke)
 * [David Murray (@dajamu)](https://www.github.com/dajamu)
+* [Dan Barker (@danbarke)](https://www.github.com/danbarke)
 * [drhey (@drhey)](https://www.github.com/drhey)
+* [Dennis Stam (@dstam)](https://github.com/dstam)
 * [hakasapl (@hakasapl)](https://www.github.com/hakasapl)
 * [Hugo Larcher @Hugoch](https://www.github.com/Hugoch)
 * [Jan-Christoph Klie (@jcklie)](https://github.com/jcklie)
