@@ -87,6 +87,7 @@ class ProcessSpoolFileOptions:
         self.email_from_address: str
         self.email_from_name: Optional[str] = None
         self.email_subject: str
+        self.email_headers: Dict[str, str] = {}
         self.mail_regex: str = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
         self.validate_email: Optional[bool] = None
         self.sacct_exe: pathlib.Path
@@ -828,6 +829,19 @@ def __process_spool_file(
         msg["From"] = options.email_from_address
         msg["Date"] = email.utils.formatdate(localtime=True)
         msg["Message-ID"] = email.utils.make_msgid()
+
+        # add optional headers
+        if options.email_headers:
+            for header_name, header_value in options.email_headers.items():
+                if header_name in msg:
+                    logging.warning(
+                        "Ignoring header_name %s - header is already set",
+                        header_name
+                    )
+                    continue
+
+                msg[header_name] = header_value
+
         # prefer HTML to plain text, so we add the plain text attachment first (see rfc2046 5.1.4)
         msg.attach(MIMEText(body_text, "plain"))
         msg.attach(MIMEText(body_html, "html"))
@@ -956,6 +970,11 @@ def send_mail_main():
         options.email_from_address = config.get(section, "emailFromUserAddress")
         options.email_from_name = config.get(section, "emailFromName")
         options.email_subject = config.get(section, "emailSubject")
+
+        if config.has_option(section, "emailHeaders"):
+            for header in config.get(section, "emailHeaders").split(";"):
+                header_name, header_value = header.split(":", maxsplit=1)
+                options.email_headers[header_name.strip()] = header_value.strip()
 
         if config.has_option(section, "gecosNameField"):
             Job.GECOS_NAME_FIELD = config.getint(section, "gecosNameField")
