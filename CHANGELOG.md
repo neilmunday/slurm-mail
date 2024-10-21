@@ -7,6 +7,7 @@ Version 4.22
 Date: 2024-10-19
 
 * Added trackable resource information to e-mails (issue #142). Thanks to @aav18141 for the suggestion.
+* Added emailHeaders config option (pull #143, @dstam).
 * Updated SLES Docker files to use 15.6 (issue #147).
 
 Version 4.21
