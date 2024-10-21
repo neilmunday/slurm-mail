@@ -973,8 +973,11 @@ def send_mail_main():
 
         if config.has_option(section, "emailHeaders"):
             for header in config.get(section, "emailHeaders").split(";"):
-                header_name, header_value = header.split(":", maxsplit=1)
-                options.email_headers[header_name.strip()] = header_value.strip()
+                if ":" in header:
+                    header_name, header_value = header.split(":", maxsplit=1)
+                    options.email_headers[header_name.strip()] = header_value.strip()
+                else:
+                    logging.error("Ignoring invalid e-mail header: %s", header)
 
         if config.has_option(section, "gecosNameField"):
             Job.GECOS_NAME_FIELD = config.getint(section, "gecosNameField")
