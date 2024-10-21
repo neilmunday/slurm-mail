@@ -770,8 +770,9 @@ def __process_spool_file(
         if options.email_headers:
             for header_name, header_value in options.email_headers.items():
                 if header_name in msg:
-                    logger.warning(
-                        f"Ignoring header_name:{header_name} as header is already set"
+                    logging.warning(
+                        "Ignoring header_name %s - header is already set",
+                        header_name
                     )
                     continue
 
