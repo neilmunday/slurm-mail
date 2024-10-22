@@ -4,7 +4,7 @@ Change Log
 Version 4.22
 ------------
 
-Date: 2024-10-19
+Date: 2024-10-22
 
 * Added trackable resource information to e-mails (issue #142). Thanks to @aav18141 for the suggestion.
 * Added emailHeaders config option (pull #143, @dstam).
