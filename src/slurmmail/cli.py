@@ -70,6 +70,7 @@ from slurmmail.common import (
 )
 from slurmmail.slurm import check_job_output_file_path, Job
 
+logger = logging.getLogger(__name__)
 
 TemplateResult = namedtuple("TemplateResult", ["html", "text"])
 
@@ -164,13 +165,13 @@ def __process_spool_file(
         try:
             data = json.load(spool_file)
         except Exception:
-            logging.error("Could not parse JSON from: %s", json_file)
+            logger.error("Could not parse JSON from: %s", json_file)
             delete_spool_file(json_file)
             return
 
     for f in ["job_id", "email", "state", "array_summary"]:
         if f not in data:
-            logging.error("Could not find %s in %s", f, json_file)
+            logger.error("Could not find %s in %s", f, json_file)
             delete_spool_file(json_file)
             return
 
@@ -179,11 +180,11 @@ def __process_spool_file(
     state = data["state"]
     array_summary = data["array_summary"]
 
-    logging.debug("spool file content: %s", data)
+    logger.debug("spool file content: %s", data)
 
     if options.validate_email and not re.fullmatch(options.mail_regex, user_email):
         # not a valid email address
-        logging.error("Email address not valid: %s", user_email)
+        logger.error("Email address not valid: %s", user_email)
         delete_spool_file(json_file)
         return
 
@@ -201,7 +202,7 @@ def __process_spool_file(
         "Time reached 90%",
         "Time limit reached",
     ]:
-        logging.warning(
+        logger.warning(
             "Unsupported job state: %s - no emails will be generated", state
         )
     else:
@@ -241,16 +242,16 @@ def __process_spool_file(
         )
         rc, stdout, stderr = run_command(cmd)
         if rc != 0:
-            logging.error("Failed to run %s", cmd)
-            logging.error(stdout)
-            logging.error(stderr)
+            logger.error("Failed to run %s", cmd)
+            logger.error(stdout)
+            logger.error(stderr)
         else:
-            logging.debug(stdout)
+            logger.debug(stdout)
             job = None
             for line in stdout.split("\n"):
                 data = line.split("|", (field_num - 1))
                 if len(data) != field_num:
-                    logging.debug("sacct field length expected: %s, found %s", field_num, len(data))
+                    logger.debug("sacct field length expected: %s, found %s", field_num, len(data))
                     continue
 
                 sacct_dict = {}
@@ -266,7 +267,7 @@ def __process_spool_file(
                     r"^([0-9]+|[0-9]+_[0-9]+|[0-9]+_\[[0-9]+-[0-9]+\]|[0-9]+\+[0-9]+)$",
                     sacct_dict["JobId"]
                 ):
-                    logging.debug("job ID %s failed reg ex match", sacct_dict["JobId"])
+                    logger.debug("job ID %s failed reg ex match", sacct_dict["JobId"])
                     # grab MaxRSS value
                     if (
                         state != "Began"
@@ -284,11 +285,11 @@ def __process_spool_file(
                 job_raw_id = int(sacct_dict["JobIdRaw"])
 
                 if not array_summary and job_raw_id != int(first_job_id):
-                    logging.debug("skipping %s, it does not equal %s", job_raw_id, first_job_id)
+                    logger.debug("skipping %s, it does not equal %s", job_raw_id, first_job_id)
                     continue
 
                 if array_summary and "{0}".format(first_job_id) not in sacct_dict["JobId"]:
-                    logging.debug("skipping %s for job array summary", sacct_dict["JobId"])
+                    logger.debug("skipping %s for job array summary", sacct_dict["JobId"])
                     continue
 
                 job = Job(options.datetime_format, job_id, job_raw_id)
@@ -307,7 +308,7 @@ def __process_spool_file(
                 # appended depending on whether the user has requested per node
                 # see issue #38
                 if sacct_dict["ReqMem"][-1:] == "c" and job.cpus is not None:
-                    logging.debug("Applying ReqMem workaround for Slurm versions < 21")
+                    logger.debug("Applying ReqMem workaround for Slurm versions < 21")
                     # need to multiply by job.cpus
                     try:
                         sacct_dict["ReqMem"] = "{0}{1}".format(
@@ -315,12 +316,12 @@ def __process_spool_file(
                             sacct_dict["ReqMem"][-2:-1],
                         )
                     except ValueError:
-                        logging.error(
+                        logger.error(
                             'Failed to convert ReqMem "%s" to a float',
                             sacct_dict["ReqMem"][:-2],
                         )
                 elif sacct_dict["ReqMem"][-1:] == "n":
-                    logging.debug("Applying ReqMem workaround for Slurm versions < 21")
+                    logger.debug("Applying ReqMem workaround for Slurm versions < 21")
                     sacct_dict["ReqMem"] = sacct_dict["ReqMem"][:-1]
                 job.requested_mem_str = sacct_dict["ReqMem"]
                 # if job start is "None", then the job was never despatched
@@ -329,7 +330,7 @@ def __process_spool_file(
                     try:
                         job.start_ts = sacct_dict["Start"]
                     except ValueError:
-                        logging.warning(
+                        logger.warning(
                             "job %s: could not parse '%s' for job start timestamp",
                             job.raw_id,
                             sacct_dict["Start"],
@@ -344,7 +345,7 @@ def __process_spool_file(
                     try:
                         job.wallclock = int(sacct_dict["TimelimitRaw"]) * 60
                     except ValueError:
-                        logging.warning(
+                        logger.warning(
                             "job %s: could not parse: '%s' for job time limit",
                             job.raw_id,
                             sacct_dict["TimelimitRaw"],
@@ -361,7 +362,7 @@ def __process_spool_file(
                     try:
                         job.end_ts = sacct_dict["End"]
                     except ValueError:
-                        logging.warning(
+                        logger.warning(
                             "job %s: could not parse: '%s' for job end timestamp",
                             job.raw_id,
                             sacct_dict["End"],
@@ -381,7 +382,7 @@ def __process_spool_file(
                     cmd = "{0} -o show job={1}".format(options.scontrol_exe, job_id)
                     rc, stdout, stderr = run_command(cmd)
                     if rc == 0:
-                        logging.debug(stdout)
+                        logger.debug(stdout)
                         # for the first job in an array, scontrol will
                         # output details about all jobs so let's just
                         # use the first line
@@ -399,9 +400,9 @@ def __process_spool_file(
                         else:
                             job.stdout = "N/A"
                     else:
-                        logging.error("Failed to run: %s", cmd)
-                        logging.error(stdout)
-                        logging.error(stderr)
+                        logger.error("Failed to run: %s", cmd)
+                        logger.error(stdout)
+                        logger.error(stderr)
                 job.save()
                 jobs.append(job)
 
@@ -409,7 +410,7 @@ def __process_spool_file(
         jobs = [jobs[0]]
 
     if not array_summary and 0 < options.array_max_notifications < len(jobs):
-        logging.info(
+        logger.info(
             "Asked to send notifications for %d array-jobs which exceeds the limit of"
             " %d. Will send only send the first %d.",
             len(jobs),
@@ -422,7 +423,7 @@ def __process_spool_file(
         # Will only be one job regardless of if it is an array in the
         # "began" state. For jobs that have ended there can be mulitple
         # jobs objects if it is an array.
-        logging.debug("Creating template for job %s", job.raw_id)
+        logger.debug("Creating template for job %s", job.raw_id)
         tpl = Template(get_file_contents(options.html_templates["job_table"]))
         job_table_html = tpl.substitute(
             JOB_ID=job.id,
@@ -477,7 +478,7 @@ def __process_spool_file(
             WALLCLOCK_ACCURACY=job.wc_accuracy,
         )
 
-        logging.debug("Creating e-mail signature template")
+        logger.debug("Creating e-mail signature template")
         tpl = Template(get_file_contents(options.html_templates["signature"]))
         signature_html = tpl.substitute(EMAIL_FROM=options.email_from_name)
         tpl = Template(get_file_contents(options.text_templates["signature"]))
@@ -834,7 +835,7 @@ def __process_spool_file(
         if options.email_headers:
             for header_name, header_value in options.email_headers.items():
                 if header_name in msg:
-                    logging.warning(
+                    logger.warning(
                         "Ignoring header_name %s - header is already set",
                         header_name
                     )
@@ -845,7 +846,7 @@ def __process_spool_file(
         # prefer HTML to plain text, so we add the plain text attachment first (see rfc2046 5.1.4)
         msg.attach(MIMEText(body_text, "plain"))
         msg.attach(MIMEText(body_html, "html"))
-        logging.info(
+        logger.info(
             "Sending e-mail to: %s using %s for job %s (%s) via SMTP server %s:%s",
             job.user,
             user_email,
@@ -865,7 +866,7 @@ def __process_spool_file(
             smtplib.SMTPSenderRefused,
             smtplib.SMTPNotSupportedError
         ) as e:
-            logging.error("Failed to send e-mail: %s", e)
+            logger.error("Failed to send e-mail: %s", e)
             if options.retry_on_failure:
                 # Raise the original exception to prevent `delete_spool_file` from being
                 # executed at the end of the function. This way the spool file will be
@@ -977,7 +978,7 @@ def send_mail_main():
                     header_name, header_value = header.split(":", maxsplit=1)
                     options.email_headers[header_name.strip()] = header_value.strip()
                 else:
-                    logging.error("Ignoring invalid e-mail header: %s", header)
+                    logger.error("Ignoring invalid e-mail header: '%s'", header)
 
         if config.has_option(section, "gecosNameField"):
             Job.GECOS_NAME_FIELD = config.getint(section, "gecosNameField")
@@ -1029,7 +1030,7 @@ def send_mail_main():
     smtp_conn = None
     # Look for any new mail notifications in the spool dir
     for f in spool_dir.glob("*.mail"):
-        logging.info("processing: %s", f)
+        logger.info("processing: %s", f)
         smtp_connection_ok = False
         if smtp_conn is not None:
             try:
@@ -1037,7 +1038,7 @@ def send_mail_main():
                 smtp_conn.noop()[0]  # pylint: disable=expression-not-assigned
                 smtp_connection_ok = True
             except Exception as e:
-                logging.warning(
+                logger.warning(
                     "SMTP connection failed:\n%s\nWill attempt to reconnect.", e
                 )
                 smtp_connection_ok = False
@@ -1065,8 +1066,8 @@ def send_mail_main():
         try:
             __process_spool_file(f, smtp_conn, options)
         except Exception as e:
-            logging.error("Failed to process: %s", f)
-            logging.error(e, exc_info=True)
+            logger.error("Failed to process: %s", f)
+            logger.error(e, exc_info=True)
 
 
 def spool_mail_main():
@@ -1107,14 +1108,14 @@ def spool_mail_main():
         level=log_level,
         filename=log_file,
     )
-    logging.debug("Called with: %s", sys.argv)
+    logger.debug("Called with: %s", sys.argv)
 
     if len(sys.argv) != 4:
         die("Incorrect number of command line arguments")
 
     try:
         info = sys.argv[2]
-        logging.debug("info str: %s", info)
+        logger.debug("info str: %s", info)
         match = None
         if "Array" in info:
             match = re.search(
@@ -1149,10 +1150,10 @@ def spool_mail_main():
         if time_reached:
             state = "Time reached {0}%".format(time_reached)
 
-        logging.debug("Job ID: %d", job_id)
-        logging.debug("State: %s", state)
-        logging.debug("Array Summary: %s", array_summary)
-        logging.debug("E-mail to: %s", email_to)
+        logger.debug("Job ID: %d", job_id)
+        logger.debug("State: %s", state)
+        logger.debug("Array Summary: %s", array_summary)
+        logger.debug("E-mail to: %s", email_to)
 
         data = {
             "job_id": job_id,
@@ -1164,8 +1165,8 @@ def spool_mail_main():
         output_path = pathlib.Path(spool_dir).joinpath(
             "{0}_{1}.mail".format(match.group("job_id"), time.time())
         )
-        logging.info("writing file: %s", output_path)
+        logger.info("writing file: %s", output_path)
         with output_path.open(mode="w", encoding="utf-8") as f:
             json.dump(data, f)
     except Exception as e:
-        logging.error(e, exc_info=True)
+        logger.error(e, exc_info=True)

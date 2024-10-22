@@ -37,6 +37,8 @@ import sys
 
 from typing import NoReturn
 
+logger = logging.getLogger(__name__)
+
 
 def check_dir(path: pathlib.Path, check_writeable=True):
     """
@@ -63,7 +65,7 @@ def delete_spool_file(f: pathlib.Path):
     """
     Delete the given file.
     """
-    logging.info("Deleting: %s", f)
+    logger.info("Deleting: %s", f)
     f.unlink()
 
 
@@ -71,7 +73,7 @@ def die(msg: str) -> NoReturn:
     """
     Exit the program with the given error message.
     """
-    logging.error(msg)
+    logger.error(msg)
     sys.stderr.write("{0}\n".format(msg))
     sys.exit(1)
 
@@ -96,7 +98,7 @@ def get_kbytes_from_str(value: str) -> int:
     try:
         kbytes = int(float(value[:-1]))
     except Exception:
-        logging.error(
+        logger.error(
             "get_kbytes_from_str: input value: %s, numeric component: %s, units: %s",
             value,
             value[:-1],
@@ -111,7 +113,7 @@ def get_kbytes_from_str(value: str) -> int:
         return 1048576 * kbytes
     if units == "T":
         return 1073741824 * kbytes
-    logging.error("get_kbytes_from_str: unknown unit '%s' for value '%s'", units, value)
+    logger.error("get_kbytes_from_str: unknown unit '%s' for value '%s'", units, value)
     return 0
 
 
@@ -155,7 +157,7 @@ def run_command(cmd: str) -> tuple:
     Execute the given command and return a tuple that contains the
     return code, std out and std err output.
     """
-    logging.debug('Running "%s"', cmd)
+    logger.debug('Running "%s"', cmd)
     with subprocess.Popen(
         shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE
     ) as process:
@@ -171,12 +173,12 @@ def tail_file(f: str, num_lines: int, tail_exe: pathlib.Path) -> str:
         err_msg = "slurm-mail: invalid number of lines " "to tail: {0}".format(
             num_lines
         )
-        logging.error(err_msg)
+        logger.error(err_msg)
         return err_msg
     try:
         if not pathlib.Path(f).exists():
             err_msg = "slurm-mail: file {0} does not exist".format(f)
-            logging.error(err_msg)
+            logger.error(err_msg)
             return err_msg
 
         rtn, stdout, _ = run_command("{0} -{1} '{2}'".format(tail_exe, num_lines, f))
@@ -185,7 +187,7 @@ def tail_file(f: str, num_lines: int, tail_exe: pathlib.Path) -> str:
                 "slurm-mail: error trying to read "
                 "the last {0} lines of {1}".format(num_lines, f)
             )
-            logging.error(err_msg)
+            logger.error(err_msg)
             return err_msg
         return stdout
     except Exception as e:

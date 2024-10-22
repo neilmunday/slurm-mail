@@ -28,6 +28,7 @@ Unit tests for Slurm-Mail.
 """
 
 import configparser
+import logging
 import pathlib
 from os import access
 import smtplib
@@ -72,18 +73,6 @@ def mock_get_file_contents():
 @pytest.fixture
 def mock_json_dump():
     with patch("json.dump") as the_mock:
-        yield the_mock
-
-
-@pytest.fixture
-def mock_logging_error():
-    with patch("logging.error") as the_mock:
-        yield the_mock
-
-
-@pytest.fixture
-def mock_logging_warning():
-    with patch("logging.warning") as the_mock:
         yield the_mock
 
 
@@ -278,6 +267,17 @@ def mock_smtp_sendmail():
 #
 
 
+def check_message_logged(caplog, log_level: int, message: str, partial_match: bool = False) -> bool:
+    for record in caplog.records:
+        if record.levelno == log_level:
+            if not partial_match and record.message == message:
+                return True
+            if partial_match and message in record.message:
+                return True
+
+    return False
+
+
 def check_template_used(the_mock: MagicMock, template_name: str):
     call_found = False
     for call in the_mock.mock_calls:
@@ -444,8 +444,8 @@ class TestProcessSpoolFile:
 
     def test_validate_unknown_state(
         self,
+        caplog,
         mock_slurmmail_cli_delete_spool_file,
-        mock_logging_warning,
         mock_slurmmail_cli_process_spool_file_options,
     ):
         with patch(
@@ -464,7 +464,12 @@ class TestProcessSpoolFile:
                 None,
                 mock_slurmmail_cli_process_spool_file_options,
             )
-            mock_logging_warning.assert_called_once()
+
+            assert check_message_logged(
+                caplog,
+                logging.WARNING,
+                "Unsupported job state: Foo - no emails will be generated"
+            )
             mock_slurmmail_cli_delete_spool_file.assert_called_once()
 
     def test_validate_email_fail(
@@ -1293,9 +1298,9 @@ class TestProcessSpoolFile:
 
     def test_job_ended_scontrol_failure(
         self,
+        caplog,
         mock_get_file_contents,
         mock_slurmmail_cli_delete_spool_file,
-        mock_logging_error,
         mock_slurmmail_cli_process_spool_file_options,
         mock_slurmmail_cli_run_command,
         mock_smtp_sendmail,
@@ -1322,8 +1327,10 @@ class TestProcessSpoolFile:
                 smtplib.SMTP(),
                 mock_slurmmail_cli_process_spool_file_options,
             )
+
             assert mock_slurmmail_cli_run_command.call_count == 2
-            mock_logging_error.assert_called()
+            assert check_message_logged(caplog, logging.ERROR, "Failed to run", True)
+
             mock_slurmmail_cli_delete_spool_file.assert_called_once()
             mock_smtp_sendmail.assert_called_once()
             assert (
@@ -1401,9 +1408,9 @@ class TestProcessSpoolFile:
 
     def test_job_ended_bad_wallclock(
         self,
+        caplog,
         mock_get_file_contents,
         mock_slurmmail_cli_delete_spool_file,
-        mock_logging_warning,
         mock_slurmmail_cli_process_spool_file_options,
         mock_slurmmail_cli_run_command,
         mock_smtp_sendmail,
@@ -1450,8 +1457,10 @@ class TestProcessSpoolFile:
                 smtplib.SMTP(),
                 mock_slurmmail_cli_process_spool_file_options,
             )
+
             assert mock_slurmmail_cli_run_command.call_count == 2
-            mock_logging_warning.assert_called_once()
+            assert check_message_logged(caplog, logging.WARNING, "job 2: could not parse: 'bad_wc' for job time limit")
+
             mock_slurmmail_cli_delete_spool_file.assert_called_once()
             mock_smtp_sendmail.assert_called_once()
             assert (
@@ -1466,9 +1475,9 @@ class TestProcessSpoolFile:
 
     def test_job_ended_bad_end_ts(
         self,
+        caplog,
         mock_get_file_contents,
         mock_slurmmail_cli_delete_spool_file,
-        mock_logging_warning,
         mock_slurmmail_cli_process_spool_file_options,
         mock_slurmmail_cli_run_command,
         mock_smtp_sendmail,
@@ -1515,8 +1524,13 @@ class TestProcessSpoolFile:
                 smtplib.SMTP(),
                 mock_slurmmail_cli_process_spool_file_options,
             )
+
             assert mock_slurmmail_cli_run_command.call_count == 2
-            mock_logging_warning.assert_called_once()
+            assert check_message_logged(
+                caplog, logging.WARNING,
+                "job 2: could not parse: 'bad_ts' for job end timestamp"
+            )
+
             mock_slurmmail_cli_delete_spool_file.assert_called_once()
             mock_smtp_sendmail.assert_called_once()
             assert (
@@ -1755,7 +1769,7 @@ class TestSendMailMain:
 
     def test_spool_files_present_bad_email_headers(
         self,
-        mock_logging_error,
+        caplog,
         mock_path_glob,
         mock_raw_config_parser,
         mock_slurmmail_cli__process_spool_file,
@@ -1765,11 +1779,11 @@ class TestSendMailMain:
             "slurm-send-mail", "emailHeaders", "Bad option"
         )
         slurmmail.cli.send_mail_main()
+
         assert mock_slurmmail_cli__process_spool_file.call_count == len(
             mock_path_glob.return_value
         )
-
-        mock_logging_error.assert_called()
+        assert check_message_logged(caplog, logging.ERROR, "Ignoring invalid e-mail header: 'Bad option'")
         assert mock_slurmmail_cli__process_spool_file.call_args[0][2].email_headers == {}
 
         mock_smtp.assert_called_once()
