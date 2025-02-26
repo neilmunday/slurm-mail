@@ -6,7 +6,7 @@ LABEL org.opencontainers.image.source="https://github.com/neilmunday/slurm-mail"
       maintainer="Neil Munday"
 
 ARG SLURM_VER=24.11.1
-ARG MARIADB_VER=11.6
+ARG MARIADB_VER=11.rolling
 
 RUN zypper update -y && \
     rpm --import https://yum.mariadb.org/RPM-GPG-KEY-MariaDB && \
