@@ -38,6 +38,8 @@ jobs:
               if [ $(git branch -r | grep "slurm_${latest_version}" | wc -l) -eq 0 ]; then
                 echo "no existing branch"
                 proceed=1
+              else
+                echo "branch already exists"
               fi
             fi  
           fi
