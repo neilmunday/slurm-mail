@@ -28,6 +28,7 @@ jobs:
         id: check
         run: |
           proceed=0
+          git fetch; git pull
           PYTHONPATH=src tests/integration/docker-slurm/new-version.py -c --check
           if [ -f tests/integration/docker-slurm/latest_version ]; then
             latest_version=$(cat tests/integration/docker-slurm/latest_version)
