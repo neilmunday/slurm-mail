@@ -5,7 +5,7 @@ LABEL org.opencontainers.image.source="https://github.com/neilmunday/slurm-mail"
       org.opencontainers.image.title="amzn2-slurm" \
       maintainer="Neil Munday"
 
-ARG SLURM_VER=24.11.3
+ARG SLURM_VER=24.11.4
 
 # download, build, install and clean-up
 RUN yum update -y && \
