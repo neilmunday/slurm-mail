@@ -65,22 +65,22 @@ Once the head node container is up and running the `run.sh` script executes `run
 
 A summary of how many tests passed and failed is printed at the end of the tests.
 
-Excute all tests against Slurm 22.05.6:
+Excute all tests against Slurm 24.11.4 on Rocky Linux 9:
 
 ```bash
-./run.sh -s 22.05.6
+./run.sh -s 24.11.4 -o el9
 ```
 
 Execute a particular test:
 
 ```bash
-./run.sh -s 22.05.6 -t test2
+./run.sh -s 24.11.4  -o el9 -t test2
 ```
 
 Enable verbose logging:
 
 ```bash
-./run.sh -s 22.05.6 -v
+./run.sh -s 24.11.4 -o el9 -v
 ```
 
 > **_Tip:_** As `run.sh` will build a Slurm-Mail RPM you can use the `-r` flag on subsequent invocations to skip building the RPM and thus save time.
