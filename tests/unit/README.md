@@ -12,5 +12,5 @@ The `tests/unit` directory contains the unit tests for Slurm-Mail. The `pytest` 
 ## Running Tests
 
 ```bash
-pytest -v tests/unit/test.py
+pytest
 ```
