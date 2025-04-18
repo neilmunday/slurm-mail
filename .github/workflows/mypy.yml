@@ -25,7 +25,7 @@ jobs:
           echo "matrix=${matrix}" >> $GITHUB_OUTPUT
   mypy:
     needs: generate_python_matrix
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ${{fromJson(needs.generate_python_matrix.outputs.matrix)}}
