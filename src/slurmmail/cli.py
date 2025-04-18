@@ -54,6 +54,7 @@ from datetime import timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from string import Template
+from time import sleep
 from typing import Dict, Optional
 
 from slurmmail import conf_dir, conf_file, html_tpl_dir, text_tpl_dir
@@ -73,6 +74,8 @@ from slurmmail.slurm import check_job_output_file_path, Job
 logger = logging.getLogger(__name__)
 
 TemplateResult = namedtuple("TemplateResult", ["html", "text"])
+
+MAX_EMAIL_SEND_ATTEMPTS = 3
 
 
 class ProcessSpoolFileOptions:
@@ -99,6 +102,7 @@ class ProcessSpoolFileOptions:
         self.tail_lines: int
         self.html_templates: Dict[str, pathlib.Path]
         self.text_templates: Dict[str, pathlib.Path]
+        self.retry_delay: int = 0
         self.retry_on_failure: bool = True
 
 
@@ -856,22 +860,32 @@ def __process_spool_file(
             options.smtp_port,
         )
 
-        try:
-            smtp_conn.sendmail(
-                options.email_from_address, user_email.split(","), msg.as_string()
-            )
-        except (
-            smtplib.SMTPHeloError,
-            smtplib.SMTPRecipientsRefused,
-            smtplib.SMTPSenderRefused,
-            smtplib.SMTPNotSupportedError
-        ) as e:
-            logger.error("Failed to send e-mail: %s", e)
-            if options.retry_on_failure:
-                # Raise the original exception to prevent `delete_spool_file` from being
-                # executed at the end of the function. This way the spool file will be
-                # retried on the next run.
-                raise e
+        attempt = 0
+
+        while True:
+            attempt += 1
+            try:
+                smtp_conn.sendmail(
+                    options.email_from_address, user_email.split(","), msg.as_string()
+                )
+                break
+            except (
+                smtplib.SMTPHeloError,
+                smtplib.SMTPRecipientsRefused,
+                smtplib.SMTPSenderRefused,
+                smtplib.SMTPNotSupportedError
+            ) as e:
+                logger.error("Failed to send e-mail: %s", e)
+                if options.retry_on_failure:
+                    if options.retry_delay > 0:
+                        logger.info("Waiting %ds before trying again")
+                        sleep(options.retry_delay)
+                else:
+                    break
+
+            if attempt == MAX_EMAIL_SEND_ATTEMPTS:
+                logger.error("Failed to send e-mail to %s after %d attempts", user_email, attempt)
+                break
 
     delete_spool_file(json_file)
 
@@ -999,6 +1013,14 @@ def send_mail_main():
 
         if config.has_option(section, "emailRegEx"):
             options.mail_regex = config.get(section, "emailRegEx")
+
+        if config.has_option(section, "retryDelay"):
+            retry_delay = config.getint(section, "retryDelay")
+            if retry_delay < 0 or retry_delay > 20:
+                logger.error("retryDelay must be greater than or equal to zero and less than or equal to 20")
+            else:
+                options.retry_delay = retry_delay
+
     except Exception as e:
         die("Error: {0}".format(e))
 

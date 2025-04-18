@@ -119,6 +119,12 @@ def mock_raw_config_parser_missing_section():
 
 
 @pytest.fixture
+def mock_sleep():
+    with patch("slurmmail.cli.sleep") as the_mock:
+        yield the_mock
+
+
+@pytest.fixture
 def mock_sys_argv_job_began():
     with patch(
         "sys.argv",
@@ -175,6 +181,7 @@ def mock_slurmmail_cli_process_spool_file_options():
     options.smtp_server = "localhost"
     options.smtp_port = 25
     options.retry_on_failure = True
+    options.retry_delay = 0
     options.tail_lines = 0
     options.html_templates = {}
     options.html_templates["array_ended"] = HTML_TEMPLATES_DIR / "ended-array.tpl"
@@ -629,20 +636,63 @@ class TestProcessSpoolFile:
             sacct_output += "1.batch||||1674333232|Unknown|RUNNING|||1|0|00:00:00|1||00:00:11|0:0|||test|node01|||1.batch|cpu=1,mem=0,node=1|batch"  # noqa
             mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
             mock_smtp_sendmail.side_effect = smtplib.SMTPSenderRefused(503, b'Error', 'root')
-            with pytest.raises(smtplib.SMTPSenderRefused):
-                slurmmail.cli.__dict__["__process_spool_file"](
-                    pathlib.Path("/tmp/foo"),
-                    smtplib.SMTP(),
-                    mock_slurmmail_cli_process_spool_file_options,
-                )
+            slurmmail.cli.__dict__["__process_spool_file"](
+                pathlib.Path("/tmp/foo"),
+                smtplib.SMTP(),
+                mock_slurmmail_cli_process_spool_file_options,
+            )
             assert mock_slurmmail_cli_run_command.call_count == 1
-            mock_slurmmail_cli_delete_spool_file.assert_not_called()
-            mock_smtp_sendmail.assert_called_once()
+            mock_slurmmail_cli_delete_spool_file.assert_called()
+            assert mock_smtp_sendmail.call_count == slurmmail.cli.MAX_EMAIL_SEND_ATTEMPTS
             assert (
                 mock_smtp_sendmail.call_args[0][0]
                 == mock_slurmmail_cli_process_spool_file_options.email_from_address
             )
             assert mock_smtp_sendmail.call_args[0][1] == ["root"]
+            check_templates_used(mock_get_file_contents, ["started.tpl", "job-table.tpl", "signature.tpl"])
+
+    def test_job_began_sendmail_fail_retry_on_failure_time_delay(
+        self,
+        mock_get_file_contents,
+        mock_sleep,
+        mock_slurmmail_cli_delete_spool_file,
+        mock_slurmmail_cli_process_spool_file_options,
+        mock_slurmmail_cli_run_command,
+        mock_smtp_sendmail,
+    ):
+        # set time delay
+        mock_slurmmail_cli_process_spool_file_options.retry_delay = 1
+
+        with patch(
+            "pathlib.Path.open",
+            new_callable=mock_open,
+            read_data="""{
+                "job_id": 1,
+                "email": "root",
+                "state": "Began",
+                "array_summary": false
+                }
+                """,
+        ):
+            sacct_output = "1|root|root|all|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "1.batch||||1674333232|Unknown|RUNNING|||1|0|00:00:00|1||00:00:11|0:0|||test|node01|||1.batch|cpu=1,mem=0,node=1|batch"  # noqa
+            mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
+            # simulate failure of first e-mail attempt and then success
+            mock_smtp_sendmail.side_effect = [smtplib.SMTPSenderRefused(503, b'Error', 'root'), None]
+            slurmmail.cli.__dict__["__process_spool_file"](
+                pathlib.Path("/tmp/foo"),
+                smtplib.SMTP(),
+                mock_slurmmail_cli_process_spool_file_options,
+            )
+            assert mock_slurmmail_cli_run_command.call_count == 1
+            mock_slurmmail_cli_delete_spool_file.assert_called()
+            assert mock_smtp_sendmail.call_count == 2
+            assert (
+                mock_smtp_sendmail.call_args[0][0]
+                == mock_slurmmail_cli_process_spool_file_options.email_from_address
+            )
+            assert mock_smtp_sendmail.call_args[0][1] == ["root"]
+            mock_sleep.assert_called_with(mock_slurmmail_cli_process_spool_file_options.retry_delay)
             check_templates_used(mock_get_file_contents, ["started.tpl", "job-table.tpl", "signature.tpl"])
 
     def test_job_began_sendmail_fail_no_retry_failure(
@@ -1702,6 +1752,26 @@ class TestSendMailMain:
     def test_config_file_missing_section(self):
         with pytest.raises(SystemExit):
             slurmmail.cli.send_mail_main()
+
+    @pytest.mark.usefixtures("mock_path_glob")
+    def test_config_file_retry_delay_negative(self, caplog, mock_raw_config_parser):
+        mock_raw_config_parser.side_effect.add_mock_value("slurm-send-mail", "retryDelay", -1)
+        slurmmail.cli.send_mail_main()
+        assert check_message_logged(
+            caplog,
+            logging.ERROR,
+            "retryDelay must be greater than or equal to zero and less than or equal to 20"
+        )
+
+    @pytest.mark.usefixtures("mock_path_glob")
+    def test_config_file_retry_delay_too_long(self, caplog, mock_raw_config_parser):
+        mock_raw_config_parser.side_effect.add_mock_value("slurm-send-mail", "retryDelay", 21)
+        slurmmail.cli.send_mail_main()
+        assert check_message_logged(
+            caplog,
+            logging.ERROR,
+            "retryDelay must be greater than or equal to zero and less than or equal to 20"
+        )
 
     @pytest.mark.usefixtures("mock_raw_config_parser")
     def test_bad_spool_dir_permissons(self, mock_os_access):

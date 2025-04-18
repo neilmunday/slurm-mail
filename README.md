@@ -244,6 +244,10 @@ retryOnFailure = no
 
 In either case, errors for failed e-mail delivery will always be logged in `/var/log/slurm-mail/slurm-send-mail.log`
 
+You can add a time delay between retries by setting the `retryDelay` option in `/etc/slurm-mail/slurm-mail.conf` to a value greater than equal to `0` and less than or equal to `20`. The value is specified in seconds and is disabled by default.
+
+**Note**: If e-mail delivery fails for several e-mails and `retryDelay` is a large value this could lead to more than one copy of `slurm-send-mail` being executed. You should consider decreasing the frequency that `slurm-send-mail` is executed by updating `/etc/cron.d/slurm-mail`
+
 ## E-mail headers
 
 To add additional e-mail headers to outgoing e-mails please set the `emailHeaders` option in `/etc/slurm-mail/slurm-mail.conf`
