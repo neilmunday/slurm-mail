@@ -1754,7 +1754,7 @@ class TestSendMailMain:
             slurmmail.cli.send_mail_main()
 
     @pytest.mark.usefixtures("mock_path_glob")
-    def test_config_file_retry_delay_negative(self, caplog, mock_raw_config_parser):
+    def test_config_file_retry_delay_negative(self, caplog, mock_raw_config_parser, mock_smtp):
         mock_raw_config_parser.side_effect.add_mock_value("slurm-send-mail", "retryDelay", -1)
         slurmmail.cli.send_mail_main()
         assert check_message_logged(
@@ -1762,9 +1762,10 @@ class TestSendMailMain:
             logging.ERROR,
             "retryDelay must be greater than or equal to zero and less than or equal to 20"
         )
+        mock_smtp.assert_called_once()
 
     @pytest.mark.usefixtures("mock_path_glob")
-    def test_config_file_retry_delay_too_long(self, caplog, mock_raw_config_parser):
+    def test_config_file_retry_delay_too_long(self, caplog, mock_raw_config_parser, mock_smtp):
         mock_raw_config_parser.side_effect.add_mock_value("slurm-send-mail", "retryDelay", 21)
         slurmmail.cli.send_mail_main()
         assert check_message_logged(
@@ -1772,6 +1773,7 @@ class TestSendMailMain:
             logging.ERROR,
             "retryDelay must be greater than or equal to zero and less than or equal to 20"
         )
+        mock_smtp.assert_called_once()
 
     @pytest.mark.usefixtures("mock_raw_config_parser")
     def test_bad_spool_dir_permissons(self, mock_os_access):
