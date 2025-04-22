@@ -57,6 +57,7 @@ RUN dnf install -y dnf-plugins-core && \
 COPY supervisord.conf /etc/
 COPY --chown=slurm slurm.*.conf /etc/slurm/
 COPY --chown=slurm slurmdbd.conf /etc/slurm/
+COPY --chown=slurm cgroup.conf /etc/slurm/
 COPY --chown=root entrypoint.sh /usr/local/sbin/
 
 RUN MAJOR_VER=`echo ${SLURM_VER} | egrep -o "^[0-9]+"` && \

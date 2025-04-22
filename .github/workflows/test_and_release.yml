@@ -43,7 +43,7 @@ jobs:
           echo "matrix=${matrix}" >> $GITHUB_OUTPUT
   unit_tests:
     needs: generate_python_matrix
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ${{fromJson(needs.generate_python_matrix.outputs.matrix)}}
@@ -107,7 +107,7 @@ jobs:
     needs: unit_tests
     permissions:
       contents: read
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Create tar
@@ -145,7 +145,7 @@ jobs:
     needs: unit_tests
     permissions:
       contents: read
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Create RHEL 7 RPM
@@ -177,7 +177,7 @@ jobs:
     needs: unit_tests
     permissions:
       contents: read
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Create Amazon Linux 2 RPM
@@ -209,7 +209,7 @@ jobs:
     needs: unit_tests
     permissions:
       contents: read
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Create Amazon Linux 2023 RPM
@@ -241,7 +241,7 @@ jobs:
     needs: unit_tests
     permissions:
       contents: read
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Create RHEL 8 RPM
@@ -273,7 +273,7 @@ jobs:
     needs: unit_tests
     permissions:
       contents: read
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Create RHEL 9 RPM
@@ -305,7 +305,7 @@ jobs:
     needs: unit_tests
     permissions:
       contents: read
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Create SUSE 15 RPM
@@ -337,7 +337,7 @@ jobs:
     needs: unit_tests
     permissions:
       contents: read
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Create Ubuntu 20
@@ -369,7 +369,7 @@ jobs:
     needs: unit_tests
     permissions:
       contents: read
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Create Ubuntu 22
@@ -401,7 +401,7 @@ jobs:
     needs: unit_tests
     permissions:
       contents: read
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Create Ubuntu 24
@@ -446,7 +446,7 @@ jobs:
     permissions:
       contents: read
       packages: read
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         slurm-version: ${{fromJson(needs.generate_slurm_matrix.outputs.matrix)}}
@@ -471,7 +471,7 @@ jobs:
     permissions:
       contents: read
       packages: read
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         slurm-version: ${{fromJson(needs.generate_slurm_matrix.outputs.matrix)}}
@@ -496,7 +496,7 @@ jobs:
     permissions:
       contents: read
       packages: read
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         slurm-version: ${{fromJson(needs.generate_slurm_matrix.outputs.matrix)}}
@@ -521,7 +521,7 @@ jobs:
     permissions:
       contents: read
       packages: read
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         slurm-version: ${{fromJson(needs.generate_slurm_matrix.outputs.matrix)}}
@@ -546,7 +546,7 @@ jobs:
     permissions:
       contents: read
       packages: read
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         slurm-version: ${{fromJson(needs.generate_slurm_matrix.outputs.matrix)}}
@@ -571,7 +571,7 @@ jobs:
     permissions:
       contents: read
       packages: read
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         slurm-version: ${{fromJson(needs.generate_slurm_matrix.outputs.matrix)}}
@@ -596,7 +596,7 @@ jobs:
     permissions:
       contents: read
       packages: read
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         slurm-version: ${{fromJson(needs.generate_slurm_matrix.outputs.matrix)}}
@@ -621,7 +621,7 @@ jobs:
     permissions:
       contents: read
       packages: read
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         slurm-version: ${{fromJson(needs.generate_slurm_matrix.outputs.matrix)}}
@@ -646,7 +646,7 @@ jobs:
     permissions:
       contents: read
       packages: read
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         slurm-version: ${{fromJson(needs.generate_slurm_matrix.outputs.matrix)}}
