@@ -6,9 +6,9 @@ Version 4.23
 
 Date: 2025-04-22
 
-* Added `retryDelay` option when retrying the sending of failed e-mail deliveries (issue #159).
-* Updated GitHub workflows to use Ubuntu-latest runners (issue #160)
-* Added cgroup.conf file to Docker Slurm images (issue #160)
+* Added `retryDelay` option when retrying the sending of failed e-mail deliveries (issue #159). Thanks to @KasperSkytte  for the suggestion.
+* Updated GitHub workflows to use Ubuntu-latest runners (issue #160).
+* Added cgroup.conf file to Docker Slurm images (issue #160).
 
 Version 4.22
 ------------

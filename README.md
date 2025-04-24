@@ -435,6 +435,7 @@ Thank you to the following people who have contributed code improvements, featur
 * [hakasapl (@hakasapl)](https://www.github.com/hakasapl)
 * [Hugo Larcher @Hugoch](https://www.github.com/Hugoch)
 * [Jan-Christoph Klie (@jcklie)](https://github.com/jcklie)
+* [Kasper Skytte Andersen (@KasperSkytte)](https://github.com/KasperSkytte)
 * [langefa (@langefa)](https://github.com/langefa)
 * [mamiller615 (@mamiller615)](https://github.com/mamiller615)
 * [Mehran Khodabandeh (@mkhodabandeh)](https://www.github.com/mkhodabandeh)
