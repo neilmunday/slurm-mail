@@ -79,7 +79,7 @@ sudo yum install slurm-mail
 #### Amazon Linux 2023
 
 ```bash
-sudo dnf dnf config-manager --add-repo https://neilmunday.github.io/slurm-mail/repo/slurm-mail.amnz2023.repo
+sudo dnf config-manager --add-repo https://neilmunday.github.io/slurm-mail/repo/slurm-mail.amnz2023.repo
 sudo dnf install slurm-mail
 ```
 
@@ -93,14 +93,14 @@ sudo yum install slurm-mail
 #### RedHat 8 / Rocky Linux 8 / Oracle Linux 8
 
 ```bash
-sudo dnf dnf config-manager --add-repo https://neilmunday.github.io/slurm-mail/repo/slurm-mail.el8.repo
+sudo dnf config-manager --add-repo https://neilmunday.github.io/slurm-mail/repo/slurm-mail.el8.repo
 sudo dnf install slurm-mail
 ```
 
 #### RedHat 9 / Rocky Linux 9 / Oracle Linux 9
 
 ```bash
-sudo dnf dnf config-manager --add-repo https://neilmunday.github.io/slurm-mail/repo/slurm-mail.el9.repo
+sudo dnf config-manager --add-repo https://neilmunday.github.io/slurm-mail/repo/slurm-mail.el9.repo
 sudo dnf install slurm-mail
 ```
 
