@@ -107,6 +107,7 @@ class Job:
         self.nodelist: Optional[List[str]] = None
         self.nodes: Optional[int] = None
         self.partition: Optional[str] = None
+        self.account: Optional[str] = None
         self.raw_id: int = job_raw_id
         self.requested_mem: Optional[int] = None
         self.stderr: str = "?"
