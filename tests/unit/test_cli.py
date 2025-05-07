@@ -547,8 +547,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "1|root|root|all|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
-            sacct_output += "1.batch||||1674333232|Unknown|RUNNING|||1|0|00:00:00|1||00:00:11|0:0|||test|node01|||1.batch|cpu=1,mem=0,node=1|batch"  # noqa
+            sacct_output = "1|root|root|all|myaccount|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "1.batch||||myaccount|1674333232|Unknown|RUNNING|||1|0|00:00:00|1||00:00:11|0:0|||test|node01|||1.batch|cpu=1,mem=0,node=1|batch"  # noqa
             mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
             slurmmail.cli.__dict__["__process_spool_file"](
                 pathlib.Path("/tmp/foo"),
@@ -589,8 +589,8 @@ class TestProcessSpoolFile:
                 "X-Auto-Response-Suppress": "DR, OOF, AutoReply"
             }
 
-            sacct_output = "1|root|root|all|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
-            sacct_output += "1.batch||||1674333232|Unknown|RUNNING|||1|0|00:00:00|1||00:00:11|0:0|||test|node01|||1.batch|cpu=1,mem=0,node=1|batch"  # noqa
+            sacct_output = "1|root|root|all|myaccount|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "1.batch||||myaccount|1674333232|Unknown|RUNNING|||1|0|00:00:00|1||00:00:11|0:0|||test|node01|||1.batch|cpu=1,mem=0,node=1|batch"  # noqa
             mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
             mock_slurmmail_cli_process_spool_file_options.email_headers = email_headers
             slurmmail.cli.__dict__["__process_spool_file"](
@@ -632,8 +632,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "1|root|root|all|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
-            sacct_output += "1.batch||||1674333232|Unknown|RUNNING|||1|0|00:00:00|1||00:00:11|0:0|||test|node01|||1.batch|cpu=1,mem=0,node=1|batch"  # noqa
+            sacct_output = "1|root|root|all|myaccount|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "1.batch||||myaccount|1674333232|Unknown|RUNNING|||1|0|00:00:00|1||00:00:11|0:0|||test|node01|||1.batch|cpu=1,mem=0,node=1|batch"  # noqa
             mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
             mock_smtp_sendmail.side_effect = smtplib.SMTPSenderRefused(503, b'Error', 'root')
             slurmmail.cli.__dict__["__process_spool_file"](
@@ -674,8 +674,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "1|root|root|all|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
-            sacct_output += "1.batch||||1674333232|Unknown|RUNNING|||1|0|00:00:00|1||00:00:11|0:0|||test|node01|||1.batch|cpu=1,mem=0,node=1|batch"  # noqa
+            sacct_output = "1|root|root|all|myaccount|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "1.batch||||myaccount|1674333232|Unknown|RUNNING|||1|0|00:00:00|1||00:00:11|0:0|||test|node01|||1.batch|cpu=1,mem=0,node=1|batch"  # noqa
             mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
             # simulate failure of first e-mail attempt and then success
             mock_smtp_sendmail.side_effect = [smtplib.SMTPSenderRefused(503, b'Error', 'root'), None]
@@ -714,8 +714,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "1|root|root|all|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
-            sacct_output += "1.batch||||1674333232|Unknown|RUNNING|||1|0|00:00:00|1||00:00:11|0:0|||test|node01|||1.batch|cpu=1,mem=0,node=1|batch"  # noqa
+            sacct_output = "1|root|root|all|myaccount|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "1.batch||||myaccount|1674333232|Unknown|RUNNING|||1|0|00:00:00|1||00:00:11|0:0|||test|node01|||1.batch|cpu=1,mem=0,node=1|batch"  # noqa
             mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
             mock_slurmmail_cli_process_spool_file_options.retry_on_failure = False
             mock_smtp_sendmail.side_effect = smtplib.SMTPSenderRefused(503, b'Error', 'root')
@@ -753,8 +753,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "2|root|root|all|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
-            sacct_output += "2.batch||||1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
+            sacct_output = "2|root|root|all|myaccount|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "2.batch||||myaccount|1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
                 "JobId=2 JobName=test.jcf UserId=root(0) GroupId=root(0) MCS_label=N/A"
                 " Priority=4294901758 Nice=0 Account=root QOS=normal JobState=COMPLETED"
@@ -816,8 +816,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "2|root|root|all|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
-            sacct_output += "2.batch||||1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
+            sacct_output = "2|root|root|all|myaccount|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "2.batch||||myaccount|1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
                 "JobId=2 JobName=test.jcf UserId=root(0) GroupId=root(0) MCS_label=N/A"
                 " Priority=4294901758 Nice=0 Account=root QOS=normal JobState=COMPLETED"
@@ -878,8 +878,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "2|root|root|all|1674340451|1674340571|COMPLETED|500n||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
-            sacct_output += "2.batch||||1674340451|1674340571|COMPLETED||500n|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
+            sacct_output = "2|root|root|all|myaccount|1674340451|1674340571|COMPLETED|500n||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "2.batch||||myaccount|1674340451|1674340571|COMPLETED||500n|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
                 "JobId=2 JobName=test.jcf UserId=root(0) GroupId=root(0) MCS_label=N/A"
                 " Priority=4294901758 Nice=0 Account=root QOS=normal JobState=COMPLETED"
@@ -941,8 +941,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "2|root|root|all|1674340451|1674340571|COMPLETED|500c||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
-            sacct_output += "2.batch||||1674340451|1674340571|COMPLETED||500c|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
+            sacct_output = "2|root|root|all|myaccount|1674340451|1674340571|COMPLETED|500c||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "2.batch||||myaccount|1674340451|1674340571|COMPLETED||500c|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
                 "JobId=2 JobName=test.jcf UserId=root(0) GroupId=root(0) MCS_label=N/A"
                 " Priority=4294901758 Nice=0 Account=root QOS=normal JobState=COMPLETED"
@@ -1013,8 +1013,8 @@ class TestProcessSpoolFile:
             mock_slurmmail_cli_process_spool_file_options.tail_exe = pathlib.Path(
                 "/usr/bin/tail"
             )
-            sacct_output = "2|root|root|all|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
-            sacct_output += "2.batch||||1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
+            sacct_output = "2|root|root|all|myaccount|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "2.batch||||myaccount|1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
                 "JobId=2 JobName=test.jcf UserId=root(0) GroupId=root(0) MCS_label=N/A"
                 " Priority=4294901758 Nice=0 Account=root QOS=normal JobState=COMPLETED"
@@ -1079,10 +1079,10 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "7_0|root|root|all|1675460419|Unknown|RUNNING|500M||1|0|00:00:00|1|/root|00:00:43|0:0|||test|node01|00:05:00|5|8|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
-            sacct_output += "7_0.batch||||1675460419|Unknown|RUNNING|||1|0|00:00:00|1||00:00:43|0:0|||test|node01|||8.batch|cpu=1,mem=0,node=1|batch\n"  # noqa
+            sacct_output = "7_0|root|root|all|myaccount|1675460419|Unknown|RUNNING|500M||1|0|00:00:00|1|/root|00:00:43|0:0|||test|node01|00:05:00|5|8|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "7_0.batch||||myaccount|1675460419|Unknown|RUNNING|||1|0|00:00:00|1||00:00:43|0:0|||test|node01|||8.batch|cpu=1,mem=0,node=1|batch\n"  # noqa
             sacct_output += (
-                "7_1|root|root|all|Unknown|Unknown|PENDING|500M||1|0|00:00:00|1|/root|00:00:00|0:0||test|None"  # noqa
+                "7_1|root|root|all|myaccount|Unknown|Unknown|PENDING|500M||1|0|00:00:00|1|/root|00:00:00|0:0||test|None"  # noqa
                 " assigned|00:05:00|5|7|test.jcf"
             )
             mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
@@ -1123,10 +1123,10 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "7_0|root|root|all|1675460419|1675460599|COMPLETED|500M||1|1|00:00.010|1|/root|00:03:00|0:0|||test|node01|00:05:00|5|8|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
-            sacct_output += "7_0.batch||||1675460419|1675460599|COMPLETED||4832K|1|00:00.010|1||00:03:00|0:0|||test|node01|||8.batch|cpu=1,mem=0,node=1|batch\n"  # noqa
-            sacct_output += "7_1|root|root|all|1675460599|1675460779|COMPLETED|500M||1|1|00:00.010|1|/root|00:03:00|0:0|||test|node01|00:05:00|5|7|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
-            sacct_output += "7_1.batch||||1675460599|1675460779|COMPLETED||4784K|1|00:00.010|1||00:03:00|0:0|||test|node01|||7.batch|cpu=1,mem=0,node=1|batch"  # noqa
+            sacct_output = "7_0|root|root|all|myaccount|1675460419|1675460599|COMPLETED|500M||1|1|00:00.010|1|/root|00:03:00|0:0|||test|node01|00:05:00|5|8|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "7_0.batch||||myaccount|1675460419|1675460599|COMPLETED||4832K|1|00:00.010|1||00:03:00|0:0|||test|node01|||8.batch|cpu=1,mem=0,node=1|batch\n"  # noqa
+            sacct_output += "7_1|root|root|all|myaccount|1675460599|1675460779|COMPLETED|500M||1|1|00:00.010|1|/root|00:03:00|0:0|||test|node01|00:05:00|5|7|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "7_1.batch||||myaccount|1675460599|1675460779|COMPLETED||4784K|1|00:00.010|1||00:03:00|0:0|||test|node01|||7.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output_1 = (
                 "JobId=8 ArrayJobId=7 ArrayTaskId=0 JobName=test.jcf UserId=root(0)"
                 " GroupId=root(0) MCS_label=N/A Priority=4294901756 Nice=0 Account=root"
@@ -1226,10 +1226,10 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "7_0|root|root|all|1675460419|1675460599|COMPLETED|500M||1|1|00:00.010|1|/root|00:03:00|0:0|||test|node01|00:05:00|5|8|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
-            sacct_output += "7_0.batch||||1675460419|1675460599|COMPLETED||4832K|1|00:00.010|1||00:03:00|0:0|||test|node01|||8.batch|cpu=1,mem=0,node=1|batch\n"  # noqa
-            sacct_output += "7_1|root|root|all|1675460599|1675460779|COMPLETED|500M||1|1|00:00.010|1|/root|00:03:00|0:0|||test|node01|00:05:00|5|7|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
-            sacct_output += "7_1.batch||||1675460599|1675460779|COMPLETED||4784K|1|00:00.010|1||00:03:00|0:0|||test|node01|||7.batch|cpu=1,mem=0,node=1|batch"  # noqa
+            sacct_output = "7_0|root|root|all|myaccount|1675460419|1675460599|COMPLETED|500M||1|1|00:00.010|1|/root|00:03:00|0:0|||test|node01|00:05:00|5|8|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "7_0.batch||||myaccount|1675460419|1675460599|COMPLETED||4832K|1|00:00.010|1||00:03:00|0:0|||test|node01|||8.batch|cpu=1,mem=0,node=1|batch\n"  # noqa
+            sacct_output += "7_1|root|root|all|myaccount|1675460599|1675460779|COMPLETED|500M||1|1|00:00.010|1|/root|00:03:00|0:0|||test|node01|00:05:00|5|7|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "7_1.batch||||myaccount|1675460599|1675460779|COMPLETED||4784K|1|00:00.010|1||00:03:00|0:0|||test|node01|||7.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
                 "JobId=7 ArrayJobId=7 ArrayTaskId=1 JobName=test.jcf UserId=root(0)"
                 " GroupId=root(0) MCS_label=N/A Priority=4294901756 Nice=0 Account=root"
@@ -1295,10 +1295,10 @@ class TestProcessSpoolFile:
         ):
             mock_slurmmail_cli_process_spool_file_options.array_max_notifications = 1
 
-            sacct_output = "7_0|root|root|all|1675460419|1675460599|COMPLETED|500M||1|1|00:00.010|1|/root|00:03:00|0:0|||test|node01|00:05:00|5|8|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
-            sacct_output += "7_0.batch||||1675460419|1675460599|COMPLETED||4832K|1|00:00.010|1||00:03:00|0:0|||test|node01|||8.batch|cpu=1,mem=0,node=1|batch\n"  # noqa
-            sacct_output += "7_1|root|root|all|1675460599|1675460779|COMPLETED|500M||1|1|00:00.010|1|/root|00:03:00|0:0|||test|node01|00:05:00|5|7|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
-            sacct_output += "7_1.batch||||1675460599|1675460779|COMPLETED||4784K|1|00:00.010|1||00:03:00|0:0|||test|node01|||7.batch|cpu=1,mem=0,node=1|batch"  # noqa
+            sacct_output = "7_0|root|root|all|myaccount|1675460419|1675460599|COMPLETED|500M||1|1|00:00.010|1|/root|00:03:00|0:0|||test|node01|00:05:00|5|8|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "7_0.batch||||myaccount|1675460419|1675460599|COMPLETED||4832K|1|00:00.010|1||00:03:00|0:0|||test|node01|||8.batch|cpu=1,mem=0,node=1|batch\n"  # noqa
+            sacct_output += "7_1|root|root|all|myaccount|1675460599|1675460779|COMPLETED|500M||1|1|00:00.010|1|/root|00:03:00|0:0|||test|node01|00:05:00|5|7|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "7_1.batch||||myaccount|1675460599|1675460779|COMPLETED||4784K|1|00:00.010|1||00:03:00|0:0|||test|node01|||7.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
                 "JobId=7 ArrayJobId=7 ArrayTaskId=1 JobName=test.jcf UserId=root(0)"
                 " GroupId=root(0) MCS_label=N/A Priority=4294901756 Nice=0 Account=root"
@@ -1366,8 +1366,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "2|root|root|all|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
-            sacct_output += "2.batch||||1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
+            sacct_output = "2|root|root|all|myaccount|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "2.batch||||myaccount|1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
             mock_slurmmail_cli_run_command.side_effect = [
                 (0, sacct_output, ""),
                 (1, "error", "error"),
@@ -1412,8 +1412,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "2|root|root|all|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|UNLIMITED||2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
-            sacct_output += "2.batch||||1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
+            sacct_output = "2|root|root|all|myaccount|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|UNLIMITED||2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "2.batch||||myaccount|1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
                 "JobId=2 JobName=test.jcf UserId=root(0) GroupId=root(0) MCS_label=N/A"
                 " Priority=4294901758 Nice=0 Account=root QOS=normal JobState=COMPLETED"
@@ -1476,8 +1476,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "2|root|root|all|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|bad_wc|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
-            sacct_output += "2.batch||||1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
+            sacct_output = "2|root|root|all|myaccount|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|bad_wc|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "2.batch||||myaccount|1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
                 "JobId=2 JobName=test.jcf UserId=root(0) GroupId=root(0) MCS_label=N/A"
                 " Priority=4294901758 Nice=0 Account=root QOS=normal JobState=COMPLETED"
@@ -1543,8 +1543,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "2|root|root|all|1674340451|bad_ts|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
-            sacct_output += "2.batch||||1674340451|bad_ts|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
+            sacct_output = "2|root|root|all|myaccount|1674340451|bad_ts|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "2.batch||||myaccount|1674340451|bad_ts|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
                 "JobId=2 JobName=test.jcf UserId=root(0) GroupId=root(0) MCS_label=N/A"
                 " Priority=4294901758 Nice=0 Account=root QOS=normal JobState=COMPLETED"
@@ -1612,8 +1612,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "3|root|root|all|1674340908|1674340980|TIMEOUT|500M||1|1|00:00.009|1|/root|00:01:12|0:0|||test|node01|00:01:00|1|3|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
-            sacct_output += "3.batch||||1674340908|1674340980|CANCELLED||4876K|1|1|00:00.009|1||00:01:12|0:15|||test|node01|||3.batch|cpu=1,mem=0,node=1|batch"  # noqa
+            sacct_output = "3|root|root|all|myaccount|1674340908|1674340980|TIMEOUT|500M||1|1|00:00.009|1|/root|00:01:12|0:0|||test|node01|00:01:00|1|3|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "3.batch||||myaccount|1674340908|1674340980|CANCELLED||4876K|1|1|00:00.009|1||00:01:12|0:15|||test|node01|||3.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
                 "JobId=3 JobName=test.jcf UserId=root(0) GroupId=root(0) MCS_label=N/A"
                 " Priority=4294901757 Nice=0 Account=root QOS=normal JobState=TIMEOUT"
@@ -1675,8 +1675,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "3|root|root|all|1674770321|Unknown|RUNNING|500M||1|0|00:00:00|1|/root|00:02:22|0:0|||test|node01|00:04:00|4|3|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
-            sacct_output += "3.batch||||1674770321|Unknown|RUNNING|||1|0|00:00:00|1||00:02:22|0:0|||test|node01|||3.batch|cpu=1,mem=0,node=1|batch"  # noqa
+            sacct_output = "3|root|root|all|myaccount|1674770321|Unknown|RUNNING|500M||1|0|00:00:00|1|/root|00:02:22|0:0|||test|node01|00:04:00|4|3|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "3.batch||||myaccount|1674770321|Unknown|RUNNING|||1|0|00:00:00|1||00:02:22|0:0|||test|node01|||3.batch|cpu=1,mem=0,node=1|batch"  # noqa
             mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
             slurmmail.cli.__dict__["__process_spool_file"](
                 pathlib.Path("/tmp/foo"),
@@ -1715,8 +1715,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
-            sacct_output = "3|root|root|all|1674770321|Unknown|PENDING|500M||1|0|00:00:00|1|/root|00:00:00|0:0|||test|node01|00:00:00|4|3|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
-            sacct_output += "3.batch||||1674770321|Unknown|PENDING|||1|0|00:00:00|1||00:00:00|0:0|||test|node01|||3.batch|cpu=1,mem=0,node=1|batch"  # noqa
+            sacct_output = "3|root|root|all|myaccount|1674770321|Unknown|PENDING|500M||1|0|00:00:00|1|/root|00:00:00|0:0|||test|node01|00:00:00|4|3|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "3.batch||||myaccount|1674770321|Unknown|PENDING|||1|0|00:00:00|1||00:00:00|0:0|||test|node01|||3.batch|cpu=1,mem=0,node=1|batch"  # noqa
             mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
             slurmmail.cli.__dict__["__process_spool_file"](
                 pathlib.Path("/tmp/foo"),
