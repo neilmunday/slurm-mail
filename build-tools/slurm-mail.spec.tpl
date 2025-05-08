@@ -65,11 +65,15 @@ cp INSTALLED_FILES INSTALLED_FILES_NEW
 # look for site packages directory
 for d in `python3 -c "import site; print(\"\n\".join(site.getsitepackages()))"`; do
     if grep -q $d INSTALLED_FILES; then
+        echo "%defattr(-,root,root,0755)" >> INSTALLED_FILES_NEW
         echo "$d/*" >> INSTALLED_FILES_NEW
     fi
 done
 
 mv INSTALLED_FILES_NEW INSTALLED_FILES
+
+# add config directive to files under /etc
+sed -i -r 's#/etc/#%config /etc/#' INSTALLED_FILES
 
 %files -f INSTALLED_FILES
 %defattr(-,root,root,0644)
@@ -80,40 +84,7 @@ mv INSTALLED_FILES_NEW INSTALLED_FILES
 %config /etc/slurm-mail/style.css
 %dir %attr(0700,root,root) /etc/slurm-mail/templates
 %dir %attr(0700,root,root) /etc/slurm-mail/templates/html
-%config /etc/slurm-mail/templates/html/ended-array-summary.tpl
-%config /etc/slurm-mail/templates/html/ended-array.tpl
-%config /etc/slurm-mail/templates/html/ended.tpl
-%config /etc/slurm-mail/templates/html/ended-hetjob.tpl
-%config /etc/slurm-mail/templates/html/invalid-dependency.tpl
-%config /etc/slurm-mail/templates/html/job-output.tpl
-%config /etc/slurm-mail/templates/html/job-table.tpl
-%config /etc/slurm-mail/templates/html/never-ran.tpl
-%config /etc/slurm-mail/templates/html/signature.tpl
-%config /etc/slurm-mail/templates/html/staged-out.tpl
-%config /etc/slurm-mail/templates/html/started-array-summary.tpl
-%config /etc/slurm-mail/templates/html/started-array.tpl
-%config /etc/slurm-mail/templates/html/started.tpl
-%config /etc/slurm-mail/templates/html/started-hetjob.tpl
-%config /etc/slurm-mail/templates/html/time.tpl
-%config /etc/slurm-mail/templates/html/tres.tpl
 %dir %attr(0700,root,root) /etc/slurm-mail/templates/text
-%config /etc/slurm-mail/templates/text/ended-array-summary.tpl
-%config /etc/slurm-mail/templates/text/ended-array.tpl
-%config /etc/slurm-mail/templates/text/ended.tpl
-%config /etc/slurm-mail/templates/text/ended-hetjob.tpl
-%config /etc/slurm-mail/templates/text/invalid-dependency.tpl
-%config /etc/slurm-mail/templates/text/job-output.tpl
-%config /etc/slurm-mail/templates/text/job-table.tpl
-%config /etc/slurm-mail/templates/text/never-ran.tpl
-%config /etc/slurm-mail/templates/text/signature.tpl
-%config /etc/slurm-mail/templates/text/staged-out.tpl
-%config /etc/slurm-mail/templates/text/started-array-summary.tpl
-%config /etc/slurm-mail/templates/text/started-array.tpl
-%config /etc/slurm-mail/templates/text/started.tpl
-%config /etc/slurm-mail/templates/text/started-hetjob.tpl
-%config /etc/slurm-mail/templates/text/time.tpl
-%config /etc/slurm-mail/templates/text/tres.tpl
-#%defattr(-,root,root,0644)
 %doc /usr/share/doc/slurm-mail/CHANGELOG.md
 %doc /usr/share/doc/slurm-mail/LICENSE
 %doc /usr/share/doc/slurm-mail/README.md
