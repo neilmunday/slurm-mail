@@ -56,7 +56,20 @@ install -m 644 etc/cron.d/slurm-mail %{buildroot}/etc/cron.d/slurm-mail
 install -d -m 755 %{buildroot}/etc/logrotate.d
 install -m 644 etc/logrotate.d/slurm-mail %{buildroot}/etc/logrotate.d/
 
-# set permissions on directories?
+# make sure that the site-packages directories are included in
+# the file listing to prevent empty directories being left
+# behind after upgrades, ref: https://github.com/neilmunday/slurm-mail/issues/164
+
+cp INSTALLED_FILES INSTALLED_FILES_NEW
+
+# look for site packages directory
+for d in `python3 -c "import site; print(\"\n\".join(site.getsitepackages()))"`; do
+    if grep -q $d INSTALLED_FILES; then
+        echo "$d/*" >> INSTALLED_FILES_NEW
+    fi
+done
+
+mv INSTALLED_FILES_NEW INSTALLED_FILES
 
 %files -f INSTALLED_FILES
 %defattr(-,root,root,0644)
@@ -111,3 +124,23 @@ install -m 644 etc/logrotate.d/slurm-mail %{buildroot}/etc/logrotate.d/
 
 %clean
 rm -rf $RPM_BUILD_ROOT
+
+%post
+
+if [ $1 -gt 1 ] ; then
+    # need to purge any slurmmail-4.*-py3.9.egg-info directories left
+    # over from installs before version 4.24
+
+    for site_packages in `python3 -c "import site; print(\"\n\".join(site.getsitepackages()))"`; do
+    if [ -d $site_packages ]; then
+        for d in `find $site_packages -maxdepth 1 -type d`; do
+            if [[ "$d" =~ /slurmmail-4.[0-9]+-py3.[0-9]+.egg-info ]] && [[ ! "$d" =~ /slurmmail-$VERSION-py3.[0-9]+.egg-info ]];  then
+                echo "Deleting old directory: $d"
+                rm -rf $d
+            fi
+        done
+    fi
+    done
+fi
+
+exit 0
