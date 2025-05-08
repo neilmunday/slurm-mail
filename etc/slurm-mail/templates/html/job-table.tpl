@@ -4,6 +4,10 @@
 		<td>$JOB_ID</td>
 	</tr>
 	<tr>
+		<td>Account:</td>
+		<td>$ACCOUNT</td>
+	</tr>
+	<tr>
 		<td>Name:</td>
 		<td>$JOB_NAME</td>
 	</tr>

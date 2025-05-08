@@ -1,4 +1,5 @@
 ID:                         $JOB_ID
+Account:                    $ACCOUNT
 Name:                       $JOB_NAME
 Partition:                  $PARTITION
 Nodes:                      $NODES

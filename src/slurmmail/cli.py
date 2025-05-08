@@ -215,6 +215,7 @@ def __process_spool_file(
             "User",
             "Group",
             "Partition",
+            "Account",
             "Start",
             "End",
             "State",
@@ -308,6 +309,7 @@ def __process_spool_file(
                 job.nodelist = sacct_dict["NodeList"]
                 job.nodes = sacct_dict["NNodes"]
                 job.partition = sacct_dict["Partition"]
+                job.account = sacct_dict["Account"]
                 # for Slurm < 21, the ReqMem value will have 'n' or 'c'
                 # appended depending on whether the user has requested per node
                 # see issue #38
@@ -453,6 +455,7 @@ def __process_spool_file(
             CPU_TIME=job.used_cpu_str,
             WALLCLOCK=job.wc_string,
             WALLCLOCK_ACCURACY=job.wc_accuracy,
+            ACCOUNT=job.account,
         )
 
         tpl = Template(get_file_contents(options.text_templates["job_table"]))
@@ -480,6 +483,7 @@ def __process_spool_file(
             CPU_TIME=job.used_cpu_str,
             WALLCLOCK=job.wc_string,
             WALLCLOCK_ACCURACY=job.wc_accuracy,
+            ACCOUNT=job.account,
         )
 
         logger.debug("Creating e-mail signature template")
