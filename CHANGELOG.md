@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 4.24
+------------
+
+Date: 2025-05-08
+
+* Updated RPM spec file to include site-packages directories created by Slurm-Mail installation so that they are removed upon package updates/removal and added scriptlet to remove egg directories left over from older versions (issue #164)
+
 Version 4.23
 ------------
 
