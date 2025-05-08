@@ -5,7 +5,7 @@ LABEL org.opencontainers.image.source="https://github.com/neilmunday/slurm-mail"
       org.opencontainers.image.title="ubuntu24-slurm" \
       maintainer="Neil Munday"
 
-ARG SLURM_VER=24.11.4
+ARG SLURM_VER=24.11.5
 
 RUN ln -fs /usr/share/zoneinfo/Europe/London /etc/localtime
 
