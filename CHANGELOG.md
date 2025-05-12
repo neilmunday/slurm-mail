@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 4.25
+------------
+
+Date: 2025-05-12
+
+* Added job account to e-mail templates (pull #166). Thanks to @eeidson for the pull request.
+
 Version 4.24
 ------------
 
