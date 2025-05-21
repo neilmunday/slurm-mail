@@ -25,13 +25,28 @@
 Slurm Mail global variables
 """
 
+import os
 import pathlib
 
-conf_dir = pathlib.Path("/etc/slurm-mail")
-conf_file = conf_dir / "slurm-mail.conf"
-tpl_dir = conf_dir / "templates"
-html_tpl_dir = tpl_dir / "html"
-text_tpl_dir = tpl_dir / "text"
+try:
+    conf_dir = pathlib.Path(os.environ['SLURMMAIL_CONF_DIR'])
+except KeyError as ke:
+    conf_dir = pathlib.Path("/etc/slurm-mail")
+
+try:
+    conf_file = pathlib.Path(os.environ['SLURMMAIL_CONF_FILE'])
+except KeyError as ke:
+    conf_file = conf_dir / "slurm-mail.conf"
+
+try:
+    html_tpl_dir = pathlib.Path(os.environ['SLURMMAIL_HTML_TEMPLATE_DIR'])
+except KeyError as ke:
+    html_tpl_dir = conf_dir / "templates" / "html"
+
+try:
+    text_tpl_dir = pathlib.Path(os.environ['SLURMMAIL_TEXT_TEMPLATE_DIR'])
+except KeyError as ke:
+    text_tpl_dir = conf_dir / "templates" / "text"
 
 # defaults
 DEFAULT_DATETIME_FORMAT = "%d/%m/%Y %H:%M:%S"
