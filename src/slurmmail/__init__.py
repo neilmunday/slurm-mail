@@ -27,11 +27,21 @@ Slurm Mail global variables
 
 import os
 import pathlib
+import sys
 
 try:
     conf_dir = pathlib.Path(os.environ['SLURMMAIL_CONF_DIR'])
 except KeyError as ke:
+    # Default conf_dir that we'll fall back to using if none of the candidates below are valid.
     conf_dir = pathlib.Path("/etc/slurm-mail")
+
+    script_dir = pathlib.Path(sys.argv[0]).resolve().parent
+    conf_dir_candidates = [script_dir / "etc" / "slurm-mail", script_dir.parent / "etc" / "slurm-mail"]
+
+    for candidate in conf_dir_candidates:
+        if candidate.is_dir():
+            conf_dir = candidate
+            break
 
 try:
     conf_file = pathlib.Path(os.environ['SLURMMAIL_CONF_FILE'])
