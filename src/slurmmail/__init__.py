@@ -29,6 +29,21 @@ import os
 import pathlib
 import sys
 
+# defaults
+DEFAULT_DATETIME_FORMAT = "%d/%m/%Y %H:%M:%S"
+
+# properties
+ARCHITECTURE = 'any'
+EMAIL = 'neil@mundayweb.com'
+DESCRIPTION = 'Provides enhanced e-mails for Slurm.'
+LONG_DESCRIPTION = 'Slurm-Mail is a drop in replacement for Slurm\'s ' + \
+    ' e-mails to give users much more information about their jobs ' + \
+    ' compared to the standard Slurm e-mails.'
+MAINTAINER = 'Neil Munday'
+NAME = 'slurmmail'
+VERSION = '4.25'
+URL = 'https://www.github.com/neilmunday/slurm-mail'
+
 try:
     conf_dir = pathlib.Path(os.environ['SLURMMAIL_CONF_DIR'])
 except KeyError as ke:
@@ -57,18 +72,3 @@ try:
     text_tpl_dir = pathlib.Path(os.environ['SLURMMAIL_TEXT_TEMPLATE_DIR'])
 except KeyError as ke:
     text_tpl_dir = conf_dir / "templates" / "text"
-
-# defaults
-DEFAULT_DATETIME_FORMAT = "%d/%m/%Y %H:%M:%S"
-
-# properties
-ARCHITECTURE = 'any'
-EMAIL = 'neil@mundayweb.com'
-DESCRIPTION = 'Provides enhanced e-mails for Slurm.'
-LONG_DESCRIPTION = 'Slurm-Mail is a drop in replacement for Slurm\'s ' + \
-    ' e-mails to give users much more information about their jobs ' + \
-    ' compared to the standard Slurm e-mails.'
-MAINTAINER = 'Neil Munday'
-NAME = 'slurmmail'
-VERSION = '4.25'
-URL = 'https://www.github.com/neilmunday/slurm-mail'
