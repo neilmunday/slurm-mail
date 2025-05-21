@@ -347,10 +347,10 @@ pylint setup.py src/slurmmail/*.py tests/unit/*.py tests/integration/docker-slur
 
 ## Testing
 
-In order to run the unit tests you will need to install `pytest`, e.g.
+In order to run the unit tests you will need to install `pytest` and `pytest-cov`, e.g.
 
 ```bash
-pip3 install --user pytest
+pip3 install --user pytest pytest-cov
 ```
 
 The unit tests can be found at [tests/unit](tests/unit) and can be invoked from either VSCode or from the command line, e.g.
