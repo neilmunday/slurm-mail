@@ -8,6 +8,7 @@ The `tests/unit` directory contains the unit tests for Slurm-Mail. The `pytest` 
 
 * mock
 * pytest
+* pytest-cov
 
 ## Running Tests
 
