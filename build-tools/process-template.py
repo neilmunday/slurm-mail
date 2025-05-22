@@ -38,9 +38,10 @@ import sys
 from string import Template
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
-import slurmmail  # pylint: disable=wrong-import-position
+import slurmmail  # noqa
 
-from slurmmail.common import check_file, die, get_file_contents  # pylint: disable=wrong-import-position
+from slurmmail.common import check_file, die, get_file_contents  # noqa
+
 
 def write_file(template_path: pathlib.Path, write_path: pathlib.Path):
     """
@@ -62,17 +63,20 @@ def write_file(template_path: pathlib.Path, write_path: pathlib.Path):
         )
     logging.debug("wrote: %s", write_path)
 
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
         description="Utility to process template files with Slurm Mail values", add_help=True
     )
-    parser.add_argument("-o", "--output", type=str, dest="output",
+    parser.add_argument(
+        "-o", "--output", type=str, dest="output",
         help="the output path to write to", required=True
     )
     parser.add_argument("-f", "--force", dest="force", action="store_true")
     parser.add_argument("-v", "--verbose", dest="verbose", action="store_true")
-    parser.add_argument("-t", "--template", type=str, dest="template",
+    parser.add_argument(
+        "-t", "--template", type=str, dest="template",
         help="the template file to process", required=True
     )
     args = parser.parse_args()
