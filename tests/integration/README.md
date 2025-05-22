@@ -4,6 +4,15 @@
 
 The `tests/integration` directory contains an automated test harness for Slurm-Mail. It makes use of the docker images created by the Docker files in the [docker-slurm](docker-slurm) sub directory.
 
+These tests can be run locally via Docker (see below).
+
+The [test_and_release](../../.github/workflows/test_and_release.yml) GitHub workflow executes the integration tests when:
+
+- new commits are pushed
+- pull requests are created
+- merges to the main branch are performed
+- new releases are created with a `v` tag
+
 ## Adding new Slurm version support
 
 When a new version of Slurm is released the Docker files in the [docker-slurm](docker-slurm) sub directory need to be updated to the new version and the images created and pushed to the `ghcr.io/neilmunday/slurm-mail` image repository. This is partially automated via the [slurm_version_check](../../.github/workflows/slurm_version_check.yml) and [build_docker_slurm](../../.github/workflows/build_docker_slurm.yml) workflows.
@@ -111,7 +120,7 @@ docker exec -it slurm-mail-el9-24.05.0-head /usr/bin/bash -i
 
 ### Reverting to /usr/bin/mail
 
-If you want to see how e-mails from Slurm look like instead, perform the following steps:
+If you want to see how e-mails from Slurm look like instead (i.e. not using Slurm-Mail), perform the following steps:
 
 1. Disable the cron job at `/etc/cron.d/slurm-mail`
 
@@ -136,3 +145,75 @@ supervisorctl stop slurmctld
 supervisorctl start slurmctld
 ```
 
+## GitHub Actions Set-Up
+
+In order to execute Slurm-Mail's GitHub actions with your repository you will need to create a personal access token and a *classic* token.
+
+### Fine Grained Personal Access Token
+
+A personal accesst token (PAT) is required to allow the [slurm_version_check](../../.github/workflows/slurm_version_check.yml) workflow to create pull requests when a new Slurm version is released. This workflow runs daily.
+
+Replace `$GH_USER` in the instructions below with *your* GitHub username.
+
+Create a [new PAT](https://github.com/settings/personal-access-tokens/new) with the following values:
+
+|Setting               |Value                                                        |
+|----------------------|-------------------------------------------------------------|
+|Name                  |slurm-mail                                                   |
+|Description           |Token to allow PRs from workflows to trigger other workflows.|
+|Repository Access     |`$GH_USER`/slurm-mail                                        |
+|User Permissions      |None                                                         |
+|Repository Permissions|Read access to actions, code, and metadata                   |
+|Repository Permissions|Read and Write access to pull requests                       |
+|Expiration            |Select a time of your choosing, e.g. 90 days                 |
+
+Copy the generated secret and go to `https://github.com/$GH_USER/slurm-mail/settings/secrets/actions` and create a new repository secret called `PRPAT` and paste your generated secret. Now save the secret.
+
+### Tokens (classic)
+
+A *classic* token is required to allow the [purge_docker_slurm_images](../../.github/workflows/purge_docker_slurm_images.yml) to automatically delete old Slurm Docker images from the GHCR repository.
+
+[Create a new token](https://github.com/settings/tokens/new) called `Image Repository Access` with the following sopes enabled:
+
+- repo: all
+- write:packages
+- read:packages
+- delete:packages
+
+Copy the generated secret and go to `https://github.com/$GH_USER/slurm-mail/settings/secrets/actions` and create a new repository secret called `PACKAGE_REPO` and paste your generated secret. Now save the secret.
+
+### Image repository
+
+The [test_and_release](../../.github/workflows/test_and_release.yml) relies upon being able to use the Slurm images in the [Slurm-Mail image repository](https://github.com/neilmunday?tab=packages&repo_name=slurm-mail).
+
+These images are public and can therefore be consumed by anyone. If you want to build your own images then you will need to build all of the images and push them to your GitHub image repository.
+
+**Note:** If you decide to make your image repositories private you will need to give access to your Slurm-Mail repository in order for the [test_and_release](../../.github/workflows/test_and_release.yml) to work.
+
+To build the images proceed as follows from within the root of your local copy of the Slurm-Mail repository:
+
+```bash
+cd slurm-mail/tests/integration/docker-slurm
+```
+
+Now edit `build-all.sh` and change `ghcr.io/neilmunday/slurm-mail` to include your GitHub username instead of mine.
+
+Then run:
+
+```bash
+for v in `jq -r .[] ../../supported_slurm_versions.json`; do ./build-all.sh $v; done
+```
+
+This will build Slurm Docker images for all versions of Slurm and all operating systems supported by Slurm-Mail - it will take some time!
+
+Now push the images to your GitHub image repository:
+
+```bash
+docker images | grep slurm | awk '{ print $1":"$2 }' | while read i; do docker push $i; done
+```
+
+### Update integration tests Docker files
+
+Under the `tests/integration` directory you will need to change the `FROM` line in each Dockerfile to use your image repository.
+
+You are now ready to run Slurm-Mail's GitHub workflows with your repository.
