@@ -34,7 +34,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
-import slurmmail  # pylint: disable=wrong-import-position
+import slurmmail  # noqa
 
 
 def print_value(value: str):
@@ -44,12 +44,15 @@ def print_value(value: str):
     print(value)
     sys.exit(0)
 
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
         description="Utility to get setup values for Slurm Mail", add_help=True
     )
-    parser.add_argument("property", metavar="property", type=str,
+    parser.add_argument(
+        "property",
+        metavar="property", type=str,
         help="the property value to return",
         choices=[
             "arch",
