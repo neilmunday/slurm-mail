@@ -2,7 +2,9 @@
 
 Each template has a number of variables which are are used during e-mail generation. The following sub sections detail which variables are available to which templates. You can use these to customise the templates to your individual requirements.
 
-HTML and plain text templates can be found at: `/etc/slurm-mail/templates/html` and `/etc/slurm-mail/templates/text`
+HTML and plain text templates can be found, by default, at: `/etc/slurm-mail/templates/html` and `/etc/slurm-mail/templates/text`.
+
+> **_NOTE_**: These locations can be modified through the use of the `SLURMMAIL_HTML_TEMPLATE_DIR` and `SLURMMAIL_TEXT_TEMPLATE_DIR` environment variables, respectively. See README.md for more details.
 
 ## ended-array.tpl, ended-array_summary.tpl
 
