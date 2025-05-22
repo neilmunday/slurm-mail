@@ -193,9 +193,64 @@ Slurm-Mail can be installed and automatically configured to work with [AWS Paral
 
 ## Configuration
 
-Edit `/etc/slurm-mail/slurm-mail.conf` to suit your needs. For example, check that the location of `sacct` is correct. If you are installing from source check that the log and spool directories are set to your desired values.
+Slurm-Mail expects to find all of its config files in a directory called `slurm-mail`, with the following structure:
 
-Change the value of `MailProg` in your `slurm.conf` file to `/usr/bin/slurm-spool-mail`. By default the Slurm config file will be located at `/etc/slurm/slurm.conf`.
+```bash
+slurm-mail
+├── slurm-mail.conf
+├── style.css
+└── templates
+    ├── html
+    │   ├── ended-array-summary.tpl
+    │   ├── ended-array.tpl
+    │   ├── ended-hetjob.tpl
+    │   ├── ended.tpl
+    │   ├── invalid-dependency.tpl
+    │   ├── job-output.tpl
+    │   ├── job-table.tpl
+    │   ├── never-ran.tpl
+    │   ├── signature.tpl
+    │   ├── staged-out.tpl
+    │   ├── started-array-summary.tpl
+    │   ├── started-array.tpl
+    │   ├── started-hetjob.tpl
+    │   ├── started.tpl
+    │   ├── time.tpl
+    │   └── tres.tpl
+    └── text
+        ├── ended-array-summary.tpl
+        ├── ended-array.tpl
+        ├── ended-hetjob.tpl
+        ├── ended.tpl
+        ├── invalid-dependency.tpl
+        ├── job-output.tpl
+        ├── job-table.tpl
+        ├── never-ran.tpl
+        ├── signature.tpl
+        ├── staged-out.tpl
+        ├── started-array-summary.tpl
+        ├── started-array.tpl
+        ├── started-hetjob.tpl
+        ├── started.tpl
+        ├── time.tpl
+        └── tres.tpl
+```
+
+By default, the library will look for a `slurm-mail` folder at the following locations, in order of precedence:
+
+```bash
+./etc/slurm-mail
+../etc/slurm-mail
+/etc/slurm-mail
+```
+
+> **_NOTE:_** The first two paths listed above are tested relative to the directory of the _executing script_. If neither directory exists then we fall back to using `/etc/slurm-mail`. See also the [Environment Variables](#environment-variables) section of this document.
+
+Once the location of the `slurm-mail` directory has been established all of the configuration is read from a single `slurm-mail.conf` file inside it.
+
+Edit `slurm-mail.conf` to suit your needs. For example, check that the location of `sacct` is correct. If you are installing from source check that the log and spool directories are set to your desired values.
+
+Finally, you should set/update the value of `MailProg` in your `slurm.conf` file to `/usr/bin/slurm-spool-mail`. By default the Slurm config file will be located at `/etc/slurm/slurm.conf`.
 
 Restart `slurmctld`:
 
@@ -203,15 +258,35 @@ Restart `slurmctld`:
 systemctl restart slurmctld
 ```
 
-Slurm-Mail will now log e-mail requests from Slurm users to the Slurm-Mail spool directory `/var/spool/slurm-mail`.
+Slurm-Mail will now log e-mail requests from Slurm users to the directory defined as `spoolDir` in the `common` section of `slurm-mail.conf` (`/var/spool/slurm-mail` by default).
 
 The cron job created during installation at `/etc/cron.d/slurm-mail` will execute once per minute to process the spool files, thus making sure that `slurmctld` is not blocked by processing e-mails.
+
+## Environment Variables
+
+Some of the default behaviour described in the [Configuration](#configuration) section can be modified through the use of the following environment variables:
+
+### SLURMMAIL_CONF_DIR
+
+Explicitly defines the location of the top-level `slurm-mail` directory containing all of the necessary config files. See tree in [Configuration](#configuration) section.
+
+### SLURMMAIL_CONF_FILE
+
+Explicitly defines the path to `slurm-mail.conf`. Overrides the default value of `${SLURMMAIL_CONF_DIR}/slurm-mail.conf`.
+
+### SLURMMAIL_HTML_TEMPLATE_DIR
+
+Explicitly defines the directory containing HTML template files. Overrides the default value of `${SLURMMAIL_CONF_DIR}/templates/html`.
+
+### SLURMMAIL_TEXT_TEMPLATE_DIR
+
+Explicitly defines the directory containing text template files. Overrides the default value of `${SLURMMAIL_CONF_DIR}/templates/text`.
 
 ## SMTP Settings
 
 By default Slurm-Mail will send e-mails to a mail server running on the same host as Slurm-Mail is installed on, i.e. `localhost`.
 
-You can edit the `smtp` configuration options in `/etc/slurm-mail/slurm-mail.conf`. For example, to send e-mails via Gmail's SMTP server set the following settings:
+You can edit the `smtp` configuration options in `slurm-mail.conf`. For example, to send e-mails via Gmail's SMTP server set the following settings:
 
 ```
 smtpServer = smtp.gmail.com
@@ -236,7 +311,7 @@ For SMTP servers that use SSL rather than starttls please set `smtpUseSsl = yes`
 
 By default Slurm-Mail will attempt to resend e-mails when a previous attempt failed. This can result in repeated failed e-mail attempts if for example a user has specified an invalid e-mail address.
 
-If you would prefer to disable this feature, set the following option in `/etc/slurm-mail/slurm-mail.conf`:
+If you would prefer to disable this feature, set the following option in `slurm-mail.conf`:
 
 ```
 retryOnFailure = no
@@ -244,13 +319,13 @@ retryOnFailure = no
 
 In either case, errors for failed e-mail delivery will always be logged in `/var/log/slurm-mail/slurm-send-mail.log`
 
-You can add a time delay between retries by setting the `retryDelay` option in `/etc/slurm-mail/slurm-mail.conf` to a value greater than equal to `0` and less than or equal to `20`. The value is specified in seconds and is disabled by default.
+You can add a time delay between retries by setting the `retryDelay` option in `slurm-mail.conf` to a value greater than equal to `0` and less than or equal to `20`. The value is specified in seconds and is disabled by default.
 
 **Note**: If e-mail delivery fails for several e-mails and `retryDelay` is a large value this could lead to more than one copy of `slurm-send-mail` being executed. You should consider decreasing the frequency that `slurm-send-mail` is executed by updating `/etc/cron.d/slurm-mail`
 
 ## E-mail headers
 
-To add additional e-mail headers to outgoing e-mails please set the `emailHeaders` option in `/etc/slurm-mail/slurm-mail.conf`
+To add additional e-mail headers to outgoing e-mails please set the `emailHeaders` option in `slurm-mail.conf`
 
 ## Customising E-mails
 
@@ -284,11 +359,11 @@ You can adjust the font style, size, colours etc. by editing the Cascading Style
 
 ### Date/time format
 
-To change the date/time format used for job start and end times in the e-mails, change the `datetimeFormat` configuration option in `/etc/slurm-mail/slurm-mail.conf`. The format string used is the same as Python's [datetime.strftime function](https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior).
+To change the date/time format used for job start and end times in the e-mails, change the `datetimeFormat` configuration option in `slurm-mail.conf`. The format string used is the same as Python's [datetime.strftime function](https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior).
 
 ### E-mail subject
 
-To change the subject of the e-mails, change the `emailSubject` configuration option in `/etc/slurm-mail`. You use the following place holders in the string:
+To change the subject of the e-mails, set the `emailSubject` configuration option in `slurm-mail.conf`. The following placeholders are available for use in the string:
 
 | Place holder | Value                   |
 | ------------ | ----------------------- |
@@ -299,13 +374,13 @@ To change the subject of the e-mails, change the `emailSubject` configuration op
 
 ## Validating E-mails
 
-By default Slurm-Mail will not perform any checks on the destination e-mail address (i.e the value supplied to `sbatch` via `--mail-user`). If you would like Slurm-Mail to only send e-mails for jobs that correspond to a valid e-mail address (e.g. user@some.domain) then you can set the `validateEmail` option in `/etc/slurm-mail/slurm-mail.conf` to `true`. E-mail addresses that failed this check will be logged in `/var/log/slurm-mail/slurm-send-mail.log` as an error.
+By default Slurm-Mail will not perform any checks on the destination e-mail address (i.e the value supplied to `sbatch` via `--mail-user`). If you would like Slurm-Mail to only send e-mails for jobs that correspond to a valid e-mail address (e.g. user@some.domain) then you can set the `validateEmail` option in `slurm-mail.conf` to `true`. E-mail addresses that failed this check will be logged in `/var/log/slurm-mail/slurm-send-mail.log` as an error.
 
-The regular expression used to validate e-mail addresses can be configured by adjusting the `emailRegEx` value in `/etc/slurm-mail/slurm-mail.conf`.
+The regular expression used to validate e-mail addresses can be configured by adjusting the `emailRegEx` value in `slurm-mail.conf`.
 
 ## Including Job Output in E-mails
 
-In `/etc/slurm-mail/slurm-mail.conf` you can set the `includeOutputLines` to the number of lines to include from the end of each job's standard out and standard error files.
+In `slurm-mail.conf` you can set the `includeOutputLines` to the number of lines to include from the end of each job's standard out and standard error files.
 
 Notes:
 
@@ -420,7 +495,7 @@ Starting from version 4.10, HTML and plain text e-mail templates are provided. I
 * check `cron` is working
 * check for invocation of `/usr/bin/slurm-spool-mail` in the `slurmctld` logs
 
-2. If spool files are being created but not purged please comment out `logFile` in the `[slurm-send-mail]` section in `/etc/slurm-mail/slurm-mail.conf` and run (as root): `/usr/bin/slurm-send-mail -v` at the console.
+2. If spool files are being created but not purged please comment out `logFile` in the `[slurm-send-mail]` section in `slurm-mail.conf` and run (as root): `/usr/bin/slurm-send-mail -v` at the console.
 
 3. If `/usr/bin/slurm-send-mail` is executing ok but you are not receiving e-mails, then check the mail logs on your server for any mail delivery errors.
 
