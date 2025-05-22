@@ -216,4 +216,6 @@ docker images | grep slurm | awk '{ print $1":"$2 }' | while read i; do docker p
 
 Under the `tests/integration` directory you will need to change the `FROM` line in each Dockerfile to use your image repository.
 
+You will also need to edit `tests/integration/run.sh` to use your image repository.
+
 You are now ready to run Slurm-Mail's GitHub workflows with your repository.
