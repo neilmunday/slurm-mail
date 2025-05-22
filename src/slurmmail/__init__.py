@@ -46,7 +46,7 @@ URL = 'https://www.github.com/neilmunday/slurm-mail'
 
 try:
     conf_dir = pathlib.Path(os.environ['SLURMMAIL_CONF_DIR'])
-except KeyError as ke:
+except KeyError:
     # Default conf_dir that we'll fall back to using if none of the candidates below are valid.
     conf_dir = pathlib.Path("/etc/slurm-mail")
 
@@ -60,15 +60,15 @@ except KeyError as ke:
 
 try:
     conf_file = pathlib.Path(os.environ['SLURMMAIL_CONF_FILE'])
-except KeyError as ke:
+except KeyError:
     conf_file = conf_dir / "slurm-mail.conf"
 
 try:
     html_tpl_dir = pathlib.Path(os.environ['SLURMMAIL_HTML_TEMPLATE_DIR'])
-except KeyError as ke:
+except KeyError:
     html_tpl_dir = conf_dir / "templates" / "html"
 
 try:
     text_tpl_dir = pathlib.Path(os.environ['SLURMMAIL_TEXT_TEMPLATE_DIR'])
-except KeyError as ke:
+except KeyError:
     text_tpl_dir = conf_dir / "templates" / "text"
