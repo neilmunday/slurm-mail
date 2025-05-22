@@ -38,9 +38,9 @@ import sys
 from string import Template
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
-import slurmmail  # noqa
+import slurmmail  # noqa pylint: disable=wrong-import-position
 
-from slurmmail.common import check_file, die, get_file_contents  # noqa
+from slurmmail.common import check_file, die, get_file_contents  # noqa pylint: disable=wrong-import-position
 
 
 def write_file(template_path: pathlib.Path, write_path: pathlib.Path):
