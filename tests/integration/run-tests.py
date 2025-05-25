@@ -158,6 +158,8 @@ if __name__ == "__main__":
     check_dir(spool_dir)
     check_file(slurmmail.conf_file)
 
+    logging.info("using slurm mail config from: %s", slurmmail.conf_dir)
+
     spool_log = None
     send_log = None
 
