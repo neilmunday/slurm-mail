@@ -4,10 +4,12 @@ on:
   pull_request:
     paths:
       - '.github/workflows/mypy.yml'
+      - 'supported_python_versions.json'
       - '**.py'
   push:
     paths:
       - '.github/workflows/mypy.yml'
+      - 'supported_python_versions.json'
       - '**.py'
   workflow_dispatch:
 
