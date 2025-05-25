@@ -7,6 +7,7 @@ Version 4.26
 Date: 2025-05-25
 
 * Added support for `SLURMMAIL` environment variables to override default configuration file locations (pull #168). Thanks to @dajamu from the pull request.
+* Added Python 3.13 to list of supported versions.
 
 Version 4.25
 ------------
