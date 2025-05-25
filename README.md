@@ -58,11 +58,14 @@ You can also opt to include a number of lines from the end of the job's output f
 
 * cron
 * logrotate
-* Python 3.6 or newer
+* Python 3.8 or newer
 * Slurm 22, 23 or 24
 * A working e-mail server
 
-**Note:** earlier versions of Slurm may work but are not tested with this release of Slurm-Mail.
+**Notes:**
+
+- earlier versions of Slurm may work but are not tested with this release of Slurm-Mail.
+- earlier versions of Python 3 may work but are not tested with this release of Slurm-Mail.
 
 ## Installation
 
