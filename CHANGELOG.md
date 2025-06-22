@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 4.27
+------------
+
+Date: 2025-06-22
+
+* Added support for RHEL 10 based operating systems (issue #169).
+
 Version 4.26
 ------------
 
