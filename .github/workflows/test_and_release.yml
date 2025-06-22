@@ -303,6 +303,38 @@ jobs:
           if-no-files-found: error
           retention-days: 5
 
+  build_rhel10:
+    needs: unit_tests
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create RHEL 10 RPM
+        run: build-tools/RedHat_10/build.sh
+      - name: Get package name
+        id: pkg_path
+        run: |
+          echo "RHEL10_RPM=$(
+            ls -1 build-tools/RedHat_10/slurm-mail*.rpm
+          )" >> $GITHUB_ENV
+      - name: Create md5sum for RHEL 10 RPM
+        run: md5sum ${{ env.RHEL10_RPM }} > ${{ env.RHEL10_RPM }}.md5sum
+      - name: Store RHEL 10 RPM
+        uses: actions/upload-artifact@v4
+        with:
+          name: rhel10_pkg
+          path: ${{ env.RHEL10_RPM }}
+          if-no-files-found: error
+          retention-days: 5
+      - name: Store RHEL 10 RPM md5sum
+        uses: actions/upload-artifact@v4
+        with:
+          name: rhel10_pkg_md5sum
+          path: ${{ env.RHEL10_RPM }}.md5sum
+          if-no-files-found: error
+          retention-days: 5
+
   build_suse15:
     needs: unit_tests
     permissions:
@@ -568,6 +600,31 @@ jobs:
         run: |
           tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o el9 -p
 
+  integration_tests_rhel10:
+    needs: [build_rhel10, generate_slurm_matrix]
+    permissions:
+      contents: read
+      packages: read
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        slurm-version: ${{fromJson(needs.generate_slurm_matrix.outputs.matrix)}}
+    steps:
+      - name: Log in to the container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: 'rhel10_pkg'
+          path: tests/integration/
+      - name: Run integration tests
+        run: |
+          tests/integration/run.sh -s "${{ matrix.slurm-version }}" -o el10 -p
+
   integration_tests_suse15:
     needs: [build_suse15, generate_slurm_matrix]
     permissions:
@@ -677,6 +734,7 @@ jobs:
       integration_tests_rhel7,
       integration_tests_rhel8,
       integration_tests_rhel9,
+      integration_tests_rhel10,
       integration_tests_suse15,
       integration_tests_ubuntu20,
       integration_tests_ubuntu22,
@@ -713,6 +771,11 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           pattern: 'rhel9_pkg*'
+          path: downloads
+          merge-multiple: true
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: 'rhel10_pkg*'
           path: downloads
           merge-multiple: true
       - uses: actions/download-artifact@v4
