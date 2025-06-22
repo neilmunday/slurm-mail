@@ -73,6 +73,7 @@ amzn2023
 el7
 el8
 el9
+el10
 "
 
 SLES_OSES="
