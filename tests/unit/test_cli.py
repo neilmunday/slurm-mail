@@ -402,7 +402,7 @@ class MockRawConfigParser(configparser.RawConfigParser):
             return bool(MockRawConfigParser.__mock_values[section][option])
         return super().getboolean(section, option)
 
-    def has_option(self, section: str, option: str) -> bool:
+    def has_option(self, section: str, option: str) -> bool:  # type: ignore[override]
         if (
             section in MockRawConfigParser.__mock_values
             and option in MockRawConfigParser.__mock_values[section]
