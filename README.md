@@ -108,6 +108,13 @@ sudo dnf config-manager --add-repo https://neilmunday.github.io/slurm-mail/repo/
 sudo dnf install slurm-mail
 ```
 
+#### RedHat 10 / Rocky Linux 10 / Oracle Linux 10
+
+```bash
+sudo dnf config-manager --add-repo https://neilmunday.github.io/slurm-mail/repo/slurm-mail.el10.repo
+sudo dnf install slurm-mail
+```
+
 #### OpenSUSE 15 / SLES 15
 
 ```bash
