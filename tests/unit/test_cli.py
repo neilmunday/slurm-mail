@@ -385,7 +385,7 @@ class MockRawConfigParser(configparser.RawConfigParser):
             return str(MockRawConfigParser.__mock_values[section][option])
         return super().get(section, option)
 
-    def getboolean(
+    def getboolean(  # type: ignore[override]
         self,
         section: str,
         option: str,
