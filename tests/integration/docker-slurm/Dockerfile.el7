@@ -5,7 +5,7 @@ LABEL org.opencontainers.image.source="https://github.com/neilmunday/slurm-mail"
       org.opencontainers.image.title="centos7-slurm" \
       maintainer="Neil Munday"
 
-ARG SLURM_VER=24.11.5
+ARG SLURM_VER=25.05.1
 
 # Note: CentOS 7 is EOL so we have to make use of vault repos
 COPY CentOS-Base.repo /etc/yum.repos.d/
