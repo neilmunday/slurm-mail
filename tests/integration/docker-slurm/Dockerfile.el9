@@ -5,7 +5,7 @@ LABEL org.opencontainers.image.source="https://github.com/neilmunday/slurm-mail"
       org.opencontainers.image.title="rocky9-slurm" \
       maintainer="Neil Munday"
 
-ARG SLURM_VER=25.05.2
+ARG SLURM_VER=25.05.3
 
 # download, build, install and clean-up
 RUN dnf install -y dnf-plugins-core && \
