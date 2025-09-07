@@ -6,18 +6,23 @@ LABEL org.opencontainers.image.source="https://github.com/neilmunday/slurm-mail"
       maintainer="Neil Munday"
 
 ARG SLURM_VER=25.05.3
+ARG MARIADB_VER=11.4
 
 # download, build, install and clean-up
 RUN yum update -y && \
     amazon-linux-extras install epel -y && \
+    rpm --import https://yum.mariadb.org/RPM-GPG-KEY-MariaDB && \
+    yum install -y yum-utils && \
+    yum-config-manager --add-repo https://yum.mariadb.org/${MARIADB_VER}/rhel7-amd64 && \
     yum install -y \
       autoconf \
       automake \
       gcc \
       mailx \
       make \
-      mariadb-devel \
-      mariadb-server \
+      MariaDB-devel \
+      MariaDB-client \
+      MariaDB-server \
       munge-devel \
       pam-devel \
       perl \
@@ -38,8 +43,7 @@ RUN yum update -y && \
       autoconf \
       automake \
       gcc \
-      mariab-devel \
-      make \
+      MariaDB-devel \
       munge-devel \
       pam-devel \
       readline-devel \
@@ -67,7 +71,7 @@ RUN MAJOR_VER=`echo ${SLURM_VER} | egrep -o "^[0-9]+"` && \
   rm -f /etc/slurm/slurm.*.conf && \
   chmod 600 /etc/slurm/slurm*.conf
 
-RUN /usr/bin/mysql_install_db --user=mysql
+RUN /usr/bin/mariadb-install-db --user=mysql
 
 ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/sbin/entrypoint.sh"]
 CMD ["tail -f /dev/null"]
