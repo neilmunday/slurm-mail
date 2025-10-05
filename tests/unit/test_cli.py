@@ -233,6 +233,12 @@ def mock_slurmmail_cli_run_command():
 
 
 @pytest.fixture
+def mock_slurmmail_cli_run_scontrol():
+    with patch("slurmmail.cli.run_scontrol") as the_mock:
+        yield the_mock
+
+
+@pytest.fixture
 def mock_slurmmail_cli_tail_file():
     with patch("slurmmail.cli.tail_file") as the_mock:
         yield the_mock
@@ -318,6 +324,47 @@ class TestCli:
     """
     Test slurmmail.cli helper functions
     """
+
+    def test_run_scontrol(self, mock_slurmmail_cli_process_spool_file_options, mock_slurmmail_cli_run_command):
+        scontrol_output = (
+            "JobId=1 JobName=test UserId=root(0) GroupId=root(0) MCS_label=N/A"
+            " Priority=4294901759 Nice=0 Account=root QOS=normal JobState=COMPLETED"
+            " Reason=None Dependency=(null) Requeue=1 Restarts=0 BatchFlag=1 Reboot=0"
+            " ExitCode=0:0 RunTime=00:00:03 TimeLimit=UNLIMITED TimeMin=N/A"
+            " SubmitTime=2023-01-08T16:01:33 EligibleTime=2023-01-08T16:01:33"
+            " AccrueTime=2023-01-08T16:01:33 StartTime=2023-01-08T16:01:33"
+            " EndTime=2023-01-08T16:01:36 Deadline=N/A SuspendTime=None"
+            " SecsPreSuspend=0 LastSchedEval=2023-01-08T16:01:33 Scheduler=Main"
+            " Partition=all AllocNode:Sid=631cc24917ee:218 ReqNodeList=(null)"
+            " ExcNodeList=(null) NodeList=node01 BatchHost=node01 NumNodes=1 NumCPUs=1"
+            " NumTasks=1 CPUs/Task=1 ReqB:S:C:T=0:0:*:* TRES=cpu=1,node=1,billing=1"
+            " Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=* MinCPUsNode=1"
+            " MinMemoryNode=0 MinTmpDiskNode=0 Features=(null) DelayBoot=00:00:00"
+            " OverSubscribe=OK Contiguous=0 Licenses=(null) Network=(null)"
+            " Command=/root/test.jcf WorkDir=/root StdErr=/root/slurm-1.out"
+            " StdIn=/dev/null StdOut=/root/slurm-1.out Power="
+        )
+
+        mock_slurmmail_cli_run_command.return_value = (0, scontrol_output, "")
+
+        scontrol_dict = slurmmail.cli.run_scontrol("1", mock_slurmmail_cli_process_spool_file_options)
+
+        assert scontrol_dict["JobId"] == "1"
+
+    def test_run_scontrol_failure(self, caplog, mock_slurmmail_cli_process_spool_file_options, mock_slurmmail_cli_run_command):
+        mock_slurmmail_cli_run_command.return_value = (1, "", "Error")
+
+        scontrol_dict = slurmmail.cli.run_scontrol("1", mock_slurmmail_cli_process_spool_file_options)
+
+        assert scontrol_dict is None
+        # check error was logged
+        assert check_message_logged(caplog, logging.ERROR, "Error")
+
+    def test_run_scontrol_invalid_job_id(self, caplog, mock_slurmmail_cli_process_spool_file_options, mock_slurmmail_cli_run_command):
+        mock_slurmmail_cli_run_command.return_value = (1, "", "Invalid job id specified")
+        scontrol_dict = slurmmail.cli.run_scontrol("1", mock_slurmmail_cli_process_spool_file_options)
+        assert scontrol_dict is None
+        assert not check_message_logged(caplog, logging.ERROR, "Error")
 
     def test_get_scontrol_values(self):
         scontrol_output = (
@@ -534,6 +581,7 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_delete_spool_file,
         mock_slurmmail_cli_process_spool_file_options,
         mock_slurmmail_cli_run_command,
+        mock_slurmmail_cli_run_scontrol,
         mock_smtp_sendmail,
     ):
         with patch(
@@ -547,6 +595,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
+            mock_slurmmail_cli_run_scontrol.return_value = None
+
             sacct_output = "1|root|root|all|myaccount|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
             sacct_output += "1.batch||||myaccount|1674333232|Unknown|RUNNING|||1|0|00:00:00|1||00:00:11|0:0|||test|node01|||1.batch|cpu=1,mem=0,node=1|batch"  # noqa
             mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
@@ -571,6 +621,7 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_delete_spool_file,
         mock_slurmmail_cli_process_spool_file_options,
         mock_slurmmail_cli_run_command,
+        mock_slurmmail_cli_run_scontrol,
         mock_smtp_sendmail,
     ):
         with patch(
@@ -588,6 +639,8 @@ class TestProcessSpoolFile:
                 "Precedence": "bulk",
                 "X-Auto-Response-Suppress": "DR, OOF, AutoReply"
             }
+
+            mock_slurmmail_cli_run_scontrol.return_value = None
 
             sacct_output = "1|root|root|all|myaccount|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
             sacct_output += "1.batch||||myaccount|1674333232|Unknown|RUNNING|||1|0|00:00:00|1||00:00:11|0:0|||test|node01|||1.batch|cpu=1,mem=0,node=1|batch"  # noqa
@@ -619,6 +672,7 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_delete_spool_file,
         mock_slurmmail_cli_process_spool_file_options,
         mock_slurmmail_cli_run_command,
+        mock_slurmmail_cli_run_scontrol,
         mock_smtp_sendmail,
     ):
         with patch(
@@ -632,6 +686,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
+            mock_slurmmail_cli_run_scontrol.return_value = None
+
             sacct_output = "1|root|root|all|myaccount|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
             sacct_output += "1.batch||||myaccount|1674333232|Unknown|RUNNING|||1|0|00:00:00|1||00:00:11|0:0|||test|node01|||1.batch|cpu=1,mem=0,node=1|batch"  # noqa
             mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
@@ -658,6 +714,7 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_delete_spool_file,
         mock_slurmmail_cli_process_spool_file_options,
         mock_slurmmail_cli_run_command,
+        mock_slurmmail_cli_run_scontrol,
         mock_smtp_sendmail,
     ):
         # set time delay
@@ -674,6 +731,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
+            mock_slurmmail_cli_run_scontrol.return_value = None
+
             sacct_output = "1|root|root|all|myaccount|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
             sacct_output += "1.batch||||myaccount|1674333232|Unknown|RUNNING|||1|0|00:00:00|1||00:00:11|0:0|||test|node01|||1.batch|cpu=1,mem=0,node=1|batch"  # noqa
             mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
@@ -701,6 +760,7 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_delete_spool_file,
         mock_slurmmail_cli_process_spool_file_options,
         mock_slurmmail_cli_run_command,
+        mock_slurmmail_cli_run_scontrol,
         mock_smtp_sendmail,
     ):
         with patch(
@@ -714,6 +774,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
+            mock_slurmmail_cli_run_scontrol.return_value = None
+
             sacct_output = "1|root|root|all|myaccount|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
             sacct_output += "1.batch||||myaccount|1674333232|Unknown|RUNNING|||1|0|00:00:00|1||00:00:11|0:0|||test|node01|||1.batch|cpu=1,mem=0,node=1|batch"  # noqa
             mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
@@ -785,6 +847,75 @@ class TestProcessSpoolFile:
                 mock_slurmmail_cli_process_spool_file_options,
             )
             assert mock_slurmmail_cli_run_command.call_count == 2
+            mock_slurmmail_cli_delete_spool_file.assert_called_once()
+            mock_smtp_sendmail.assert_called_once()
+            assert (
+                mock_smtp_sendmail.call_args[0][0]
+                == mock_slurmmail_cli_process_spool_file_options.email_from_address
+            )
+            assert mock_smtp_sendmail.call_args[0][1] == ["root"]
+            check_templates_used(
+                mock_get_file_contents,
+                ["ended.tpl", "job-table.tpl", "tres.tpl", "signature.tpl"]
+            )
+
+    def test_job_scronjob_ended(
+        self,
+        mock_get_file_contents,
+        mock_slurmmail_cli_delete_spool_file,
+        mock_slurmmail_cli_process_spool_file_options,
+        mock_slurmmail_cli_run_command,
+        mock_smtp_sendmail,
+    ):
+        with patch(
+            "pathlib.Path.open",
+            new_callable=mock_open,
+            read_data="""{
+                "job_id": 2,
+                "email": "root",
+                "state": "Ended",
+                "array_summary": false
+                }
+                """,
+        ):
+            sacct_output = "2|root|root|all|myaccount|1674340451|1674340571|PENDING|500M||1|1|00:00:00|1|/root|0|0:0|||test|node01|0|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "2.batch||||myaccount|1674340451|1674340571|PENDING||4880K|1|1|00:00:00|1||0|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
+
+            sacct_duplicate_output = "2|root|root|all|myaccount|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_duplicate_output += "2.batch||||myaccount|1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
+
+            scontrol_output = (
+                "JobId=2 JobName=test.jcf UserId=root(0) GroupId=root(0) MCS_label=N/A"
+                " Priority=4294901758 Nice=0 Account=root QOS=normal JobState=COMPLETED"
+                " Reason=None Dependency=(null) Requeue=1 Restarts=0 BatchFlag=1"
+                " Reboot=0 ExitCode=0:0 RunTime=00:02:00 TimeLimit=01:00:00 TimeMin=N/A"
+                " SubmitTime=2023-01-21T22:34:11 EligibleTime=2023-01-21T22:34:11"
+                " AccrueTime=2023-01-21T22:34:11 StartTime=2023-01-21T22:34:11"
+                " CronJob=Yes CrontabSpec=\"10 16 16 9 *\""
+                " EndTime=2023-01-21T22:36:11 Deadline=N/A SuspendTime=None"
+                " SecsPreSuspend=0 LastSchedEval=2023-01-21T22:34:11 Scheduler=Main"
+                " Partition=all AllocNode:Sid=ac2c384f02af:204 ReqNodeList=(null)"
+                " ExcNodeList=(null) NodeList=node01 BatchHost=node01 NumNodes=1"
+                " NumCPUs=1 NumTasks=1 CPUs/Task=1 ReqB:S:C:T=0:0:*:*"
+                " TRES=cpu=1,node=1,billing=1 Socks/Node=* NtasksPerN:B:S:C=0:0:*:*"
+                " CoreSpec=* MinCPUsNode=1 MinMemoryNode=0 MinTmpDiskNode=0"
+                " Features=(null) DelayBoot=00:00:00 OverSubscribe=OK Contiguous=0"
+                " Licenses=(null) Network=(null) Command=/root/test.jcf WorkDir=/root"
+                " StdErr=/root/slurm-2.out StdIn=/dev/null StdOut=/root/slurm-2.out"
+                " Power= MailUser=root"
+                " MailType=INVALID_DEPEND,BEGIN,END,FAIL,REQUEUE,STAGE_OUT"
+            )
+            mock_slurmmail_cli_run_command.side_effect = [
+                (0, sacct_output, ""),
+                (0, scontrol_output, ""),
+                (0, sacct_duplicate_output, ""),
+            ]
+            slurmmail.cli.__dict__["__process_spool_file"](
+                pathlib.Path("/tmp/foo"),
+                smtplib.SMTP(),
+                mock_slurmmail_cli_process_spool_file_options,
+            )
+            assert mock_slurmmail_cli_run_command.call_count == 3
             mock_slurmmail_cli_delete_spool_file.assert_called_once()
             mock_smtp_sendmail.assert_called_once()
             assert (
@@ -1066,6 +1197,7 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_delete_spool_file,
         mock_slurmmail_cli_process_spool_file_options,
         mock_slurmmail_cli_run_command,
+        mock_slurmmail_cli_run_scontrol,
         mock_smtp_sendmail,
     ):
         with patch(
@@ -1079,6 +1211,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
+            mock_slurmmail_cli_run_scontrol.return_value = None
+
             sacct_output = "7_0|root|root|all|myaccount|1675460419|Unknown|RUNNING|500M||1|0|00:00:00|1|/root|00:00:43|0:0|||test|node01|00:05:00|5|8|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
             sacct_output += "7_0.batch||||myaccount|1675460419|Unknown|RUNNING|||1|0|00:00:00|1||00:00:43|0:0|||test|node01|||8.batch|cpu=1,mem=0,node=1|batch\n"  # noqa
             sacct_output += (
@@ -1662,6 +1796,7 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_delete_spool_file,
         mock_slurmmail_cli_process_spool_file_options,
         mock_slurmmail_cli_run_command,
+        mock_slurmmail_cli_run_scontrol,
         mock_smtp_sendmail,
     ):
         with patch(
@@ -1675,6 +1810,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
+            mock_slurmmail_cli_run_scontrol.return_value = None
+
             sacct_output = "3|root|root|all|myaccount|1674770321|Unknown|RUNNING|500M||1|0|00:00:00|1|/root|00:02:22|0:0|||test|node01|00:04:00|4|3|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
             sacct_output += "3.batch||||myaccount|1674770321|Unknown|RUNNING|||1|0|00:00:00|1||00:02:22|0:0|||test|node01|||3.batch|cpu=1,mem=0,node=1|batch"  # noqa
             mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
@@ -1702,6 +1839,7 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_delete_spool_file,
         mock_slurmmail_cli_process_spool_file_options,
         mock_slurmmail_cli_run_command,
+        mock_slurmmail_cli_run_scontrol,
         mock_smtp_sendmail,
     ):
         with patch(
@@ -1715,6 +1853,8 @@ class TestProcessSpoolFile:
                 }
                 """,
         ):
+            mock_slurmmail_cli_run_scontrol.return_value = None
+
             sacct_output = "3|root|root|all|myaccount|1674770321|Unknown|PENDING|500M||1|0|00:00:00|1|/root|00:00:00|0:0|||test|node01|00:00:00|4|3|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
             sacct_output += "3.batch||||myaccount|1674770321|Unknown|PENDING|||1|0|00:00:00|1||00:00:00|0:0|||test|node01|||3.batch|cpu=1,mem=0,node=1|batch"  # noqa
             mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
