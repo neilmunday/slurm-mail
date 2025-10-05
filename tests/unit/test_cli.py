@@ -325,7 +325,7 @@ class TestCli:
     Test slurmmail.cli helper functions
     """
 
-    def test_run_scontrol(self, mock_slurmmail_cli_process_spool_file_options, mock_slurmmail_cli_run_command):
+    def test_run_scontrol(self, mock_slurmmail_cli_run_command):
         scontrol_output = (
             "JobId=1 JobName=test UserId=root(0) GroupId=root(0) MCS_label=N/A"
             " Priority=4294901759 Nice=0 Account=root QOS=normal JobState=COMPLETED"
@@ -347,22 +347,30 @@ class TestCli:
 
         mock_slurmmail_cli_run_command.return_value = (0, scontrol_output, "")
 
-        scontrol_dict = slurmmail.cli.run_scontrol("1", mock_slurmmail_cli_process_spool_file_options)
+        scontrol_dict = slurmmail.cli.run_scontrol("1", "scontrol")
 
         assert scontrol_dict["JobId"] == "1"
 
-    def test_run_scontrol_failure(self, caplog, mock_slurmmail_cli_process_spool_file_options, mock_slurmmail_cli_run_command):
+    def test_run_scontrol_failure(
+        self,
+        caplog,
+        mock_slurmmail_cli_run_command
+    ):
         mock_slurmmail_cli_run_command.return_value = (1, "", "Error")
 
-        scontrol_dict = slurmmail.cli.run_scontrol("1", mock_slurmmail_cli_process_spool_file_options)
+        scontrol_dict = slurmmail.cli.run_scontrol("1", "scrontrol")
 
         assert scontrol_dict is None
         # check error was logged
         assert check_message_logged(caplog, logging.ERROR, "Error")
 
-    def test_run_scontrol_invalid_job_id(self, caplog, mock_slurmmail_cli_process_spool_file_options, mock_slurmmail_cli_run_command):
+    def test_run_scontrol_invalid_job_id(
+        self,
+        caplog,
+        mock_slurmmail_cli_run_command
+    ):
         mock_slurmmail_cli_run_command.return_value = (1, "", "Invalid job id specified")
-        scontrol_dict = slurmmail.cli.run_scontrol("1", mock_slurmmail_cli_process_spool_file_options)
+        scontrol_dict = slurmmail.cli.run_scontrol("1", "scontrol")
         assert scontrol_dict is None
         assert not check_message_logged(caplog, logging.ERROR, "Error")
 

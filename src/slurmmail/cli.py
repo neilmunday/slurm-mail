@@ -160,8 +160,18 @@ def get_tres_tables(job: Job, tres_html_tpl: pathlib.Path, tres_text_tpl: pathli
     return TemplateResult(tres_table_html, tres_table_text)
 
 
-def run_scontrol(job_id: str, options: ProcessSpoolFileOptions) -> Optional[Dict[str, str]]:
-    cmd = "{0} -o show job={1}".format(options.scontrol_exe, job_id)
+def run_scontrol(job_id: str, scontrol_exe: str) -> Optional[Dict[str, str]]:
+    """
+    Execute scontrol against the given Slurm job ID.
+
+    :param job_id:          the job ID
+    :type job_id:           str
+    :param scontrol_exe:    path to scontrol exe
+    :type scontrol_exe:     str
+    :return:                a dictionary of scontrol output or None if the command failed
+    :rtype:                 Optional[Dict[str, str]]
+    """
+    cmd = "{0} -o show job={1}".format(scontrol_exe, job_id)
     rc, stdout, stderr = run_command(cmd)
     if rc == 0:
         logger.debug(stdout)
@@ -385,7 +395,7 @@ def __process_spool_file(
                         job.add_tres(key, value)
 
                 # Get jon info from scrontrol (if it exists)
-                scontrol_dict = run_scontrol(job_id, options)
+                scontrol_dict = run_scontrol(job_id, options.scontrol_exe)
 
                 if scontrol_dict is not None:
                     if "StdErr" in scontrol_dict:
