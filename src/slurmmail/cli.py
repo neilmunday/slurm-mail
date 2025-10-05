@@ -160,6 +160,27 @@ def get_tres_tables(job: Job, tres_html_tpl: pathlib.Path, tres_text_tpl: pathli
     return TemplateResult(tres_table_html, tres_table_text)
 
 
+def run_scontrol(job_id: str, options: ProcessSpoolFileOptions) -> Optional[Dict[str, str]]:
+    cmd = "{0} -o show job={1}".format(options.scontrol_exe, job_id)
+    rc, stdout, stderr = run_command(cmd)
+    if rc == 0:
+        logger.debug(stdout)
+        # for the first job in an array, scontrol will
+        # output details about all jobs so let's just
+        # use the first line
+        return get_scontrol_values(
+            stdout.split("\n", maxsplit=1)[0]
+        )
+
+    if "Invalid job id specified" in stderr:
+        return None
+
+    logger.error("Failed to run: %s", cmd)
+    logger.error(stdout)
+    logger.error(stderr)
+    return None
+
+
 def __process_spool_file(
     json_file: pathlib.Path, smtp_conn: smtplib.SMTP, options: ProcessSpoolFileOptions
 ):
@@ -363,8 +384,75 @@ def __process_spool_file(
                         key, value = item.split("=")
                         job.add_tres(key, value)
 
+                # Get jon info from scrontrol (if it exists)
+                scontrol_dict = run_scontrol(job_id, options)
+
+                if scontrol_dict is not None:
+                    if "StdErr" in scontrol_dict:
+                        job.stderr = scontrol_dict["StdErr"]
+                    else:
+                        job.stderr = "N/A"
+
+                    if "StdOut" in scontrol_dict:
+                        job.stdout = scontrol_dict["StdOut"]
+                    else:
+                        job.stdout = "N/A"
+
+                    if "CronJob" in scontrol_dict and scontrol_dict["CronJob"] == "Yes":
+                        job.cronjob = True
+                        logger.debug("job %s: is a scron job", job.raw_id)
+                        # need to find last completed record by running sacct again but
+                        # with -D flag using a time range of the last few minutes
+
+                        cmd = "{0} -S now-1minutes -D -j {1} -P -n --fields={2}".format(
+                            options.sacct_exe, first_job_id, field_str
+                        )
+                        rc, stdout, stderr = run_command(cmd)
+                        if rc != 0:
+                            logger.error("Failed to run %s", cmd)
+                            logger.error(stdout)
+                            logger.error(stderr)
+                        else:
+                            logger.debug(stdout)
+
+                            found_completed_record = False
+
+                            # only look for completed line
+                            for line in stdout.split("\n"):
+                                data = line.split("|", (field_num - 1))
+                                if len(data) != field_num:
+                                    logger.debug("sacct field length expected: %s, found %s", field_num, len(data))
+                                    continue
+
+                                sacct_dict = {}
+                                for i in range(field_num):
+                                    sacct_dict[fields[i]] = data[i]
+
+                                if sacct_dict["State"] == "COMPLETED":
+                                    job.state = sacct_dict["State"]
+                                    job.nodelist = sacct_dict["NodeList"]
+                                    job.start_ts = sacct_dict["Start"]
+                                    job.end_ts = sacct_dict["End"]
+                                    job.cpus = int(sacct_dict["NCPUS"])
+                                    job.cpu_time = int(sacct_dict["CPUTimeRaw"])
+                                    job.used_cpu_usec = get_usec_from_str(sacct_dict["TotalCPU"])
+                                    job.exit_code = sacct_dict["ExitCode"]
+                                    if (
+                                        sacct_dict["MaxRSS"] != ""
+                                        and job.max_rss is not None
+                                        and get_kbytes_from_str(sacct_dict["MaxRSS"]) > job.max_rss
+                                    ):
+                                        job.max_rss_str = sacct_dict["MaxRSS"]
+
+                                    found_completed_record = True
+                                    break
+
+                            if not found_completed_record:
+                                logger.error("Could not find job completion record for scron job: %s", job.raw_id)
+
                 if state in ["Ended", "Failed", "Time limit reached"]:
-                    job.state = sacct_dict["State"]
+                    if not job.cronjob:
+                        job.state = sacct_dict["State"]
                     try:
                         job.end_ts = sacct_dict["End"]
                     except ValueError:
@@ -381,34 +469,6 @@ def __process_spool_file(
                     ):
                         job.max_rss_str = sacct_dict["MaxRSS"]
 
-                if job.did_start:
-                    # Get additional info from scontrol.
-                    # NOTE: this will fail if the job ended after a certain
-                    # amount of time.
-                    cmd = "{0} -o show job={1}".format(options.scontrol_exe, job_id)
-                    rc, stdout, stderr = run_command(cmd)
-                    if rc == 0:
-                        logger.debug(stdout)
-                        # for the first job in an array, scontrol will
-                        # output details about all jobs so let's just
-                        # use the first line
-                        scontrol_dict = get_scontrol_values(
-                            stdout.split("\n", maxsplit=1)[0]
-                        )
-                        # StdOut and StdError will not be present
-                        # for interactive jobs
-                        if "StdErr" in scontrol_dict:
-                            job.stderr = scontrol_dict["StdErr"]
-                        else:
-                            job.stderr = "N/A"
-                        if "StdOut" in scontrol_dict:
-                            job.stdout = scontrol_dict["StdOut"]
-                        else:
-                            job.stdout = "N/A"
-                    else:
-                        logger.error("Failed to run: %s", cmd)
-                        logger.error(stdout)
-                        logger.error(stderr)
                 job.save()
                 jobs.append(job)
 

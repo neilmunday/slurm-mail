@@ -110,6 +110,7 @@ class Job:
         self.account: Optional[str] = None
         self.raw_id: int = job_raw_id
         self.requested_mem: Optional[int] = None
+        self.cronjob: bool = False
         self.stderr: str = "?"
         self.stdout: str = "?"
         self.used_cpu_usec: Optional[int] = None

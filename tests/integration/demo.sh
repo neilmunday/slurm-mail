@@ -124,6 +124,7 @@ services:
       - NODES=2
     hostname: compute01
     image: $NAME
+    privileged: true
     volumes:
       - ${SHARED_VOLUME}:/shared
   slurm-mail-compute:
@@ -134,6 +135,7 @@ services:
       - NODES=2
     hostname: compute02
     image: ghcr.io/neilmunday/slurm-mail/slurm-${OS}:$SLURM_VER
+    privileged: true
     volumes:
       - ${SHARED_VOLUME}:/shared
   mailhog:
