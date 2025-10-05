@@ -160,14 +160,14 @@ def get_tres_tables(job: Job, tres_html_tpl: pathlib.Path, tres_text_tpl: pathli
     return TemplateResult(tres_table_html, tres_table_text)
 
 
-def run_scontrol(job_id: str, scontrol_exe: str) -> Optional[Dict[str, str]]:
+def run_scontrol(job_id: str, scontrol_exe: pathlib.Path) -> Optional[Dict[str, str]]:
     """
     Execute scontrol against the given Slurm job ID.
 
     :param job_id:          the job ID
     :type job_id:           str
     :param scontrol_exe:    path to scontrol exe
-    :type scontrol_exe:     str
+    :type scontrol_exe:     pathlib.Path
     :return:                a dictionary of scontrol output or None if the command failed
     :rtype:                 Optional[Dict[str, str]]
     """
