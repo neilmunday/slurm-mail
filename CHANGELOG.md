@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 4.28
+------------
+
+Date: 2025-10-05
+
+* Added support for scronjob jobs (issue #175)
+
 Version 4.27
 ------------
 
