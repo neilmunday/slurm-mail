@@ -347,7 +347,7 @@ class TestCli:
 
         mock_slurmmail_cli_run_command.return_value = (0, scontrol_output, "")
 
-        scontrol_dict = slurmmail.cli.run_scontrol("1", "scontrol")
+        scontrol_dict = slurmmail.cli.run_scontrol("1", pathlib.Path("/usr/bin/scontrol"))
 
         assert scontrol_dict["JobId"] == "1"
 
@@ -358,7 +358,7 @@ class TestCli:
     ):
         mock_slurmmail_cli_run_command.return_value = (1, "", "Error")
 
-        scontrol_dict = slurmmail.cli.run_scontrol("1", "scrontrol")
+        scontrol_dict = slurmmail.cli.run_scontrol("1", pathlib.Path("/usr/bin/scontrol"))
 
         assert scontrol_dict is None
         # check error was logged
@@ -370,7 +370,7 @@ class TestCli:
         mock_slurmmail_cli_run_command
     ):
         mock_slurmmail_cli_run_command.return_value = (1, "", "Invalid job id specified")
-        scontrol_dict = slurmmail.cli.run_scontrol("1", "scontrol")
+        scontrol_dict = slurmmail.cli.run_scontrol("1", pathlib.Path("/usr/bin/scontrol"))
         assert scontrol_dict is None
         assert not check_message_logged(caplog, logging.ERROR, "Error")
 
