@@ -952,7 +952,7 @@ def __process_spool_file(
                 logger.error("Failed to send e-mail: %s", e)
                 if options.retry_on_failure:
                     if options.retry_delay > 0:
-                        logger.info("Waiting %ds before trying again")
+                        logger.info("Waiting %ds before trying again", options.retry_delay)
                         sleep(options.retry_delay)
                 else:
                     break
