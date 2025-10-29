@@ -4,9 +4,10 @@ Change Log
 Version 4.28
 ------------
 
-Date: 2025-10-05
+Date: 2025-10-29
 
 * Added support for scronjob jobs (issue #175)
+* Added missing variable for logging format string
 
 Version 4.27
 ------------
