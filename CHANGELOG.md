@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 4.29
+------------
+
+Date: 2025-11-10
+
+* Updated to work with Slurm 25.11.0 (issue #180)
+
 Version 4.28
 ------------
 

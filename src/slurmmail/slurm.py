@@ -304,4 +304,11 @@ class Job:
                 ) * 100.0
 
     def separate_output(self) -> bool:
-        return self.stderr == self.stdout
+        """
+        Returns True if the job writes to separate std out and std error files,
+        False otherwise.
+
+        :return: True if the job writes to separate std out and std error files, False otherwise
+        :rtype: bool
+        """
+        return self.stderr != self.stdout
