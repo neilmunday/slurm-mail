@@ -681,7 +681,7 @@ def __process_spool_file(
                         JOB_OUTPUT=tail_output,
                     )
 
-                    if not job.separate_output() and job.stderr not in ["?", "N/A"]:
+                    if job.separate_output() and job.stderr not in ["?", "N/A", ""]:
                         job_output_text += tpl_text.substitute(
                             OUTPUT_LINES=options.tail_lines,
                             OUTPUT_FILE=job.stderr,

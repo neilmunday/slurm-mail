@@ -200,7 +200,7 @@ class TestSlurmJob:
     def test_separate_output(self, job):
         job.stdout = "stdout"
         job.stderr = "stderr"
-        assert job.separate_output() is False
+        assert job.separate_output() is True
 
     def test_set_end_ts(self, job):
         job.end_ts = 1661469811
