@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 4.30
+------------
+
+Date: 2026-01-27
+
+* Corrected file and directory permissions for Debian based packages.
+
 Version 4.29
 ------------
 
