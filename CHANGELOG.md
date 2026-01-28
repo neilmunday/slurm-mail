@@ -6,7 +6,7 @@ Version 4.31
 
 Date: 2026-01-28
 
-* Updated Debian package generation to move file permission changes for files and directories under /etc/slurm-mail from the `rules` file to `slurm-mail.postinst` so that these commands are run on the target system after installation. This removes the need for the `slurm` group to exist on the build system.
+* Updated Debian package generation to move file permission changes for files and directories under `/etc/slurm-mail` from the `rules` file to `slurm-mail.postinst` so that these commands are run on the target system after installation. This removes the need for the `slurm` group to exist on the build system.
 * Added `build-system` section to `pyproject.toml`.
 
 Version 4.30
