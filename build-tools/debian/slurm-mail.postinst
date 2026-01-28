@@ -2,6 +2,13 @@
 
 set -e
 
+chgrp slurm /etc/slurm-mail/slurm-mail.conf
+chmod 0640 /etc/slurm-mail/slurm-mail.conf
+chmod 0600 /etc/slurm-mail/style.css
+chmod 0700 /etc/slurm-mail/templates
+chmod 0700 /etc/slurm-mail/templates/html
+chmod 0700 /etc/slurm-mail/templates/text
+chmod 640 /etc/slurm-mail/slurm-mail.conf
 mkdir -p /var/log/slurm-mail /var/spool/slurm-mail
 chown slurm. /var/log/slurm-mail /var/spool/slurm-mail
 chmod 700 /var/spool/slurm-mail

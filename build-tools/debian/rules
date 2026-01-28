@@ -5,11 +5,3 @@ export PYBUILD_NAME = slurmmail
 
 %:
 	dh $@ --with python3 --buildsystem=pybuild
-
-execute_after_dh_fixperms:
-	chmod 0640 debian/slurm-mail/etc/slurm-mail/slurm-mail.conf
-	chmod 0600 debian/slurm-mail/etc/slurm-mail/style.css
-	chown root:slurm debian/slurm-mail/etc/slurm-mail/slurm-mail.conf
-	chmod 0700 debian/slurm-mail/etc/slurm-mail/templates
-	chmod 0700 debian/slurm-mail/etc/slurm-mail/templates/html
-	chmod 0700 debian/slurm-mail/etc/slurm-mail/templates/text
