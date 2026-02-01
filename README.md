@@ -518,6 +518,7 @@ Thank you to the following people who have contributed code improvements, featur
 * [David Murray (@dajamu)](https://www.github.com/dajamu)
 * [drhey (@drhey)](https://www.github.com/drhey)
 * [Dennis Stam (@dstam)](https://www.github.com/dstam)
+* [Dominic Sloan-Murphy (@dsloanm)](https://github.com/dsloanm)
 * [hakasapl (@hakasapl)](https://www.github.com/hakasapl)
 * [Hugo Larcher @Hugoch](https://www.github.com/Hugoch)
 * [Hunter @eeidson](https://www.github.com/eeidson)
