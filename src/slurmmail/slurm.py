@@ -1,4 +1,4 @@
-# pylint: disable=invalid-name,broad-except,consider-using-f-string,missing-function-docstring  # noqa
+# pylint: disable=invalid-name,broad-except,missing-function-docstring  # noqa
 
 #
 #  This file is part of Slurm-Mail.
@@ -133,7 +133,7 @@ class Job:
             self.index = int(index)
 
     def __repr__(self) -> str:
-        return "<Job object> ID: {0}".format(self.id)
+        return f"<Job object> ID: {self.id}"
 
     # properties and setters
 
@@ -144,7 +144,7 @@ class Job:
     @property
     def cpu_efficiency(self) -> str:
         if self.__cpu_efficiency:
-            return "{0:.2f}%".format(self.__cpu_efficiency)
+            return f"{self.__cpu_efficiency:.2f}%"
         return "?"
 
     @property
@@ -253,7 +253,7 @@ class Job:
     def wc_accuracy(self) -> str:
         if self.wallclock == 0 or self.__wc_accuracy is None:
             return "N/A"
-        return "{0:.2f}%".format(self.__wc_accuracy)
+        return f"{self.__wc_accuracy:.2f}%"
 
     @property
     def wc_string(self) -> str:

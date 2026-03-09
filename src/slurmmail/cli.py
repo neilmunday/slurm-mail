@@ -1,4 +1,4 @@
-# pylint: disable=invalid-name,broad-except,consider-using-f-string,line-too-long,too-many-lines
+# pylint: disable=invalid-name,broad-except,line-too-long,too-many-lines
 
 #
 #  This file is part of Slurm-Mail.
@@ -171,7 +171,7 @@ def run_scontrol(job_id: str, scontrol_exe: pathlib.Path) -> Optional[Dict[str, 
     :return:                a dictionary of scontrol output or None if the command failed
     :rtype:                 Optional[Dict[str, str]]
     """
-    cmd = "{0} -o show job={1}".format(scontrol_exe, job_id)
+    cmd = f"{scontrol_exe} -o show job={job_id}"
     rc, stdout, stderr = run_command(cmd)
     if rc == 0:
         logger.debug(stdout)
@@ -273,9 +273,7 @@ def __process_spool_file(
         field_str = ",".join(fields)
 
         # Get job info from sacct
-        cmd = "{0} -j {1} -P -n --fields={2}".format(
-            options.sacct_exe, first_job_id, field_str
-        )
+        cmd = f"{options.sacct_exe} -j {first_job_id} -P -n --fields={field_str}"
         rc, stdout, stderr = run_command(cmd)
         if rc != 0:
             logger.error("Failed to run %s", cmd)
@@ -324,7 +322,7 @@ def __process_spool_file(
                     logger.debug("skipping %s, it does not equal %s", job_raw_id, first_job_id)
                     continue
 
-                if array_summary and "{0}".format(first_job_id) not in sacct_dict["JobId"]:
+                if array_summary and f"{first_job_id}" not in sacct_dict["JobId"]:
                     logger.debug("skipping %s for job array summary", sacct_dict["JobId"])
                     continue
 
@@ -348,10 +346,8 @@ def __process_spool_file(
                     logger.debug("Applying ReqMem workaround for Slurm versions < 21")
                     # need to multiply by job.cpus
                     try:
-                        sacct_dict["ReqMem"] = "{0}{1}".format(
-                            float(sacct_dict["ReqMem"][:-2]) * job.cpus,  # type: ignore
-                            sacct_dict["ReqMem"][-2:-1],
-                        )
+                        reqMem = float(sacct_dict["ReqMem"][:-2]) * job.cpus
+                        sacct_dict["ReqMem"] = f"{reqMem}{sacct_dict['ReqMem'][-2:-1]}"
                     except ValueError:
                         logger.error(
                             'Failed to convert ReqMem "%s" to a float',
@@ -414,9 +410,7 @@ def __process_spool_file(
                         # need to find last completed record by running sacct again but
                         # with -D flag using a time range of the last few minutes
 
-                        cmd = "{0} -S now-1minutes -D -j {1} -P -n --fields={2}".format(
-                            options.sacct_exe, first_job_id, field_str
-                        )
+                        cmd = f"{options.sacct_exe} -S now-1minutes -D -j {first_job_id} -P -n --fields={field_str}"
                         rc, stdout, stderr = run_command(cmd)
                         if rc != 0:
                             logger.error("Failed to run %s", cmd)
@@ -857,7 +851,7 @@ def __process_spool_file(
                 SIGNATURE=signature_text,
             )
             # change state value for upcomming e-mail send
-            state = "{0}% of time limit reached".format(reached)
+            state = f"{reached}% of time limit reached"
         elif state == "Invalid dependency":
             tpl_html = Template(get_file_contents(options.html_templates["invalid_dependency"]))
             body_html = tpl_html.substitute(
@@ -1047,7 +1041,7 @@ def send_mail_main():
         section = "slurm-send-mail"
 
         if not config.has_section(section):
-            die("Could not find config section '{0}' in {1}".format(section, conf_file))
+            die(f"Could not find config section '{section}' in {conf_file}")
 
         spool_dir = pathlib.Path(config.get("common", "spoolDir"))
         if config.has_option(section, "logFile"):
@@ -1096,7 +1090,7 @@ def send_mail_main():
                 options.retry_delay = retry_delay
 
     except Exception as e:
-        die("Error: {0}".format(e))
+        die(f"Error: {e}")
 
     log_date = "%Y/%m/%d %H:%M:%S"
     log_format = "%(asctime)s:%(levelname)s: %(message)s"
@@ -1118,10 +1112,7 @@ def send_mail_main():
     options.css = get_file_contents(stylesheet)
 
     if not os.access(str(spool_dir), os.R_OK | os.W_OK):
-        die(
-            "Cannot access {0}, check file permissions "
-            "and that the directory exists.".format(spool_dir)
-        )
+        die(f"Cannot access {spool_dir}, check file permissions and that the directory exists.")
 
     smtp_conn = None
     # Look for any new mail notifications in the spool dir
@@ -1157,7 +1148,7 @@ def send_mail_main():
                 if smtp_username != "" and smtp_password != "":
                     smtp_conn.login(smtp_username, smtp_password)
             except Exception as e:
-                die("Failed to create SMTP connection due to:\n{0}".format(e))
+                die(f"Failed to create SMTP connection due to:\n{e}")
 
         try:
             __process_spool_file(f, smtp_conn, options)
@@ -1184,12 +1175,12 @@ def spool_mail_main():
         config = configparser.RawConfigParser()
         config.read(str(conf_file))
         if not config.has_section(section):
-            die("Could not find config section '{0}' in {1}".format(section, conf_file))
+            die(f"Could not find config section '{section}' in {conf_file}")
         spool_dir = config.get("common", "spoolDir")
         log_file = pathlib.Path(config.get(section, "logFile"))
         verbose = config.getboolean(section, "verbose")
     except Exception as e:
-        die("Error: {0}".format(e))
+        die(f"Error: {e}")
 
     check_dir(log_file.parent)
     check_dir(pathlib.Path(spool_dir))
@@ -1244,7 +1235,7 @@ def spool_mail_main():
             state = "Time limit reached"
         time_reached = match.group("limit")
         if time_reached:
-            state = "Time reached {0}%".format(time_reached)
+            state = f"Time reached {time_reached}%"
 
         logger.debug("Job ID: %d", job_id)
         logger.debug("State: %s", state)
@@ -1258,9 +1249,7 @@ def spool_mail_main():
             "array_summary": array_summary,
         }
 
-        output_path = pathlib.Path(spool_dir).joinpath(
-            "{0}_{1}.mail".format(match.group("job_id"), time.time())
-        )
+        output_path = pathlib.Path(spool_dir).joinpath(f"{match.group('job_id')}_{time.time()}.mail")
         logger.info("writing file: %s", output_path)
         with output_path.open(mode="w", encoding="utf-8") as f:
             json.dump(data, f)

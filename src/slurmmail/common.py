@@ -1,4 +1,4 @@
-# pylint: disable=consider-using-f-string,invalid-name,broad-except,line-too-long
+# pylint: disable=invalid-name,broad-except,line-too-long
 
 #
 #  This file is part of Slurm-Mail.
@@ -47,10 +47,10 @@ def check_dir(path: pathlib.Path, check_writeable=True):
     Exit if conditions fail.
     """
     if not path.is_dir():
-        die("Error: {0} is not a directory".format(path))
+        die(f"Error: {path} is not a directory")
     # can we write to the log directory?
     if check_writeable and not os.access(path, os.W_OK):
-        die("Error: {0} is not writeable".format(path))
+        die(f"Error: {path} is not writeable")
 
 
 def check_file(f: pathlib.Path):
@@ -58,7 +58,7 @@ def check_file(f: pathlib.Path):
     Check if the given file exists, exit if it does not.
     """
     if not f.is_file():
-        die("{0} does not exist".format(f))
+        die(f"{f} does not exist")
 
 
 def delete_spool_file(f: pathlib.Path):
@@ -74,7 +74,7 @@ def die(msg: str) -> NoReturn:
     Exit the program with the given error message.
     """
     logger.error(msg)
-    sys.stderr.write("{0}\n".format(msg))
+    sys.stderr.write(f"{msg}\n")
     sys.exit(1)
 
 
@@ -124,9 +124,9 @@ def get_str_from_kbytes(value: float) -> str:
     """
     for unit in ["Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"]:
         if abs(value) < 1024.0:
-            return "{0:.2f}{1}B".format(value, unit)
+            return f"{value:.2f}{unit}B"
         value /= 1024.0
-    return "{0:.2f}YiB".format(value)
+    return f"{value:.2f}YiB"
 
 
 def get_usec_from_str(time_str: str) -> int:
@@ -138,7 +138,7 @@ def get_usec_from_str(time_str: str) -> int:
     )
     match = timeRe.match(time_str)
     if not match:
-        die("Could not parse: {0}".format(time_str))
+        die(f"Could not parse: {time_str}")
     assert match is not None
     usec = 0
     if match.group("usec"):
@@ -170,25 +170,20 @@ def tail_file(f: str, num_lines: int, tail_exe: pathlib.Path) -> str:
     Returns the last N lines of the given file.
     """
     if num_lines < 1:
-        err_msg = "slurm-mail: invalid number of lines " "to tail: {0}".format(
-            num_lines
-        )
+        err_msg = f"slurm-mail: invalid number of lines to tail: {num_lines}"
         logger.error(err_msg)
         return err_msg
     try:
         if not pathlib.Path(f).exists():
-            err_msg = "slurm-mail: file {0} does not exist".format(f)
+            err_msg = f"slurm-mail: file {f} does not exist"
             logger.error(err_msg)
             return err_msg
 
-        rtn, stdout, _ = run_command("{0} -{1} '{2}'".format(tail_exe, num_lines, f))
+        rtn, stdout, _ = run_command(f"{tail_exe} -{num_lines} '{f}'")
         if rtn != 0:
-            err_msg = (
-                "slurm-mail: error trying to read "
-                "the last {0} lines of {1}".format(num_lines, f)
-            )
+            err_msg = f"slurm-mail: error trying to read the last {num_lines} lines of {f}"
             logger.error(err_msg)
             return err_msg
         return stdout
     except Exception as e:
-        return "Unable to return contents of file: {0}".format(e)
+        return f"Unable to return contents of file: {e}"
