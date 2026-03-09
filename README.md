@@ -87,13 +87,6 @@ sudo dnf config-manager --add-repo https://neilmunday.github.io/slurm-mail/repo/
 sudo dnf install slurm-mail
 ```
 
-#### RedHat 7 / CentOS 7
-
-```bash
-sudo wget -O /etc/yum.repos.d/slurm-mail.repo https://neilmunday.github.io/slurm-mail/repo/slurm-mail.el7.repo
-sudo yum install slurm-mail
-```
-
 #### RedHat 8 / Rocky Linux 8 / Oracle Linux 8
 
 ```bash
