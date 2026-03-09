@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+Version 4.32
+------------
+
+Date: 2026-03-09
+
+* Removed RHEL7 support (issue #185)
+* Replaced Python format strings with f-strings
+
 Version 4.31
 ------------
 
