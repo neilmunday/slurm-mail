@@ -147,8 +147,13 @@ deb [trusted=yes] https://neilmunday.github.io/slurm-mail/repo/ub22 ./
 
 #### Ubuntu24
 
+For Ubuntu24, add to `/etc/apt/sources.list.d/neilmunday.sources`
+
 ```
-deb [trusted=yes] https://neilmunday.github.io/slurm-mail/repo/ub24 ./
+Types: deb
+URIs: https://neilmunday.github.io/slurm-mail/repo/ub24
+Suites: ./
+Trusted: yes
 ```
 
 #### Install
