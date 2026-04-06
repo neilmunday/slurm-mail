@@ -127,28 +127,37 @@ slurm-mail/build-tools/build-rpm.sh
 
 The RPM will be written to `~/rpmbuild/RPMS/noarch`.
 
-### Ubuntu 20 and 22
+### Ubuntu 20, 22 and 24
 
 Pre-built Ubuntu 20 and 22 packages are provided at [neilmunday.github.io/slurm-mail/repo](https://neilmunday.github.io/slurm-mail/repo/).
 
-Add to your `/etc/apt/sources.list` file the following line depending on your OS.
+Create `/etc/apt/sources.list.d/slurm-mail.sources` file the following line depending on your OS.
 
 #### Ubuntu 20
 
 ```
-deb [trusted=yes] https://neilmunday.github.io/slurm-mail/repo/ub20 ./
+Types: deb
+URIs: https://neilmunday.github.io/slurm-mail/repo/ub20
+Suites: ./
+Trusted: yes
 ```
 
 #### Ubuntu22
 
 ```
-deb [trusted=yes] https://neilmunday.github.io/slurm-mail/repo/ub22 ./
+Types: deb
+URIs: https://neilmunday.github.io/slurm-mail/repo/ub22
+Suites: ./
+Trusted: yes
 ```
 
 #### Ubuntu24
 
 ```
-deb [trusted=yes] https://neilmunday.github.io/slurm-mail/repo/ub24 ./
+Types: deb
+URIs: https://neilmunday.github.io/slurm-mail/repo/ub24
+Suites: ./
+Trusted: yes
 ```
 
 #### Install
