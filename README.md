@@ -530,6 +530,7 @@ Thank you to the following people who have contributed code improvements, featur
 * [mamiller615 (@mamiller615)](https://www.github.com/mamiller615)
 * [Mehran Khodabandeh (@mkhodabandeh)](https://www.github.com/mkhodabandeh)
 * [Neil Prockter (@mrgum)](https://www.github.com/mrgum)
+* [NorseGaud](https://github.com/NorseGaud)
 * [patbel-pwr (@patbel-pwr)](https://www.github.com/patbel-pwr)
 * [pavalenta (@pavalenta)](https://www.github.com/pavalenta)
 * [rzegson (@rzegson)](https://www.github.com/rzegson)
