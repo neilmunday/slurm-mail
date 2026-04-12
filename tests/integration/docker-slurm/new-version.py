@@ -30,14 +30,12 @@ import fileinput
 import glob
 import logging
 import pathlib
-import re
 import sys
 from datetime import datetime
 from typing import List
 
-import requests
-from bs4 import BeautifulSoup
-from slurmmail.common import check_file, die
+from github import Github
+from slurmmail.common import check_file
 
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -88,24 +86,17 @@ if __name__ == "__main__":
     with open(version_file, mode="r", encoding="utf-8") as f:
         current_version = f.readline().strip()
 
-    url = "https://www.schedmd.com/download-slurm/"
-    logging.debug("loading %s", url)
-    reqs = requests.get(url, timeout=20)
-    soup = BeautifulSoup(reqs.text, "html.parser")
-
-    download_re = re.compile(
-        r"^https://download.schedmd.com/slurm/slurm-([0-9]+\.[0-9]+\.[0-9]+).tar.bz2$"
-    )
     versions: List[str] = []
 
-    for link in soup.find_all("a"):
-        link = link.get("href")
-        match = download_re.match(link)
-        if match:
-            versions.append(match.group(1))
-
-    if len(versions) == 0:
-        die("could not determine Slurm version")
+    logging.info("creating GitHub instance")
+    gh = Github()
+    repo = gh.get_repo(full_name_or_id="SchedMD/slurm")
+    logging.info("processing releases")
+    for release in repo.get_releases():
+        if release.name.startswith("v"):
+            versions.append(release.name[1:])
+        else:
+            versions.append(release.name)
 
     versions.sort()
     latest_version = versions[-1]

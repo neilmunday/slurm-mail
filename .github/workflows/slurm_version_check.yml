@@ -20,8 +20,7 @@ jobs:
       - name: install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install bs4
-          pip install requests
+          pip install PyGithub
       - name: check for new version
         env:
           GH_TOKEN: ${{ github.token }}
