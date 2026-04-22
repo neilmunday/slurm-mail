@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 4.32
+------------
+
+Date: 2026-04-22
+
+* Users's real name will now be set to their username if the their GECOS entry is empty (issue #190). Thanks to @walee-1 for the suggestion.
+
 Version 4.31
 ------------
 
