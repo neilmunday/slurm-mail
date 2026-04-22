@@ -239,7 +239,9 @@ class Job:
     def user_real_name(self) -> Optional[str]:
         if self.user is None:
             return None
-        return pwd.getpwnam(self.user).pw_gecos.split(",", maxsplit=1)[Job.GECOS_NAME_FIELD].strip()
+        pw = pwd.getpwnam(self.user)
+        name = pw.pw_gecos.split(",", maxsplit=1)[Job.GECOS_NAME_FIELD].strip()
+        return name or self.user
 
     @property
     def wallclock(self) -> Optional[int]:

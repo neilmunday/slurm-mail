@@ -66,6 +66,8 @@ def mock_pwd_getpwnam():
             pw_struct = MagicMock()
             if username == "foo":
                 pw_struct.pw_gecos = "Foo Bar, Building 42, 1234, 5678, foo@bar.com"
+            elif username == "bar":
+                pw_struct.pw_gecos = ""
             elif username == "jdoe":
                 pw_struct.pw_gecos = "John Doe"
             elif username == "jsmith":
@@ -234,6 +236,8 @@ class TestSlurmJob:
 
     def test_user_real_name(self, job):
         assert job.user_real_name == "Foo Bar"
+        job.user = "bar"
+        assert job.user_real_name == "bar"
         job.user = "jdoe"
         assert job.user_real_name == "John Doe"
         Job.GECOS_NAME_FIELD = 1
