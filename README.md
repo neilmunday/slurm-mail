@@ -537,4 +537,5 @@ Thank you to the following people who have contributed code improvements, featur
 * [sdx23 (@sdx23)](https://www.github.com/sdx23)
 * [Simon Feltman (@sfeltman)](https://www.github.com/sfeltman)
 * [Thanasis Georgiou (@thgeorgiou)](https://www.github.com/thgeorgiou)
+* [walee-1 (@walee-1)](https://github.com/walee-1)
 * [Woody Chang (@jitkang)](https://www.github.com/jitkang)
