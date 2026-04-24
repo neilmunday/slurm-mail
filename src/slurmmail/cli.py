@@ -104,6 +104,7 @@ class ProcessSpoolFileOptions:
         self.text_templates: Dict[str, pathlib.Path]
         self.retry_delay: int = 0
         self.retry_on_failure: bool = True
+        self.ignore_tres_keys: set[str] = set()
 
 
 def get_scontrol_values(input_str: str) -> Dict[str, str]:
@@ -391,7 +392,9 @@ def __process_spool_file(
 
                 if len(sacct_dict["AllocTRES"]) > 0:
                     for item in sacct_dict["AllocTRES"].split(","):
-                        key, value = item.split("=")
+                        key, value = item.split("=", 1)
+                        if key.lower() in options.ignore_tres_keys:
+                            continue
                         job.add_tres(key, value)
 
                 # Get jon info from scrontrol (if it exists)
@@ -1084,7 +1087,12 @@ def send_mail_main():
         options.tail_exe = pathlib.Path(config.get(section, "tailExe"))
         options.tail_lines = config.getint(section, "includeOutputLines")
         options.retry_on_failure = config.getboolean(section, "retryOnFailure")
-
+        if config.has_option(section, "ignoreTRESKeys"):
+            options.ignore_tres_keys = {
+                item.strip().lower()
+                for item in config.get(section, "ignoreTRESKeys").split(",")
+                if item.strip()
+            }
         if config.has_option(section, "emailRegEx"):
             options.mail_regex = config.get(section, "emailRegEx")
 
