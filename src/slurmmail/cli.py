@@ -93,6 +93,7 @@ class ProcessSpoolFileOptions:
         self.email_subject: str
         self.email_headers: Dict[str, str] = {}
         self.mail_regex: str = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
+        self.mail_domain: Optional[str] = None
         self.validate_email: Optional[bool] = None
         self.sacct_exe: pathlib.Path
         self.scontrol_exe: pathlib.Path
@@ -160,6 +161,46 @@ def get_tres_tables(job: Job, tres_html_tpl: pathlib.Path, tres_text_tpl: pathli
     return TemplateResult(tres_table_html, tres_table_text)
 
 
+def resolve_user_email(user_email: str, options: ProcessSpoolFileOptions) -> Optional[str]:
+    """
+    Resolves a user's email address.
+    
+    If validation is enabled then it also validates. If the user only gave their username and '@' is missing
+    it appends the mailDomain option if passed and tries to validate again. 
+
+    :param user_email:  the email address or username from the spool file
+    :type user_email:   str
+    :param options:     processing options
+    :type options:      ProcessSpoolFileOptions
+    :return:            resolved email address or None if invalid
+    :rtype:             Optional[str]
+    """
+    recipients = [item.strip() for item in user_email.split(",") if item.strip()]
+    resolved = []
+
+    for recipient in recipients:
+        if not options.validate_email:
+            if "@" not in recipient and options.mail_domain:
+                resolved.append(f"{recipient}@{options.mail_domain}")
+            else:
+                resolved.append(recipient)
+            continue
+
+        if re.fullmatch(options.mail_regex, recipient):
+            resolved.append(recipient)
+            continue
+
+        if "@" not in recipient and options.mail_domain:
+            candidate = f"{recipient}@{options.mail_domain}"
+            if re.fullmatch(options.mail_regex, candidate):
+                resolved.append(candidate)
+                continue
+
+        return None
+
+    return ",".join(resolved)
+
+
 def run_scontrol(job_id: str, scontrol_exe: pathlib.Path) -> Optional[Dict[str, str]]:
     """
     Execute scontrol against the given Slurm job ID.
@@ -217,11 +258,13 @@ def __process_spool_file(
 
     logger.debug("spool file content: %s", data)
 
-    if options.validate_email and not re.fullmatch(options.mail_regex, user_email):
-        # not a valid email address
+    resolved_email = resolve_user_email(user_email, options)
+    if resolved_email is None:
         logger.error("Email address not valid: %s", user_email)
         delete_spool_file(json_file)
         return
+
+    user_email = resolved_email
 
     jobs = []  # store job object for each job in this array
 
@@ -1087,6 +1130,10 @@ def send_mail_main():
 
         if config.has_option(section, "emailRegEx"):
             options.mail_regex = config.get(section, "emailRegEx")
+        if config.has_option(section, "mailDomain"):
+            mail_domain = config.get(section, "mailDomain").strip()
+            if len(mail_domain) > 0:
+                options.mail_domain = mail_domain
 
         if config.has_option(section, "retryDelay"):
             retry_delay = config.getint(section, "retryDelay")
