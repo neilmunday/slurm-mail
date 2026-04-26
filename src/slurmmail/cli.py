@@ -164,9 +164,9 @@ def get_tres_tables(job: Job, tres_html_tpl: pathlib.Path, tres_text_tpl: pathli
 def resolve_user_email(user_email: str, options: ProcessSpoolFileOptions) -> Optional[str]:
     """
     Resolves a user's email address.
-    
+
     If validation is enabled then it also validates. If the user only gave their username and '@' is missing
-    it appends the mailDomain option if passed and tries to validate again. 
+    it appends the mailDomain option if passed and tries to validate again.
 
     :param user_email:  the email address or username from the spool file
     :type user_email:   str

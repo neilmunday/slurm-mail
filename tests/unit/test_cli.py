@@ -401,6 +401,25 @@ class TestCli:
         assert "JobId" in scontrol_dict
         assert scontrol_dict["JobId"] == "1"
 
+    def test_resolve_user_email(self):
+        proccess_spool_file_options = slurmmail.cli.ProcessSpoolFileOptions()
+        proccess_spool_file_options.validate_email = True
+
+        assert slurmmail.cli.resolve_user_email("foo@@example.com", proccess_spool_file_options) is None
+
+        proccess_spool_file_options.mail_domain = "example.com"
+
+        assert slurmmail.cli.resolve_user_email("foo,bar", proccess_spool_file_options) == "foo@example.com,bar@example.com"
+        assert slurmmail.cli.resolve_user_email("foo@example.com,bar@example.com", proccess_spool_file_options) == "foo@example.com,bar@example.com"
+
+        proccess_spool_file_options.validate_email = False
+        assert slurmmail.cli.resolve_user_email("foo,bar", proccess_spool_file_options) == "foo@example.com,bar@example.com"
+
+        proccess_spool_file_options.validate_email = True
+        proccess_spool_file_options.mail_domain = "@example.com"
+
+        assert slurmmail.cli.resolve_user_email("foo,bar", proccess_spool_file_options) is None
+
 
 class MockRawConfigParser(configparser.RawConfigParser):
     """
