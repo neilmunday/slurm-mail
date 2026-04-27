@@ -55,7 +55,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from string import Template
 from time import sleep
-from typing import Dict, Optional
+from typing import Dict, Optional, Set
 
 from slurmmail import conf_dir, conf_file, html_tpl_dir, text_tpl_dir
 from slurmmail.common import (
@@ -104,7 +104,7 @@ class ProcessSpoolFileOptions:
         self.text_templates: Dict[str, pathlib.Path]
         self.retry_delay: int = 0
         self.retry_on_failure: bool = True
-        self.ignore_tres_keys: set[str] = set()
+        self.ignore_tres_keys: Set[str] = set()
 
 
 def get_scontrol_values(input_str: str) -> Dict[str, str]:
