@@ -28,6 +28,7 @@ Unit tests for Slurm-Mail.
 """
 
 import configparser
+import tempfile
 import logging
 import pathlib
 from os import access
@@ -204,10 +205,10 @@ def mock_slurmmail_cli_process_spool_file_options():
     options.html_templates["tres"] = HTML_TEMPLATES_DIR / "tres.tpl"
 
     options.text_templates = {}
-    options.text_templates["array_ended"] = HTML_TEMPLATES_DIR / "ended-array.tpl"
-    options.text_templates["array_started"] = HTML_TEMPLATES_DIR / "started-array.tpl"
+    options.text_templates["array_ended"] = TEXT_TEMPLATES_DIR / "ended-array.tpl"
+    options.text_templates["array_started"] = TEXT_TEMPLATES_DIR / "started-array.tpl"
     options.text_templates["array_summary_started"] = (
-        HTML_TEMPLATES_DIR / "started-array-summary.tpl"
+        TEXT_TEMPLATES_DIR / "started-array-summary.tpl"
     )
     options.text_templates["array_summary_ended"] = TEXT_TEMPLATES_DIR / "ended-array-summary.tpl"
     options.text_templates["ended"] = TEXT_TEMPLATES_DIR / "ended.tpl"
@@ -502,9 +503,12 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_delete_spool_file,
         mock_slurmmail_cli_process_spool_file_options,
     ):
-        with patch("pathlib.Path.open", new_callable=mock_open, read_data="bad_json"):
+        with tempfile.NamedTemporaryFile(mode='w') as spool_file:
+            spool_file.write("bad_json")
+            spool_file.flush()
+
             slurmmail.cli.__dict__["__process_spool_file"](
-                pathlib.Path("/tmp/foo"),
+                pathlib.Path(spool_file.name),
                 None,
                 mock_slurmmail_cli_process_spool_file_options,
             )
@@ -515,9 +519,12 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_delete_spool_file,
         mock_slurmmail_cli_process_spool_file_options,
     ):
-        with patch("pathlib.Path.open", new_callable=mock_open, read_data="{}"):
+        with tempfile.NamedTemporaryFile(mode='w') as spool_file:
+            spool_file.write("{}")
+            spool_file.flush()
+
             slurmmail.cli.__dict__["__process_spool_file"](
-                pathlib.Path("/tmp/foo"),
+                pathlib.Path(spool_file.name),
                 None,
                 mock_slurmmail_cli_process_spool_file_options,
             )
@@ -529,19 +536,17 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_delete_spool_file,
         mock_slurmmail_cli_process_spool_file_options,
     ):
-        with patch(
-            "pathlib.Path.open",
-            new_callable=mock_open,
-            read_data="""{
+        with tempfile.NamedTemporaryFile(mode='w') as spool_file:
+            spool_file.write("""{
                 "job_id": 1,
                 "email": "root",
                 "state": "Foo",
                 "array_summary": false
-                }
-                """,
-        ):
+                }""")
+            spool_file.flush()
+
             slurmmail.cli.__dict__["__process_spool_file"](
-                pathlib.Path("/tmp/foo"),
+                pathlib.Path(spool_file.name),
                 None,
                 mock_slurmmail_cli_process_spool_file_options,
             )
@@ -558,20 +563,18 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_delete_spool_file,
         mock_slurmmail_cli_process_spool_file_options,
     ):
-        with patch(
-            "pathlib.Path.open",
-            new_callable=mock_open,
-            read_data="""{
+        with tempfile.NamedTemporaryFile(mode='w') as spool_file:
+            spool_file.write("""{
                 "job_id": 1,
                 "email": "root",
                 "state": "Began",
                 "array_summary": false
-                }
-                """,
-        ):
+                }""")
+            spool_file.flush()
+
             mock_slurmmail_cli_process_spool_file_options.validate_email = True
             slurmmail.cli.__dict__["__process_spool_file"](
-                pathlib.Path("/tmp/foo"),
+                pathlib.Path(spool_file.name),
                 None,
                 mock_slurmmail_cli_process_spool_file_options,
             )
@@ -583,20 +586,18 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_process_spool_file_options,
         mock_slurmmail_cli_run_command,
     ):
-        with patch(
-            "pathlib.Path.open",
-            new_callable=mock_open,
-            read_data="""{
+        with tempfile.NamedTemporaryFile(mode='w') as spool_file:
+            spool_file.write("""{
                 "job_id": 1,
                 "email": "root",
                 "state": "Began",
                 "array_summary": false
-                }
-                """,
-        ):
+                }""")
+            spool_file.flush()
+
             mock_slurmmail_cli_run_command.return_value = (1, "", "")
             slurmmail.cli.__dict__["__process_spool_file"](
-                pathlib.Path("/tmp/foo"),
+                pathlib.Path(spool_file.name),
                 None,
                 mock_slurmmail_cli_process_spool_file_options,
             )
@@ -611,24 +612,22 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_run_scontrol,
         mock_smtp_sendmail,
     ):
-        with patch(
-            "pathlib.Path.open",
-            new_callable=mock_open,
-            read_data="""{
+        with tempfile.NamedTemporaryFile(mode='w') as spool_file:
+            spool_file.write("""{
                 "job_id": 1,
                 "email": "root",
                 "state": "Began",
                 "array_summary": false
-                }
-                """,
-        ):
+                }""")
+            spool_file.flush()
+
             mock_slurmmail_cli_run_scontrol.return_value = None
 
             sacct_output = "1|root|root|all|myaccount|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
             sacct_output += "1.batch||||myaccount|1674333232|Unknown|RUNNING|||1|0|00:00:00|1||00:00:11|0:0|||test|node01|||1.batch|cpu=1,mem=0,node=1|batch"  # noqa
             mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
             slurmmail.cli.__dict__["__process_spool_file"](
-                pathlib.Path("/tmp/foo"),
+                pathlib.Path(spool_file.name),
                 smtplib.SMTP(),
                 mock_slurmmail_cli_process_spool_file_options,
             )
@@ -651,17 +650,15 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_run_scontrol,
         mock_smtp_sendmail,
     ):
-        with patch(
-            "pathlib.Path.open",
-            new_callable=mock_open,
-            read_data="""{
+        with tempfile.NamedTemporaryFile(mode='w') as spool_file:
+            spool_file.write("""{
                 "job_id": 1,
                 "email": "root",
                 "state": "Began",
                 "array_summary": false
-                }
-                """,
-        ):
+                }""")
+            spool_file.flush()
+
             email_headers = {
                 "Precedence": "bulk",
                 "X-Auto-Response-Suppress": "DR, OOF, AutoReply"
@@ -674,7 +671,7 @@ class TestProcessSpoolFile:
             mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
             mock_slurmmail_cli_process_spool_file_options.email_headers = email_headers
             slurmmail.cli.__dict__["__process_spool_file"](
-                pathlib.Path("/tmp/foo"),
+                pathlib.Path(spool_file.name),
                 smtplib.SMTP(),
                 mock_slurmmail_cli_process_spool_file_options,
             )
@@ -702,17 +699,15 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_run_scontrol,
         mock_smtp_sendmail,
     ):
-        with patch(
-            "pathlib.Path.open",
-            new_callable=mock_open,
-            read_data="""{
+       with tempfile.NamedTemporaryFile(mode='w') as spool_file:
+            spool_file.write("""{
                 "job_id": 1,
                 "email": "root",
                 "state": "Began",
                 "array_summary": false
-                }
-                """,
-        ):
+                }""")
+            spool_file.flush()
+
             mock_slurmmail_cli_run_scontrol.return_value = None
 
             sacct_output = "1|root|root|all|myaccount|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
@@ -720,7 +715,7 @@ class TestProcessSpoolFile:
             mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
             mock_smtp_sendmail.side_effect = smtplib.SMTPSenderRefused(503, b'Error', 'root')
             slurmmail.cli.__dict__["__process_spool_file"](
-                pathlib.Path("/tmp/foo"),
+                pathlib.Path(spool_file.name),
                 smtplib.SMTP(),
                 mock_slurmmail_cli_process_spool_file_options,
             )
@@ -747,17 +742,15 @@ class TestProcessSpoolFile:
         # set time delay
         mock_slurmmail_cli_process_spool_file_options.retry_delay = 1
 
-        with patch(
-            "pathlib.Path.open",
-            new_callable=mock_open,
-            read_data="""{
+        with tempfile.NamedTemporaryFile(mode='w') as spool_file:
+            spool_file.write("""{
                 "job_id": 1,
                 "email": "root",
                 "state": "Began",
                 "array_summary": false
-                }
-                """,
-        ):
+                }""")
+            spool_file.flush()
+
             mock_slurmmail_cli_run_scontrol.return_value = None
 
             sacct_output = "1|root|root|all|myaccount|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
@@ -766,7 +759,7 @@ class TestProcessSpoolFile:
             # simulate failure of first e-mail attempt and then success
             mock_smtp_sendmail.side_effect = [smtplib.SMTPSenderRefused(503, b'Error', 'root'), None]
             slurmmail.cli.__dict__["__process_spool_file"](
-                pathlib.Path("/tmp/foo"),
+                pathlib.Path(spool_file.name),
                 smtplib.SMTP(),
                 mock_slurmmail_cli_process_spool_file_options,
             )
@@ -790,17 +783,15 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_run_scontrol,
         mock_smtp_sendmail,
     ):
-        with patch(
-            "pathlib.Path.open",
-            new_callable=mock_open,
-            read_data="""{
+        with tempfile.NamedTemporaryFile(mode='w') as spool_file:
+            spool_file.write("""{
                 "job_id": 1,
                 "email": "root",
                 "state": "Began",
                 "array_summary": false
-                }
-                """,
-        ):
+                }""")
+            spool_file.flush()
+
             mock_slurmmail_cli_run_scontrol.return_value = None
 
             sacct_output = "1|root|root|all|myaccount|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
@@ -809,7 +800,7 @@ class TestProcessSpoolFile:
             mock_slurmmail_cli_process_spool_file_options.retry_on_failure = False
             mock_smtp_sendmail.side_effect = smtplib.SMTPSenderRefused(503, b'Error', 'root')
             slurmmail.cli.__dict__["__process_spool_file"](
-                pathlib.Path("/tmp/foo"),
+                pathlib.Path(spool_file.name),
                 smtplib.SMTP(),
                 mock_slurmmail_cli_process_spool_file_options,
             )
@@ -831,17 +822,15 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_run_command,
         mock_smtp_sendmail,
     ):
-        with patch(
-            "pathlib.Path.open",
-            new_callable=mock_open,
-            read_data="""{
+        with tempfile.NamedTemporaryFile(mode='w') as spool_file:
+            spool_file.write("""{
                 "job_id": 2,
                 "email": "root",
                 "state": "Ended",
                 "array_summary": false
-                }
-                """,
-        ):
+                }""")
+            spool_file.flush()
+
             sacct_output = "2|root|root|all|myaccount|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
             sacct_output += "2.batch||||myaccount|1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
@@ -869,7 +858,7 @@ class TestProcessSpoolFile:
                 (0, scontrol_output, ""),
             ]
             slurmmail.cli.__dict__["__process_spool_file"](
-                pathlib.Path("/tmp/foo"),
+                pathlib.Path(spool_file.name),
                 smtplib.SMTP(),
                 mock_slurmmail_cli_process_spool_file_options,
             )
@@ -894,17 +883,15 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_run_command,
         mock_smtp_sendmail,
     ):
-        with patch(
-            "pathlib.Path.open",
-            new_callable=mock_open,
-            read_data="""{
+        with tempfile.NamedTemporaryFile(mode='w') as spool_file:
+            spool_file.write("""{
                 "job_id": 2,
                 "email": "root",
                 "state": "Ended",
                 "array_summary": false
-                }
-                """,
-        ):
+                }""")
+            spool_file.flush()
+
             sacct_output = "2|root|root|all|myaccount|1674340451|1674340571|PENDING|500M||1|1|00:00:00|1|/root|0|0:0|||test|node01|0|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
             sacct_output += "2.batch||||myaccount|1674340451|1674340571|PENDING||4880K|1|1|00:00:00|1||0|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
 
@@ -938,7 +925,7 @@ class TestProcessSpoolFile:
                 (0, sacct_duplicate_output, ""),
             ]
             slurmmail.cli.__dict__["__process_spool_file"](
-                pathlib.Path("/tmp/foo"),
+                pathlib.Path(spool_file.name),
                 smtplib.SMTP(),
                 mock_slurmmail_cli_process_spool_file_options,
             )
@@ -963,17 +950,15 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_run_command,
         mock_smtp_sendmail,
     ):
-        with patch(
-            "pathlib.Path.open",
-            new_callable=mock_open,
-            read_data="""{
+        with tempfile.NamedTemporaryFile(mode='w') as spool_file:
+            spool_file.write("""{
                 "job_id": 2,
                 "email": "root",
                 "state": "Ended",
                 "array_summary": false
                 }
-                """,
-        ):
+            """)
+            spool_file.flush()
             sacct_output = "2|root|root|all|myaccount|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
             sacct_output += "2.batch||||myaccount|1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
@@ -1000,7 +985,7 @@ class TestProcessSpoolFile:
                 (0, scontrol_output, ""),
             ]
             slurmmail.cli.__dict__["__process_spool_file"](
-                pathlib.Path("/tmp/foo"),
+                pathlib.Path(spool_file.name),
                 smtplib.SMTP(),
                 mock_slurmmail_cli_process_spool_file_options,
             )
@@ -1025,17 +1010,16 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_run_command,
         mock_smtp_sendmail,
     ):
-        with patch(
-            "pathlib.Path.open",
-            new_callable=mock_open,
-            read_data="""{
+        with tempfile.NamedTemporaryFile(mode='w') as spool_file:
+            spool_file.write("""{
                 "job_id": 2,
                 "email": "root",
                 "state": "Ended",
                 "array_summary": false
                 }
-                """,
-        ):
+            """)
+            spool_file.flush()
+
             sacct_output = "2|root|root|all|myaccount|1674340451|1674340571|COMPLETED|500n||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
             sacct_output += "2.batch||||myaccount|1674340451|1674340571|COMPLETED||500n|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
@@ -1063,7 +1047,7 @@ class TestProcessSpoolFile:
                 (0, scontrol_output, ""),
             ]
             slurmmail.cli.__dict__["__process_spool_file"](
-                pathlib.Path("/tmp/foo"),
+                pathlib.Path(spool_file.name),
                 smtplib.SMTP(),
                 mock_slurmmail_cli_process_spool_file_options,
             )
@@ -1088,17 +1072,16 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_run_command,
         mock_smtp_sendmail,
     ):
-        with patch(
-            "pathlib.Path.open",
-            new_callable=mock_open,
-            read_data="""{
+        with tempfile.NamedTemporaryFile(mode='w') as spool_file:
+            spool_file.write("""{
                 "job_id": 2,
                 "email": "root",
                 "state": "Ended",
                 "array_summary": false
                 }
-                """,
-        ):
+            """)
+            spool_file.flush()
+
             sacct_output = "2|root|root|all|myaccount|1674340451|1674340571|COMPLETED|500c||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
             sacct_output += "2.batch||||myaccount|1674340451|1674340571|COMPLETED||500c|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
@@ -1126,7 +1109,7 @@ class TestProcessSpoolFile:
                 (0, scontrol_output, ""),
             ]
             slurmmail.cli.__dict__["__process_spool_file"](
-                pathlib.Path("/tmp/foo"),
+                pathlib.Path(spool_file.name),
                 smtplib.SMTP(),
                 mock_slurmmail_cli_process_spool_file_options,
             )
@@ -1155,17 +1138,16 @@ class TestProcessSpoolFile:
         mock_smtp_sendmail,
         mock_slurmmail_cli_tail_file,
     ):
-        with patch(
-            "pathlib.Path.open",
-            new_callable=mock_open,
-            read_data="""{
+        with tempfile.NamedTemporaryFile(mode='w') as spool_file:
+            spool_file.write("""{
                 "job_id": 2,
                 "email": "root",
                 "state": "Ended",
                 "array_summary": false
                 }
-                """,
-        ):
+            """)
+            spool_file.flush()
+
             mock_slurmmail_cli_check_job_output_file_path.return_value = True
             mock_slurmmail_cli_process_spool_file_options.tail_lines = 10
             mock_slurmmail_cli_process_spool_file_options.tail_exe = pathlib.Path(
@@ -1198,7 +1180,7 @@ class TestProcessSpoolFile:
                 (0, scontrol_output, ""),
             ]
             slurmmail.cli.__dict__["__process_spool_file"](
-                pathlib.Path("/tmp/foo"),
+                pathlib.Path(spool_file.name),
                 smtplib.SMTP(),
                 mock_slurmmail_cli_process_spool_file_options,
             )
@@ -1227,17 +1209,16 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_run_scontrol,
         mock_smtp_sendmail,
     ):
-        with patch(
-            "pathlib.Path.open",
-            new_callable=mock_open,
-            read_data="""{
+        with tempfile.NamedTemporaryFile(mode='w') as spool_file:
+            spool_file.write("""{
                 "job_id": 7,
                 "email": "root",
                 "state": "Began",
                 "array_summary": true
                 }
-                """,
-        ):
+            """)
+            spool_file.flush()
+
             mock_slurmmail_cli_run_scontrol.return_value = None
 
             sacct_output = "7_0|root|root|all|myaccount|1675460419|Unknown|RUNNING|500M||1|0|00:00:00|1|/root|00:00:43|0:0|||test|node01|00:05:00|5|8|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
@@ -1248,7 +1229,7 @@ class TestProcessSpoolFile:
             )
             mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
             slurmmail.cli.__dict__["__process_spool_file"](
-                pathlib.Path("/tmp/foo"),
+                pathlib.Path(spool_file.name),
                 smtplib.SMTP(),
                 mock_slurmmail_cli_process_spool_file_options,
             )
@@ -1273,17 +1254,16 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_run_command,
         mock_smtp_sendmail,
     ):
-        with patch(
-            "pathlib.Path.open",
-            new_callable=mock_open,
-            read_data="""{
+        with tempfile.NamedTemporaryFile(mode='w') as spool_file:
+            spool_file.write("""{
                 "job_id": 7,
                 "email": "root",
                 "state": "Ended",
                 "array_summary": true
                 }
-                """,
-        ):
+            """)
+            spool_file.flush()
+
             sacct_output = "7_0|root|root|all|myaccount|1675460419|1675460599|COMPLETED|500M||1|1|00:00.010|1|/root|00:03:00|0:0|||test|node01|00:05:00|5|8|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
             sacct_output += "7_0.batch||||myaccount|1675460419|1675460599|COMPLETED||4832K|1|00:00.010|1||00:03:00|0:0|||test|node01|||8.batch|cpu=1,mem=0,node=1|batch\n"  # noqa
             sacct_output += "7_1|root|root|all|myaccount|1675460599|1675460779|COMPLETED|500M||1|1|00:00.010|1|/root|00:03:00|0:0|||test|node01|00:05:00|5|7|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
@@ -1351,7 +1331,7 @@ class TestProcessSpoolFile:
                 (0, scontrol_output_2, ""),
             ]
             slurmmail.cli.__dict__["__process_spool_file"](
-                pathlib.Path("/tmp/foo"),
+                pathlib.Path(spool_file.name),
                 smtplib.SMTP(),
                 mock_slurmmail_cli_process_spool_file_options,
             )
@@ -1376,17 +1356,16 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_run_command,
         mock_smtp_sendmail,
     ):
-        with patch(
-            "pathlib.Path.open",
-            new_callable=mock_open,
-            read_data="""{
+        with tempfile.NamedTemporaryFile(mode='w') as spool_file:
+            spool_file.write("""{
                 "job_id": 7,
                 "email": "root",
                 "state": "Ended",
                 "array_summary": false
                 }
-                """,
-        ):
+            """)
+            spool_file.flush()
+
             sacct_output = "7_0|root|root|all|myaccount|1675460419|1675460599|COMPLETED|500M||1|1|00:00.010|1|/root|00:03:00|0:0|||test|node01|00:05:00|5|8|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
             sacct_output += "7_0.batch||||myaccount|1675460419|1675460599|COMPLETED||4832K|1|00:00.010|1||00:03:00|0:0|||test|node01|||8.batch|cpu=1,mem=0,node=1|batch\n"  # noqa
             sacct_output += "7_1|root|root|all|myaccount|1675460599|1675460779|COMPLETED|500M||1|1|00:00.010|1|/root|00:03:00|0:0|||test|node01|00:05:00|5|7|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
@@ -1415,7 +1394,7 @@ class TestProcessSpoolFile:
                 (0, scontrol_output, ""),
             ]
             slurmmail.cli.__dict__["__process_spool_file"](
-                pathlib.Path("/tmp/foo"),
+                pathlib.Path(spool_file.name),
                 smtplib.SMTP(),
                 mock_slurmmail_cli_process_spool_file_options,
             )
@@ -1443,17 +1422,16 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_run_command,
         mock_smtp_sendmail,
     ):
-        with patch(
-            "pathlib.Path.open",
-            new_callable=mock_open,
-            read_data="""{
+        with tempfile.NamedTemporaryFile(mode='w') as spool_file:
+            spool_file.write("""{
                 "job_id": 7,
                 "email": "root",
                 "state": "Ended",
                 "array_summary": false
                 }
-                """,
-        ):
+            """)
+            spool_file.flush()
+
             mock_slurmmail_cli_process_spool_file_options.array_max_notifications = 1
 
             sacct_output = "7_0|root|root|all|myaccount|1675460419|1675460599|COMPLETED|500M||1|1|00:00.010|1|/root|00:03:00|0:0|||test|node01|00:05:00|5|8|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
@@ -1484,7 +1462,7 @@ class TestProcessSpoolFile:
                 (0, scontrol_output, ""),
             ]
             slurmmail.cli.__dict__["__process_spool_file"](
-                pathlib.Path("/tmp/foo"),
+                pathlib.Path(spool_file.name),
                 smtplib.SMTP(),
                 mock_slurmmail_cli_process_spool_file_options,
             )
@@ -1516,17 +1494,16 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_run_command,
         mock_smtp_sendmail,
     ):
-        with patch(
-            "pathlib.Path.open",
-            new_callable=mock_open,
-            read_data="""{
+        with tempfile.NamedTemporaryFile(mode='w') as spool_file:
+            spool_file.write("""{
                 "job_id": 2,
                 "email": "root",
                 "state": "Ended",
                 "array_summary": false
                 }
-                """,
-        ):
+            """)
+            spool_file.flush()
+
             sacct_output = "2|root|root|all|myaccount|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
             sacct_output += "2.batch||||myaccount|1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
             mock_slurmmail_cli_run_command.side_effect = [
@@ -1534,7 +1511,7 @@ class TestProcessSpoolFile:
                 (1, "error", "error"),
             ]
             slurmmail.cli.__dict__["__process_spool_file"](
-                pathlib.Path("/tmp/foo"),
+                pathlib.Path(spool_file.name),
                 smtplib.SMTP(),
                 mock_slurmmail_cli_process_spool_file_options,
             )
@@ -1562,17 +1539,16 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_run_command,
         mock_smtp_sendmail,
     ):
-        with patch(
-            "pathlib.Path.open",
-            new_callable=mock_open,
-            read_data="""{
+        with tempfile.NamedTemporaryFile(mode='w') as spool_file:
+            spool_file.write("""{
                 "job_id": 2,
                 "email": "root",
                 "state": "Ended",
                 "array_summary": false
                 }
-                """,
-        ):
+            """)
+            spool_file.flush()
+
             sacct_output = "2|root|root|all|myaccount|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|UNLIMITED||2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
             sacct_output += "2.batch||||myaccount|1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
@@ -1600,7 +1576,7 @@ class TestProcessSpoolFile:
                 (0, scontrol_output, ""),
             ]
             slurmmail.cli.__dict__["__process_spool_file"](
-                pathlib.Path("/tmp/foo"),
+                pathlib.Path(spool_file.name),
                 smtplib.SMTP(),
                 mock_slurmmail_cli_process_spool_file_options,
             )
@@ -1626,17 +1602,16 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_run_command,
         mock_smtp_sendmail,
     ):
-        with patch(
-            "pathlib.Path.open",
-            new_callable=mock_open,
-            read_data="""{
+        with tempfile.NamedTemporaryFile(mode='w') as spool_file:
+            spool_file.write("""{
                 "job_id": 2,
                 "email": "root",
                 "state": "Ended",
                 "array_summary": false
                 }
-                """,
-        ):
+            """)
+            spool_file.flush()
+
             sacct_output = "2|root|root|all|myaccount|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|bad_wc|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
             sacct_output += "2.batch||||myaccount|1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
@@ -1664,7 +1639,7 @@ class TestProcessSpoolFile:
                 (0, scontrol_output, ""),
             ]
             slurmmail.cli.__dict__["__process_spool_file"](
-                pathlib.Path("/tmp/foo"),
+                pathlib.Path(spool_file.name),
                 smtplib.SMTP(),
                 mock_slurmmail_cli_process_spool_file_options,
             )
@@ -1693,17 +1668,16 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_run_command,
         mock_smtp_sendmail,
     ):
-        with patch(
-            "pathlib.Path.open",
-            new_callable=mock_open,
-            read_data="""{
+        with tempfile.NamedTemporaryFile(mode='w') as spool_file:
+            spool_file.write("""{
                 "job_id": 2,
                 "email": "root",
                 "state": "Ended",
                 "array_summary": false
                 }
-                """,
-        ):
+            """)
+            spool_file.flush()
+
             sacct_output = "2|root|root|all|myaccount|1674340451|bad_ts|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
             sacct_output += "2.batch||||myaccount|1674340451|bad_ts|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
@@ -1731,7 +1705,7 @@ class TestProcessSpoolFile:
                 (0, scontrol_output, ""),
             ]
             slurmmail.cli.__dict__["__process_spool_file"](
-                pathlib.Path("/tmp/foo"),
+                pathlib.Path(spool_file.name),
                 smtplib.SMTP(),
                 mock_slurmmail_cli_process_spool_file_options,
             )
@@ -1762,17 +1736,16 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_run_command,
         mock_smtp_sendmail,
     ):
-        with patch(
-            "pathlib.Path.open",
-            new_callable=mock_open,
-            read_data="""{
+        with tempfile.NamedTemporaryFile(mode='w') as spool_file:
+            spool_file.write("""{
                 "job_id": 3,
                 "email": "root",
                 "state": "Failed",
                 "array_summary": false
                 }
-                """,
-        ):
+            """)
+            spool_file.flush()
+
             sacct_output = "3|root|root|all|myaccount|1674340908|1674340980|TIMEOUT|500M||1|1|00:00.009|1|/root|00:01:12|0:0|||test|node01|00:01:00|1|3|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
             sacct_output += "3.batch||||myaccount|1674340908|1674340980|CANCELLED||4876K|1|1|00:00.009|1||00:01:12|0:15|||test|node01|||3.batch|cpu=1,mem=0,node=1|batch"  # noqa
             scontrol_output = (
@@ -1800,7 +1773,7 @@ class TestProcessSpoolFile:
                 (0, scontrol_output, ""),
             ]
             slurmmail.cli.__dict__["__process_spool_file"](
-                pathlib.Path("/tmp/foo"),
+                pathlib.Path(spool_file.name),
                 smtplib.SMTP(),
                 mock_slurmmail_cli_process_spool_file_options,
             )
@@ -1826,24 +1799,23 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_run_scontrol,
         mock_smtp_sendmail,
     ):
-        with patch(
-            "pathlib.Path.open",
-            new_callable=mock_open,
-            read_data="""{
+        with tempfile.NamedTemporaryFile(mode='w') as spool_file:
+            spool_file.write("""{
                 "job_id": 3,
                 "email": "root",
                 "state": "Time reached 50%",
                 "array_summary": false
                 }
-                """,
-        ):
+            """)
+            spool_file.flush()
+
             mock_slurmmail_cli_run_scontrol.return_value = None
 
             sacct_output = "3|root|root|all|myaccount|1674770321|Unknown|RUNNING|500M||1|0|00:00:00|1|/root|00:02:22|0:0|||test|node01|00:04:00|4|3|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
             sacct_output += "3.batch||||myaccount|1674770321|Unknown|RUNNING|||1|0|00:00:00|1||00:02:22|0:0|||test|node01|||3.batch|cpu=1,mem=0,node=1|batch"  # noqa
             mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
             slurmmail.cli.__dict__["__process_spool_file"](
-                pathlib.Path("/tmp/foo"),
+                pathlib.Path(spool_file.name),
                 smtplib.SMTP(),
                 mock_slurmmail_cli_process_spool_file_options,
             )
@@ -1869,24 +1841,23 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_run_scontrol,
         mock_smtp_sendmail,
     ):
-        with patch(
-            "pathlib.Path.open",
-            new_callable=mock_open,
-            read_data="""{
+        with tempfile.NamedTemporaryFile(mode='w') as spool_file:
+            spool_file.write("""{
                 "job_id": 3,
                 "email": "root",
                 "state": "Invalid dependency",
                 "array_summary": false
                 }
-                """,
-        ):
+            """)
+            spool_file.flush()
+
             mock_slurmmail_cli_run_scontrol.return_value = None
 
             sacct_output = "3|root|root|all|myaccount|1674770321|Unknown|PENDING|500M||1|0|00:00:00|1|/root|00:00:00|0:0|||test|node01|00:00:00|4|3|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
             sacct_output += "3.batch||||myaccount|1674770321|Unknown|PENDING|||1|0|00:00:00|1||00:00:00|0:0|||test|node01|||3.batch|cpu=1,mem=0,node=1|batch"  # noqa
             mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
             slurmmail.cli.__dict__["__process_spool_file"](
-                pathlib.Path("/tmp/foo"),
+                pathlib.Path(spool_file.name),
                 smtplib.SMTP(),
                 mock_slurmmail_cli_process_spool_file_options,
             )
