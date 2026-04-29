@@ -23,13 +23,14 @@ Repository: [https://github.com/neilmunday/slurm-mail](https://github.com/neilmu
 12. [Including Job Output in E-mails](#including-job-output-in-e-mails)
 13. [Job Arrays](#job-arrays)
 14. [GECOS Field Usage](#gecos-field-usage)
-15. [Development](#development)
-16. [Linting](#linting)
-17. [Testing](#testing)
-18. [Upgrading from Slurm-Mail version 3 to 4](#upgrading-from-slurm-mail-version-3-to-4)
-19. [Upgrading from Slurm-Mail version 4.0-4.9 to 4.10](#upgrading-from-slurm-mail-version-40-49-to-410)
-20. [Troubleshooting](#troubleshooting)
-21. [Contributors](#contributors)
+15. [TRES](#tres)
+16. [Development](#development)
+17. [Linting](#linting)
+18. [Testing](#testing)
+19. [Upgrading from Slurm-Mail version 3 to 4](#upgrading-from-slurm-mail-version-3-to-4)
+20. [Upgrading from Slurm-Mail version 4.0-4.9 to 4.10](#upgrading-from-slurm-mail-version-40-49-to-410)
+21. [Troubleshooting](#troubleshooting)
+22. [Contributors](#contributors)
 
 ## Introduction
 
@@ -419,6 +420,14 @@ Slurm-Mail will honour the behaviour of `--mail-type` option of `sbatch` for job
 Slurm-Mail uses the [GECOS](https://en.wikipedia.org/wiki/Gecos_field) field of a user's passwd entry to determine their real name to use in e-mails. Slurm-Mail will split the [GECOS](https://en.wikipedia.org/wiki/Gecos_field) field by the comma character and will by default use the first (zeroth) element. If your system is set-up to use a different element for the user's real name then you can change the `gecosNameField` parameter in `slurm-mail.conf` to your desired value.
 
 For example, if your [GECOS](https://en.wikipedia.org/wiki/Gecos_field) uses the format `Last name, first name` you can set `gecosNameField` to `1` instead of `0`.
+
+## TRES
+
+Slurm-Mail will include all TRES values associated with a job in e-mails. If you wish to exclude one or more TRES values then you can use the `ignoreTRES` option in `slurm-mail.conf`. This option takes a comma separated list, e.g.
+
+```
+ignoreTRESKeys = billing,GRES/gpu
+```
 
 # Development
 
