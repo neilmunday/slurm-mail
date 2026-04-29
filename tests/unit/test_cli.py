@@ -699,7 +699,7 @@ class TestProcessSpoolFile:
         mock_slurmmail_cli_run_scontrol,
         mock_smtp_sendmail,
     ):
-       with tempfile.NamedTemporaryFile(mode='w') as spool_file:
+        with tempfile.NamedTemporaryFile(mode='w') as spool_file:
             spool_file.write("""{
                 "job_id": 1,
                 "email": "root",
