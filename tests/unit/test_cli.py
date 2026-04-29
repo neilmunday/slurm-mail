@@ -942,6 +942,74 @@ class TestProcessSpoolFile:
                 ["ended.tpl", "job-table.tpl", "tres.tpl", "signature.tpl"]
             )
 
+    def test_job_ended_ignore_tres(
+        self,
+        mock_get_file_contents,
+        mock_slurmmail_cli_delete_spool_file,
+        mock_slurmmail_cli_process_spool_file_options,
+        mock_slurmmail_cli_run_command,
+        mock_smtp_sendmail,
+    ):
+        # ignore billing TRES
+        mock_slurmmail_cli_process_spool_file_options.ignore_tres_keys = ["billing"]
+
+        with tempfile.NamedTemporaryFile(mode='w') as spool_file:
+            spool_file.write("""{
+                "job_id": 2,
+                "email": "root",
+                "state": "Ended",
+                "array_summary": false
+                }
+            """)
+            spool_file.flush()
+
+            sacct_output = "2|root|root|all|myaccount|1674340451|1674340571|COMPLETED|500M||1|1|00:00.010|1|/root|00:02:00|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"  # noqa
+            sacct_output += "2.batch||||myaccount|1674340451|1674340571|COMPLETED||4880K|1|1|00:00.010|1||00:02:00|0:0|||test|node01|||2.batch|cpu=1,mem=0,node=1|batch"  # noqa
+            scontrol_output = (
+                "JobId=2 JobName=test.jcf UserId=root(0) GroupId=root(0) MCS_label=N/A"
+                " Priority=4294901758 Nice=0 Account=root QOS=normal JobState=COMPLETED"
+                " Reason=None Dependency=(null) Requeue=1 Restarts=0 BatchFlag=1"
+                " Reboot=0 ExitCode=0:0 RunTime=00:02:00 TimeLimit=01:00:00 TimeMin=N/A"
+                " SubmitTime=2023-01-21T22:34:11 EligibleTime=2023-01-21T22:34:11"
+                " AccrueTime=2023-01-21T22:34:11 StartTime=2023-01-21T22:34:11"
+                " EndTime=2023-01-21T22:36:11 Deadline=N/A SuspendTime=None"
+                " SecsPreSuspend=0 LastSchedEval=2023-01-21T22:34:11 Scheduler=Main"
+                " Partition=all AllocNode:Sid=ac2c384f02af:204 ReqNodeList=(null)"
+                " ExcNodeList=(null) NodeList=node01 BatchHost=node01 NumNodes=1"
+                " NumCPUs=1 NumTasks=1 CPUs/Task=1 ReqB:S:C:T=0:0:*:*"
+                " TRES=cpu=1,node=1,billing=1 Socks/Node=* NtasksPerN:B:S:C=0:0:*:*"
+                " CoreSpec=* MinCPUsNode=1 MinMemoryNode=0 MinTmpDiskNode=0"
+                " Features=(null) DelayBoot=00:00:00 OverSubscribe=OK Contiguous=0"
+                " Licenses=(null) Network=(null) Command=/root/test.jcf WorkDir=/root"
+                " StdErr=/root/slurm-2.out StdIn=/dev/null StdOut=/root/slurm-2.out"
+                " Power= MailUser=root"
+                " MailType=INVALID_DEPEND,BEGIN,END,FAIL,REQUEUE,STAGE_OUT"
+            )
+            mock_slurmmail_cli_run_command.side_effect = [
+                (0, sacct_output, ""),
+                (0, scontrol_output, ""),
+            ]
+
+            slurmmail.cli.__dict__["__process_spool_file"](
+                pathlib.Path(spool_file.name),
+                smtplib.SMTP(),
+                mock_slurmmail_cli_process_spool_file_options,
+            )
+            assert mock_slurmmail_cli_run_command.call_count == 2
+            mock_slurmmail_cli_delete_spool_file.assert_called_once()
+            mock_smtp_sendmail.assert_called_once()
+            assert (
+                mock_smtp_sendmail.call_args[0][0]
+                == mock_slurmmail_cli_process_spool_file_options.email_from_address
+            )
+            assert mock_smtp_sendmail.call_args[0][1] == ["root"]
+            # checking "billing" TRES key is not in e-mail content
+            assert "billing" not in mock_smtp_sendmail.call_args[0][2]
+            check_templates_used(
+                mock_get_file_contents,
+                ["ended.tpl", "job-table.tpl", "tres.tpl", "signature.tpl"]
+            )
+
     def test_interactive_job_ended(
         self,
         mock_get_file_contents,
