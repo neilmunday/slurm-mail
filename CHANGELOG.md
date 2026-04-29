@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 4.33
+------------
+
+Date: 2026-04-26
+
+* Added `mailDomain` configuration option (pull #192)
+
 Version 4.32
 ------------
 
