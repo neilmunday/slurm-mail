@@ -4,9 +4,10 @@ Change Log
 Version 4.33
 ------------
 
-Date: 2026-04-26
+Date: 2026-04-39
 
-* Added `mailDomain` configuration option (pull #192)
+* Added `mailDomain` configuration option (pull #192). Thanks to @walee-1 for this new feature.
+* Added `ignoreTRES` configuration option (pull #193). Thanks to @walee-1 for this new feature.
 
 Version 4.32
 ------------
