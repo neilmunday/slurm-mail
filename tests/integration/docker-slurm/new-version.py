@@ -30,6 +30,7 @@ import fileinput
 import glob
 import logging
 import pathlib
+import re
 import sys
 from datetime import datetime
 from typing import List
@@ -88,15 +89,19 @@ if __name__ == "__main__":
 
     versions: List[str] = []
 
+    version_re = re.compile(r"^v?[\d]+\.[\d]+\.[\d]+$")
+
     logging.info("creating GitHub instance")
     gh = Github()
     repo = gh.get_repo(full_name_or_id="SchedMD/slurm")
     logging.info("processing releases")
     for release in repo.get_releases():
-        if release.name.startswith("v"):
-            versions.append(release.name[1:])
-        else:
-            versions.append(release.name)
+        match = version_re.match(release.name)
+        if match:
+            if release.name.startswith("v"):
+                versions.append(release.name[1:])
+            else:
+                versions.append(release.name)
 
     versions.sort()
     latest_version = versions[-1]
