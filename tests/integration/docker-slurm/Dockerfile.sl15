@@ -12,7 +12,7 @@ RUN zypper update -y && \
     rpm --import https://yum.mariadb.org/RPM-GPG-KEY-MariaDB && \
     zypper addrepo --gpgcheck --refresh https://yum.mariadb.org/${MARIADB_VER}/sles/15/x86_64 mariadb && \
     zypper --gpg-auto-import-keys refresh && \
-    zypper install -y \
+    zypper install --force-resolution -y \
       autoconf \
       automake \
       gcc \
