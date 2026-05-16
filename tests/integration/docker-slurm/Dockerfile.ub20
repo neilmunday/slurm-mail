@@ -24,6 +24,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update -y && \
       mariadb-server \
       munge \
       perl \
+      pkg-config \
       python3 \
       python3-all \
       supervisor \
