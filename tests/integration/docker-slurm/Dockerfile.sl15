@@ -20,6 +20,7 @@ RUN zypper update -y && \
       MariaDB-client \
       MariaDB-server \
       mailx \
+      munge \
       munge-devel \
       pam-devel \
       perl \
