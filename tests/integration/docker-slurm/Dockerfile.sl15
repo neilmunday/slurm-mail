@@ -6,11 +6,11 @@ LABEL org.opencontainers.image.source="https://github.com/neilmunday/slurm-mail"
       maintainer="Neil Munday"
 
 ARG SLURM_VER=26.05.0
-ARG MARIADB_VER=11
+ARG MARIADB_VER=12.3
 
 RUN zypper update -y && \
     rpm --import https://yum.mariadb.org/RPM-GPG-KEY-MariaDB && \
-    zypper addrepo --gpgcheck --refresh https://yum.mariadb.org/${MARIADB_VER}.rolling/sles/15/x86_64 mariadb && \
+    zypper addrepo --gpgcheck --refresh https://yum.mariadb.org/${MARIADB_VER}/opensuse/15.6/x86_64 mariadb && \
     zypper --gpg-auto-import-keys refresh && \
     zypper install --force-resolution -y \
       autoconf \
