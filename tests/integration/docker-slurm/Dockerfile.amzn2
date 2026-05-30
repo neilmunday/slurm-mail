@@ -23,6 +23,7 @@ RUN yum update -y && \
       MariaDB-devel \
       MariaDB-client \
       MariaDB-server \
+      munge \
       munge-devel \
       pam-devel \
       perl \
@@ -34,6 +35,12 @@ RUN yum update -y && \
       tini \
       wget && \
     wget https://download.schedmd.com/slurm/slurm-${SLURM_VER}.tar.bz2 -O /root/slurm-${SLURM_VER}.tar.bz2 && \
+    cd /root && \
+    tar xvf /root/slurm-${SLURM_VER}.tar.bz2 && \
+    grep -v Recommends /root/slurm-${SLURM_VER}/slurm.spec > /root/slurm-${SLURM_VER}/slurm.spec.tmp && \
+    mv /root/slurm-${SLURM_VER}/slurm.spec.tmp /root/slurm-${SLURM_VER}/slurm.spec && \
+    rm /root/slurm-${SLURM_VER}.tar.bz2 && \
+    tar cjvf /root/slurm-${SLURM_VER}.tar.bz2 slurm-${SLURM_VER} && \
     rpmbuild -tb /root/slurm-${SLURM_VER}.tar.bz2 && \
     yum localinstall -y /root/rpmbuild/RPMS/x86_64/slurm-${SLURM_VER}*.amzn2.x86_64.rpm \
     /root/rpmbuild/RPMS/x86_64/slurm-slurmctld-${SLURM_VER}*.amzn2.x86_64.rpm \
