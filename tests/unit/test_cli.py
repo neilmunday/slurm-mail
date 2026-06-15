@@ -602,7 +602,49 @@ class TestProcessSpoolFile:
                 mock_slurmmail_cli_process_spool_file_options,
             )
             mock_slurmmail_cli_delete_spool_file.assert_called_once()
+    def test_array_summary_stops_after_first_representative_task(
+        self,
+        mock_get_file_contents,
+        mock_slurmmail_cli_delete_spool_file,
+        mock_slurmmail_cli_process_spool_file_options,
+        mock_slurmmail_cli_run_command,
+        mock_slurmmail_cli_run_scontrol,
+        mock_smtp_sendmail,
+    ):
+        with tempfile.NamedTemporaryFile(mode="w") as spool_file:
+            spool_file.write("""{
+                "job_id": 1,
+                "email": "root",
+                "state": "Began",
+                "array_summary": true
+            }""")
+            spool_file.flush()
 
+            mock_slurmmail_cli_run_scontrol.return_value = None
+
+            sacct_output = (
+                "1_1|root|root|all|myaccount|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|1|billing=1,cpu=1,node=1|test.jcf\n"
+                "1_2|root|root|all|myaccount|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|2|billing=1,cpu=1,node=1|test.jcf\n"
+                "1_3|root|root|all|myaccount|1674333232|Unknown|RUNNING|500M||1|0|00:00:00|1|/|00:00:11|0:0|||test|node01|01:00:00|60|3|billing=1,cpu=1,node=1|test.jcf"
+            )
+
+            mock_slurmmail_cli_run_command.side_effect = [(0, sacct_output, "")]
+
+            slurmmail.cli.__dict__["__process_spool_file"](
+                pathlib.Path(spool_file.name),
+                smtplib.SMTP(),
+                mock_slurmmail_cli_process_spool_file_options,
+            )
+
+            assert mock_slurmmail_cli_run_command.call_count == 1
+            assert mock_slurmmail_cli_run_scontrol.call_count == 1
+            mock_slurmmail_cli_delete_spool_file.assert_called_once()
+            mock_smtp_sendmail.assert_called_once()
+
+            check_templates_used(
+                mock_get_file_contents,
+                ["started-array-summary.tpl", "job-table.tpl", "signature.tpl"],
+            )
     def test_job_began(
         self,
         mock_get_file_contents,
@@ -1396,14 +1438,13 @@ class TestProcessSpoolFile:
             mock_slurmmail_cli_run_command.side_effect = [
                 (0, sacct_output, ""),
                 (0, scontrol_output_1, ""),
-                (0, scontrol_output_2, ""),
             ]
             slurmmail.cli.__dict__["__process_spool_file"](
                 pathlib.Path(spool_file.name),
                 smtplib.SMTP(),
                 mock_slurmmail_cli_process_spool_file_options,
             )
-            assert mock_slurmmail_cli_run_command.call_count == 3
+            assert mock_slurmmail_cli_run_command.call_count == 2
             mock_slurmmail_cli_delete_spool_file.assert_called_once()
             mock_smtp_sendmail.assert_called_once()
             assert (

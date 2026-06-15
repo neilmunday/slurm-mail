@@ -55,7 +55,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from string import Template
 from time import sleep
-from typing import Dict, Optional, Set
+from typing import Dict, List, Optional, Set
 
 from slurmmail import conf_dir, conf_file, html_tpl_dir, text_tpl_dir
 from slurmmail.common import (
@@ -267,7 +267,7 @@ def __process_spool_file(
 
     user_email = resolved_email
 
-    jobs = []  # store job object for each job in this array
+    jobs: List[Job] = []  # store job object for each job in this array
 
     if state not in [
         "Began",
@@ -371,7 +371,26 @@ def __process_spool_file(
                 if array_summary and "{0}".format(first_job_id) not in sacct_dict["JobId"]:
                     logger.debug("skipping %s for job array summary", sacct_dict["JobId"])
                     continue
-
+                if array_summary and jobs:
+                    logger.info(
+                        "Array summary for %s already has representative task %s;"
+                        "stopping detailed processing",
+                        first_job_id,
+                        jobs[0].id,
+                        )
+                    break
+                if (
+                    not array_summary
+                    and options.array_max_notifications > 0
+                    and len(jobs) >= options.array_max_notifications
+                ):
+                    logger.info(
+                        "Reached array notification processing limit of %d "
+                        "for job %s; stopping detailed task processing",
+                        options.array_max_notifications,
+                        first_job_id,
+                    )
+                    break
                 job = Job(options.datetime_format, job_id, job_raw_id)
 
                 job.cluster = sacct_dict["Cluster"]
@@ -545,10 +564,21 @@ def __process_spool_file(
         # Will only be one job regardless of if it is an array in the
         # "began" state. For jobs that have ended there can be mulitple
         # jobs objects if it is an array.
+        display_job_id = (
+            str(first_job_id)
+            if array_summary
+            else job.id
+        )
+
+        display_array_job_id = (
+            str(first_job_id)
+            if array_summary
+            else job.array_id
+        )
         logger.debug("Creating template for job %s", job.raw_id)
         tpl = Template(get_file_contents(options.html_templates["job_table"]))
         job_table_html = tpl.substitute(
-            JOB_ID=job.id,
+            JOB_ID=display_job_id,
             JOB_NAME=job.name,
             PARTITION=job.partition,
             START=job.start,
@@ -576,7 +606,7 @@ def __process_spool_file(
 
         tpl = Template(get_file_contents(options.text_templates["job_table"]))
         job_table_text = tpl.substitute(
-            JOB_ID=job.id,
+            JOB_ID=display_job_id,
             JOB_NAME=job.name,
             PARTITION=job.partition,
             START=job.start,
@@ -633,8 +663,8 @@ def __process_spool_file(
 
                 body_html = tpl_html.substitute(
                     CSS=options.css,
-                    JOB_ID=job.id,
-                    ARRAY_JOB_ID=job.array_id,
+                    JOB_ID=display_job_id,
+                    ARRAY_JOB_ID=display_array_job_id,
                     USER=job.user_real_name,
                     JOB_TABLE=job_table_html,
                     CLUSTER=job.cluster,
@@ -642,8 +672,8 @@ def __process_spool_file(
                 )
 
                 body_text = tpl_text.substitute(
-                    JOB_ID=job.id,
-                    ARRAY_JOB_ID=job.array_id,
+                    JOB_ID=display_job_id,
+                    ARRAY_JOB_ID=display_array_job_id,
                     USER=job.user_real_name,
                     JOB_TABLE=job_table_text,
                     CLUSTER=job.cluster,
@@ -653,7 +683,7 @@ def __process_spool_file(
                 tpl_html = Template(get_file_contents(options.html_templates["hetjob_started"]))
                 body_html = tpl_html.substitute(
                     CSS=options.css,
-                    JOB_ID=job.id,
+                    JOB_ID=display_job_id,
                     SIGNATURE=signature_html,
                     USER=job.user_real_name,
                     JOB_TABLE=job_table_html,
@@ -661,7 +691,7 @@ def __process_spool_file(
                 )
                 tpl_text = Template(get_file_contents(options.text_templates["hetjob_started"]))
                 body_text = tpl_text.substitute(
-                    JOB_ID=job.id,
+                    JOB_ID=display_job_id,
                     SIGNATURE=signature_text,
                     USER=job.user_real_name,
                     JOB_TABLE=job_table_text,
@@ -671,7 +701,7 @@ def __process_spool_file(
                 tpl_html = Template(get_file_contents(options.html_templates["started"]))
                 body_html = tpl_html.substitute(
                     CSS=options.css,
-                    JOB_ID=job.id,
+                    JOB_ID=display_job_id,
                     SIGNATURE=signature_html,
                     USER=job.user_real_name,
                     JOB_TABLE=job_table_html,
@@ -679,7 +709,7 @@ def __process_spool_file(
                 )
                 tpl_text = Template(get_file_contents(options.text_templates["started"]))
                 body_text = tpl_text.substitute(
-                    JOB_ID=job.id,
+                    JOB_ID=display_job_id,
                     SIGNATURE=signature_text,
                     USER=job.user_real_name,
                     JOB_TABLE=job_table_text,
@@ -748,8 +778,8 @@ def __process_spool_file(
                         body_html = tpl_html.substitute(
                             CSS=options.css,
                             END_TXT=end_txt,
-                            JOB_ID=job.id,
-                            ARRAY_JOB_ID=job.array_id,
+                            JOB_ID=display_job_id,
+                            ARRAY_JOB_ID=display_array_job_id,
                             SIGNATURE=signature_html,
                             USER=job.user_real_name,
                             JOB_TABLE=job_table_html,
@@ -762,8 +792,8 @@ def __process_spool_file(
                         )
                         body_text = tpl_text.substitute(
                             END_TXT=end_txt,
-                            JOB_ID=job.id,
-                            ARRAY_JOB_ID=job.array_id,
+                            JOB_ID=display_job_id,
+                            ARRAY_JOB_ID=display_array_job_id,
                             SIGNATURE=signature_text,
                             USER=job.user_real_name,
                             JOB_TABLE=job_table_text,
@@ -778,8 +808,8 @@ def __process_spool_file(
                         body_html = tpl_html.substitute(
                             CSS=options.css,
                             END_TXT=end_txt,
-                            JOB_ID=job.id,
-                            ARRAY_JOB_ID=job.array_id,
+                            JOB_ID=display_job_id,
+                            ARRAY_JOB_ID=display_array_job_id,
                             SIGNATURE=signature_html,
                             USER=job.user_real_name,
                             JOB_TABLE=job_table_html,
@@ -792,8 +822,8 @@ def __process_spool_file(
                         )
                         body_text = tpl_text.substitute(
                             END_TXT=end_txt,
-                            JOB_ID=job.id,
-                            ARRAY_JOB_ID=job.array_id,
+                            JOB_ID=display_job_id,
+                            ARRAY_JOB_ID=display_array_job_id,
                             SIGNATURE=signature_text,
                             USER=job.user_real_name,
                             JOB_TABLE=job_table_text,
@@ -806,7 +836,7 @@ def __process_spool_file(
                     body_html = tpl_html.substitute(
                         CSS=options.css,
                         END_TXT=end_txt,
-                        JOB_ID=job.id,
+                        JOB_ID=display_job_id,
                         USER=job.user_real_name,
                         JOB_TABLE=job_table_html,
                         JOB_OUTPUT=job_output_html,
@@ -817,7 +847,7 @@ def __process_spool_file(
                     tpl_text = Template(get_file_contents(options.text_templates["hetjob_ended"]))
                     body_text = tpl_text.substitute(
                         END_TXT=end_txt,
-                        JOB_ID=job.id,
+                        JOB_ID=display_job_id,
                         USER=job.user_real_name,
                         JOB_TABLE=job_table_text,
                         TRES_TABLE=tres_template_result.text,
@@ -830,7 +860,7 @@ def __process_spool_file(
                     body_html = tpl_html.substitute(
                         CSS=options.css,
                         END_TXT=end_txt,
-                        JOB_ID=job.id,
+                        JOB_ID=display_job_id,
                         USER=job.user_real_name,
                         JOB_TABLE=job_table_html,
                         TRES_TABLE=tres_template_result.html,
@@ -841,7 +871,7 @@ def __process_spool_file(
                     tpl_text = Template(get_file_contents(options.text_templates["ended"]))
                     body_text = tpl_text.substitute(
                         END_TXT=end_txt,
-                        JOB_ID=job.id,
+                        JOB_ID=display_job_id,
                         USER=job.user_real_name,
                         JOB_TABLE=job_table_text,
                         TRES_TABLE=tres_template_result.text,
@@ -854,7 +884,7 @@ def __process_spool_file(
                 tpl_html = Template(get_file_contents(options.html_templates["never_ran"]))
                 body_html = tpl_html.substitute(
                     CSS=options.css,
-                    JOB_ID=job.id,
+                    JOB_ID=display_job_id,
                     USER=job.user_real_name,
                     JOB_TABLE=job_table_html,
                     CLUSTER=job.cluster,
@@ -862,7 +892,7 @@ def __process_spool_file(
                 )
                 tpl_text = Template(get_file_contents(options.text_templates["never_ran"]))
                 body_text = tpl_text.substitute(
-                    JOB_ID=job.id,
+                    JOB_ID=display_job_id,
                     USER=job.user_real_name,
                     JOB_TABLE=job_table_text,
                     CLUSTER=job.cluster,
@@ -883,7 +913,7 @@ def __process_spool_file(
             body_html = tpl_html.substitute(
                 CSS=options.css,
                 REACHED=reached,
-                JOB_ID=job.id,
+                JOB_ID=display_job_id,
                 REMAINING=remaining_str,
                 USER=job.user_real_name,
                 JOB_TABLE=job_table_html,
@@ -894,7 +924,7 @@ def __process_spool_file(
             tpl_text = Template(get_file_contents(options.text_templates["time"]))
             body_text = tpl_text.substitute(
                 REACHED=reached,
-                JOB_ID=job.id,
+                JOB_ID=display_job_id,
                 REMAINING=remaining_str,
                 USER=job.user_real_name,
                 JOB_TABLE=job_table_text,
@@ -909,7 +939,7 @@ def __process_spool_file(
             body_html = tpl_html.substitute(
                 CSS=options.css,
                 CLUSTER=job.cluster,
-                JOB_ID=job.id,
+                JOB_ID=display_job_id,
                 SIGNATURE=signature_html,
                 USER=job.user_real_name,
                 JOB_TABLE=job_table_html,
@@ -917,7 +947,7 @@ def __process_spool_file(
             tpl_text = Template(get_file_contents(options.text_templates["invalid_dependency"]))
             body_text = tpl_text.substitute(
                 CLUSTER=job.cluster,
-                JOB_ID=job.id,
+                JOB_ID=display_job_id,
                 SIGNATURE=signature_text,
                 USER=job.user_real_name,
                 JOB_TABLE=job_table_text,
@@ -927,7 +957,7 @@ def __process_spool_file(
             body_html = tpl_html.substitute(
                 CSS=options.css,
                 CLUSTER=job.cluster,
-                JOB_ID=job.id,
+                JOB_ID=display_job_id,
                 SIGNATURE=signature_html,
                 USER=job.user_real_name,
                 JOB_TABLE=job_table_html,
@@ -935,7 +965,7 @@ def __process_spool_file(
             tpl_text = Template(get_file_contents(options.text_templates["staged_out"]))
             body_text = tpl_text.substitute(
                 CLUSTER=job.cluster,
-                JOB_ID=job.id,
+                JOB_ID=display_job_id,
                 SIGNATURE=signature_text,
                 USER=job.user_real_name,
                 JOB_TABLE=job_table_text,
@@ -948,7 +978,7 @@ def __process_spool_file(
 
         msg = MIMEMultipart("alternative")
         msg["Subject"] = Template(options.email_subject).substitute(
-            CLUSTER=job.cluster, JOB_ID=job.id, JOB_NAME=job.name, STATE=subject_state
+            CLUSTER=job.cluster, JOB_ID=display_job_id, JOB_NAME=job.name, STATE=subject_state
         )
         msg["To"] = user_email
         msg["From"] = options.email_from_address
@@ -974,7 +1004,7 @@ def __process_spool_file(
             "Sending e-mail to: %s using %s for job %s (%s) via SMTP server %s:%s",
             job.user,
             user_email,
-            job.raw_id,
+            display_job_id,
             state,
             options.smtp_server,
             options.smtp_port,
