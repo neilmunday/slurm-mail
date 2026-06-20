@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 4.34
+------------
+
+Date: 2026-06-20
+
+* Improved Slurm array processing (pull #197). Thanks to @walee-1 for this performance enhancement.
+
 Version 4.33
 ------------
 
