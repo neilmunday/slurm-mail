@@ -65,3 +65,10 @@ To submit a job:
 ```
 docker exec -i slurm sbatch < myjob.sh
 ```
+### Using a different entrypoint.sh script
+
+If you want to use a different `entrypoint.sh` script (for example if you are working on a new version of the script) you can override the script to use like so:
+
+```bash
+docker run -v $(pwd)/entrypoint.sh:/entrypoint.sh --entrypoint /entrypoint.sh -it --name slurm -h compute01 ghcr.io/neilmunday/slurm-mail/slurm-el9 /bin/bash
+```
