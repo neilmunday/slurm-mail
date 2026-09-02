@@ -83,6 +83,10 @@ if [[ "$ROLE" == "HEAD" ]]; then
 
   supervisorctl start slurmdbd || die "slurmdbd failed to start" /var/log/slurm/slurmdbd.log
   supervisorctl start slurmctld || die "slurmctld failed to start" /var/log/slurm/slurmctld.log
+
+  # add test user to sacct
+  sacctmgr create account name=default -i || die "failed to add test account via sacctmgr"
+  sacctmgr create user name=test account=default -i || die "failed to add test user via sacctmgr"
 fi
 
 supervisorctl start slurmd || die "slurmd failed to start" /var/log/slurm/slurmd.$HOSTNAME.log
