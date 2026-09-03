@@ -29,11 +29,11 @@ echo "using $NODES node(s) with prefix: $NODE_PREFIX"
 echo "container role: $ROLE"
 
 mkdir -p /var/run/mysqld
-chown mysql. /var/run/mysqld
-chown munge. /var/log/munge
-chown munge. /var/lib/munge
+chown mysql: /var/run/mysqld
+chown munge: /var/log/munge
+chown munge: /var/lib/munge
 mkdir -p /var/run/munge
-chown munge. /var/run/munge
+chown munge: /var/run/munge
 
 supervisord --configuration /etc/supervisord.conf
 
