@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 4.35
+------------
+
+Date: 2026-09-04
+
+* Removed usage of deprecated `chown user.` syntax (issue #203, pull #204). Thanks to @lsterck for reporting the issue and to @Jah-yee for the pull request. 
+
 Version 4.34
 ------------
 
