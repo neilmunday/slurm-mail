@@ -37,7 +37,6 @@ SLURM_VER=$1
 OSES="
 amzn2
 amzn2023
-el7
 el8
 el9
 sl15
