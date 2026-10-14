@@ -16,21 +16,22 @@ Repository: [https://github.com/neilmunday/slurm-mail](https://github.com/neilmu
 5. [Environment Variables](#environment-variables)
 6. [SMTP Settings](#smtp-settings)
 7. [E-mail Retries](#e-mail-retries)
-8. [E-mail Headers](#e-mail-headers)
-9. [E-mail Domain](#e-mail-domain)
-10. [Customising E-mails](#customising-e-mails)
-11. [Validating E-mails](#validating-e-mails)
-12. [Including Job Output in E-mails](#including-job-output-in-e-mails)
-13. [Job Arrays](#job-arrays)
-14. [GECOS Field Usage](#gecos-field-usage)
-15. [TRES](#tres)
-16. [Development](#development)
-17. [Linting](#linting)
-18. [Testing](#testing)
-19. [Upgrading from Slurm-Mail version 3 to 4](#upgrading-from-slurm-mail-version-3-to-4)
-20. [Upgrading from Slurm-Mail version 4.0-4.9 to 4.10](#upgrading-from-slurm-mail-version-40-49-to-410)
-21. [Troubleshooting](#troubleshooting)
-22. [Contributors](#contributors)
+8. [E-mail Rate Limiting](#e-mail-rate-limiting)
+9. [E-mail Headers](#e-mail-headers)
+10. [E-mail Domain](#e-mail-domain)
+11. [Customising E-mails](#customising-e-mails)
+12. [Validating E-mails](#validating-e-mails)
+13. [Including Job Output in E-mails](#including-job-output-in-e-mails)
+14. [Job Arrays](#job-arrays)
+15. [GECOS Field Usage](#gecos-field-usage)
+16. [TRES](#tres)
+17. [Development](#development)
+18. [Linting](#linting)
+19. [Testing](#testing)
+20. [Upgrading from Slurm-Mail version 3 to 4](#upgrading-from-slurm-mail-version-3-to-4)
+21. [Upgrading from Slurm-Mail version 4.0-4.9 to 4.10](#upgrading-from-slurm-mail-version-40-49-to-410)
+22. [Troubleshooting](#troubleshooting)
+23. [Contributors](#contributors)
 
 ## Introduction
 
@@ -226,6 +227,7 @@ slurm-mail
     │   ├── job-output.tpl
     │   ├── job-table.tpl
     │   ├── never-ran.tpl
+    │   ├── rate-limited.tpl
     │   ├── signature.tpl
     │   ├── staged-out.tpl
     │   ├── started-array-summary.tpl
@@ -243,6 +245,7 @@ slurm-mail
         ├── job-output.tpl
         ├── job-table.tpl
         ├── never-ran.tpl
+        ├── rate-limited.tpl
         ├── signature.tpl
         ├── staged-out.tpl
         ├── started-array-summary.tpl
@@ -340,6 +343,25 @@ You can add a time delay between retries by setting the `retryDelay` option in `
 
 **Note**: If e-mail delivery fails for several e-mails and `retryDelay` is a large value this could lead to more than one copy of `slurm-send-mail` being executed. You should consider decreasing the frequency that `slurm-send-mail` is executed by updating `/etc/cron.d/slurm-mail`
 
+## E-mail rate limiting
+
+A user who submits a large number of jobs from a loop with e-mail notifications enabled can cause Slurm-Mail to send thousands of e-mails in a short time, which can overload your mail servers. To prevent this, Slurm-Mail limits the number of e-mails sent to the same address. By default at most 50 e-mails per hour are sent to each address. This can be changed with the following options in `slurm-mail.conf`:
+
+```
+rateLimitMaxEmails = 50
+rateLimitPeriod = 3600
+```
+
+Once an address has been sent `rateLimitMaxEmails` e-mails within the last `rateLimitPeriod` seconds, all further e-mails to that address are suppressed. E-mails resume once no e-mails have been requested for that address for `rateLimitPeriod` seconds, so a user whose jobs keep requesting e-mails stays suppressed until the flood stops. Suppressed e-mails are logged and discarded; they are not sent later.
+
+Rate limiting is applied to the resolved destination address (after `mailDomain` is applied), and is checked before `sacct` is called, so suppressed e-mails put no extra load on the Slurm database.
+
+When an address first becomes rate limited, a single e-mail is sent to it using the `rate-limited.tpl` templates to explain why it will not receive further e-mails. To disable this e-mail set `rateLimitNotify = no`. The subject of this e-mail can be changed with the `rateLimitEmailSubject` option.
+
+Rate limit state is stored in `rate-limit.json` in the spool directory by default. Use the `rateLimitStateFile` option to choose a different location. While rate limiting is enabled only one copy of `slurm-send-mail` will run at a time; any copy started while another is still running exits straight away.
+
+Rate limiting is enabled by default, including for existing installations whose `slurm-mail.conf` does not contain the options above. To disable it set `rateLimitMaxEmails = 0`.
+
 ## E-mail headers
 
 To add additional e-mail headers to outgoing e-mails please set the `emailHeaders` option in `slurm-mail.conf`
@@ -365,6 +387,7 @@ Slurm-Mail uses Python's [string.Template](https://docs.python.org/3/library/str
 | invalid-dependency.tpl    | Used when a job has an invalid dependency.                        |
 | job-table.tpl             | Used to create the job info table in e-mails.                     |
 | never-ran.tpl             | Used for jobs that never ran.                                     |
+| rate-limited.tpl          | Used to tell a user that their e-mails are being rate limited.    |
 | signature.tpl             | Used to create the e-mail signature.                              |
 | staged-out.tpl            | Used when a job's burst buffer stage has completed.               |
 | started.tpl               | Used for jobs that have started.                                  |

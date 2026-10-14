@@ -69,6 +69,14 @@ from slurmmail.common import (
     run_command,
     tail_file,
 )
+from slurmmail.ratelimit import (
+    ALLOW,
+    DEFAULT_RATE_LIMIT_MAX_EMAILS,
+    DEFAULT_RATE_LIMIT_PERIOD,
+    LIMIT_REACHED,
+    RateLimiter,
+    get_period_str,
+)
 from slurmmail.slurm import check_job_output_file_path, Job
 
 logger = logging.getLogger(__name__)
@@ -106,6 +114,9 @@ class ProcessSpoolFileOptions:
         self.retry_delay: int = 0
         self.retry_on_failure: bool = True
         self.ignore_tres_keys: Set[str] = set()
+        self.rate_limiter: Optional[RateLimiter] = None
+        self.rate_limit_notify: bool = True
+        self.rate_limit_email_subject: str = "Job e-mail notifications suspended"
 
 
 def get_scontrol_values(input_str: str) -> Dict[str, str]:
@@ -266,6 +277,23 @@ def __process_spool_file(
         return
 
     user_email = resolved_email
+
+    if options.rate_limiter is not None:
+        # check before calling sacct so that a flood of spool files is cheap to discard
+        result = options.rate_limiter.check(user_email)
+        if result != ALLOW:
+            logger.warning(
+                "Rate limit of %d e-mails per %d seconds reached for %s, suppressing e-mail for job %s (%s)",
+                options.rate_limiter.max_emails,
+                options.rate_limiter.period,
+                user_email,
+                first_job_id,
+                state,
+            )
+            if result == LIMIT_REACHED and options.rate_limit_notify:
+                __send_rate_limit_notification(smtp_conn, options, user_email, first_job_id)
+            delete_spool_file(json_file)
+            return
 
     jobs: List[Job] = []  # store job object for each job in this array
 
@@ -976,30 +1004,9 @@ def __process_spool_file(
         else:
             subject_state = state
 
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = Template(options.email_subject).substitute(
+        subject = Template(options.email_subject).substitute(
             CLUSTER=job.cluster, JOB_ID=display_job_id, JOB_NAME=job.name, STATE=subject_state
         )
-        msg["To"] = user_email
-        msg["From"] = options.email_from_address
-        msg["Date"] = email.utils.formatdate(localtime=True)
-        msg["Message-ID"] = email.utils.make_msgid()
-
-        # add optional headers
-        if options.email_headers:
-            for header_name, header_value in options.email_headers.items():
-                if header_name in msg:
-                    logger.warning(
-                        "Ignoring header_name %s - header is already set",
-                        header_name
-                    )
-                    continue
-
-                msg[header_name] = header_value
-
-        # prefer HTML to plain text, so we add the plain text attachment first (see rfc2046 5.1.4)
-        msg.attach(MIMEText(body_text, "plain"))
-        msg.attach(MIMEText(body_html, "html"))
         logger.info(
             "Sending e-mail to: %s using %s for job %s (%s) via SMTP server %s:%s",
             job.user,
@@ -1009,35 +1016,104 @@ def __process_spool_file(
             options.smtp_server,
             options.smtp_port,
         )
-
-        attempt = 0
-
-        while True:
-            attempt += 1
-            try:
-                smtp_conn.sendmail(
-                    options.email_from_address, user_email.split(","), msg.as_string()
-                )
-                break
-            except (
-                smtplib.SMTPHeloError,
-                smtplib.SMTPRecipientsRefused,
-                smtplib.SMTPSenderRefused,
-                smtplib.SMTPNotSupportedError
-            ) as e:
-                logger.error("Failed to send e-mail: %s", e)
-                if options.retry_on_failure:
-                    if options.retry_delay > 0:
-                        logger.info("Waiting %ds before trying again", options.retry_delay)
-                        sleep(options.retry_delay)
-                else:
-                    break
-
-            if attempt == MAX_EMAIL_SEND_ATTEMPTS:
-                logger.error("Failed to send e-mail to %s after %d attempts", user_email, attempt)
-                break
+        if __send_email(smtp_conn, options, user_email, subject, TemplateResult(body_html, body_text)):
+            if options.rate_limiter is not None:
+                options.rate_limiter.record(user_email)
 
     delete_spool_file(json_file)
+
+
+def __send_email(
+    smtp_conn: smtplib.SMTP,
+    options: ProcessSpoolFileOptions,
+    user_email: str,
+    subject: str,
+    body: TemplateResult,
+) -> bool:
+    """
+    Create and send an e-mail, retrying on failure if configured to.
+
+    Returns True if the e-mail was sent.
+    """
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["To"] = user_email
+    msg["From"] = options.email_from_address
+    msg["Date"] = email.utils.formatdate(localtime=True)
+    msg["Message-ID"] = email.utils.make_msgid()
+
+    # add optional headers
+    if options.email_headers:
+        for header_name, header_value in options.email_headers.items():
+            if header_name in msg:
+                logger.warning(
+                    "Ignoring header_name %s - header is already set",
+                    header_name
+                )
+                continue
+
+            msg[header_name] = header_value
+
+    # prefer HTML to plain text, so we add the plain text attachment first (see rfc2046 5.1.4)
+    msg.attach(MIMEText(body.text, "plain"))
+    msg.attach(MIMEText(body.html, "html"))
+
+    attempt = 0
+
+    while True:
+        attempt += 1
+        try:
+            smtp_conn.sendmail(
+                options.email_from_address, user_email.split(","), msg.as_string()
+            )
+            return True
+        except (
+            smtplib.SMTPHeloError,
+            smtplib.SMTPRecipientsRefused,
+            smtplib.SMTPSenderRefused,
+            smtplib.SMTPNotSupportedError
+        ) as e:
+            logger.error("Failed to send e-mail: %s", e)
+            if options.retry_on_failure:
+                if options.retry_delay > 0:
+                    logger.info("Waiting %ds before trying again", options.retry_delay)
+                    sleep(options.retry_delay)
+            else:
+                return False
+
+        if attempt == MAX_EMAIL_SEND_ATTEMPTS:
+            logger.error("Failed to send e-mail to %s after %d attempts", user_email, attempt)
+            return False
+
+
+def __send_rate_limit_notification(
+    smtp_conn: smtplib.SMTP, options: ProcessSpoolFileOptions, user_email: str, job_id: int
+) -> None:
+    """
+    Tell the recipient that further e-mails will be suppressed because
+    they have reached the rate limit.
+    """
+    assert options.rate_limiter is not None
+    tpl_values = {
+        "EMAIL": user_email,
+        "JOB_ID": job_id,
+        "MAX_EMAILS": options.rate_limiter.max_emails,
+        "PERIOD": get_period_str(options.rate_limiter.period),
+    }
+    tpl = Template(get_file_contents(options.html_templates["signature"]))
+    signature_html = tpl.substitute(EMAIL_FROM=options.email_from_name)
+    tpl = Template(get_file_contents(options.text_templates["signature"]))
+    signature_text = tpl.substitute(EMAIL_FROM=options.email_from_name)
+
+    tpl = Template(get_file_contents(options.html_templates["rate_limited"]))
+    body_html = tpl.substitute(CSS=options.css, SIGNATURE=signature_html, **tpl_values)
+    tpl = Template(get_file_contents(options.text_templates["rate_limited"]))
+    body_text = tpl.substitute(SIGNATURE=signature_text, **tpl_values)
+
+    logger.info("Sending rate limit notification e-mail to %s", user_email)
+    __send_email(
+        smtp_conn, options, user_email, options.rate_limit_email_subject, TemplateResult(body_html, body_text)
+    )
 
 
 def send_mail_main():
@@ -1081,6 +1157,7 @@ def send_mail_main():
     options.html_templates["job_output"] = html_tpl_dir / "job-output.tpl"
     options.html_templates["job_table"] = html_tpl_dir / "job-table.tpl"
     options.html_templates["never_ran"] = html_tpl_dir / "never-ran.tpl"
+    options.html_templates["rate_limited"] = html_tpl_dir / "rate-limited.tpl"
     options.html_templates["signature"] = html_tpl_dir / "signature.tpl"
     options.html_templates["staged_out"] = html_tpl_dir / "staged-out.tpl"
     options.html_templates["started"] = html_tpl_dir / "started.tpl"
@@ -1099,6 +1176,7 @@ def send_mail_main():
     options.text_templates["job_output"] = text_tpl_dir / "job-output.tpl"
     options.text_templates["job_table"] = text_tpl_dir / "job-table.tpl"
     options.text_templates["never_ran"] = text_tpl_dir / "never-ran.tpl"
+    options.text_templates["rate_limited"] = text_tpl_dir / "rate-limited.tpl"
     options.text_templates["signature"] = text_tpl_dir / "signature.tpl"
     options.text_templates["staged_out"] = text_tpl_dir / "staged-out.tpl"
     options.text_templates["started"] = text_tpl_dir / "started.tpl"
@@ -1180,6 +1258,30 @@ def send_mail_main():
             else:
                 options.retry_delay = retry_delay
 
+        # rate limiting is enabled by default, even if missing from an older config file
+        rate_limit_max_emails = DEFAULT_RATE_LIMIT_MAX_EMAILS
+        rate_limit_period = DEFAULT_RATE_LIMIT_PERIOD
+        if config.has_option(section, "rateLimitMaxEmails"):
+            rate_limit_max_emails = config.getint(section, "rateLimitMaxEmails")
+        if config.has_option(section, "rateLimitPeriod"):
+            rate_limit_period = config.getint(section, "rateLimitPeriod")
+        if rate_limit_max_emails < 0 or rate_limit_period < 1:
+            logger.error(
+                "rateLimitMaxEmails must be greater than or equal to zero "
+                "and rateLimitPeriod must be greater than zero, using defaults"
+            )
+            rate_limit_max_emails = DEFAULT_RATE_LIMIT_MAX_EMAILS
+            rate_limit_period = DEFAULT_RATE_LIMIT_PERIOD
+        if rate_limit_max_emails > 0:
+            rate_limit_state_file = spool_dir / "rate-limit.json"
+            if config.has_option(section, "rateLimitStateFile"):
+                rate_limit_state_file = pathlib.Path(config.get(section, "rateLimitStateFile"))
+            options.rate_limiter = RateLimiter(rate_limit_state_file, rate_limit_max_emails, rate_limit_period)
+        if config.has_option(section, "rateLimitNotify"):
+            options.rate_limit_notify = config.getboolean(section, "rateLimitNotify")
+        if config.has_option(section, "rateLimitEmailSubject"):
+            options.rate_limit_email_subject = config.get(section, "rateLimitEmailSubject")
+
     except Exception as e:
         die("Error: {0}".format(e))
 
@@ -1208,47 +1310,59 @@ def send_mail_main():
             "and that the directory exists.".format(spool_dir)
         )
 
-    smtp_conn = None
-    # Look for any new mail notifications in the spool dir
-    for f in spool_dir.glob("*.mail"):
-        logger.info("processing: %s", f)
-        smtp_connection_ok = False
-        if smtp_conn is not None:
-            try:
-                # check if connection is still alive
-                smtp_conn.noop()[0]  # pylint: disable=expression-not-assigned
-                smtp_connection_ok = True
-            except Exception as e:
-                logger.warning(
-                    "SMTP connection failed:\n%s\nWill attempt to reconnect.", e
-                )
-                smtp_connection_ok = False
+    if options.rate_limiter is not None:
+        # rate limit state must only be updated by one process at a time
+        if not options.rate_limiter.acquire_lock():
+            logger.info("Another instance of slurm-send-mail is running, exiting")
+            return
+        options.rate_limiter.load()
 
-        if not smtp_connection_ok or smtp_conn is None:
-            # start new connection if previous connection dies or not exists
-            # check if ssl is being requested (usually port 465)
-            try:
-                if smtp_use_ssl:
-                    smtp_conn = smtplib.SMTP_SSL(
-                        host=options.smtp_server, port=options.smtp_port, timeout=60
+    try:
+        smtp_conn = None
+        # Look for any new mail notifications in the spool dir
+        for f in spool_dir.glob("*.mail"):
+            logger.info("processing: %s", f)
+            smtp_connection_ok = False
+            if smtp_conn is not None:
+                try:
+                    # check if connection is still alive
+                    smtp_conn.noop()[0]  # pylint: disable=expression-not-assigned
+                    smtp_connection_ok = True
+                except Exception as e:
+                    logger.warning(
+                        "SMTP connection failed:\n%s\nWill attempt to reconnect.", e
                     )
-                else:
-                    smtp_conn = smtplib.SMTP(
-                        host=options.smtp_server, port=options.smtp_port, timeout=60
-                    )
+                    smtp_connection_ok = False
 
-                if smtp_use_tls:
-                    smtp_conn.starttls()
-                if smtp_username != "" and smtp_password != "":
-                    smtp_conn.login(smtp_username, smtp_password)
+            if not smtp_connection_ok or smtp_conn is None:
+                # start new connection if previous connection dies or not exists
+                # check if ssl is being requested (usually port 465)
+                try:
+                    if smtp_use_ssl:
+                        smtp_conn = smtplib.SMTP_SSL(
+                            host=options.smtp_server, port=options.smtp_port, timeout=60
+                        )
+                    else:
+                        smtp_conn = smtplib.SMTP(
+                            host=options.smtp_server, port=options.smtp_port, timeout=60
+                        )
+
+                    if smtp_use_tls:
+                        smtp_conn.starttls()
+                    if smtp_username != "" and smtp_password != "":
+                        smtp_conn.login(smtp_username, smtp_password)
+                except Exception as e:
+                    die("Failed to create SMTP connection due to:\n{0}".format(e))
+
+            try:
+                __process_spool_file(f, smtp_conn, options)
             except Exception as e:
-                die("Failed to create SMTP connection due to:\n{0}".format(e))
-
-        try:
-            __process_spool_file(f, smtp_conn, options)
-        except Exception as e:
-            logger.error("Failed to process: %s", f)
-            logger.error(e, exc_info=True)
+                logger.error("Failed to process: %s", f)
+                logger.error(e, exc_info=True)
+    finally:
+        if options.rate_limiter is not None:
+            options.rate_limiter.save()
+            options.rate_limiter.release_lock()
 
 
 def spool_mail_main():
