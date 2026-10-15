@@ -30,10 +30,14 @@ Unit tests for slurmmail.ratelimit
 import json
 import logging
 
-from slurmmail.ratelimit import ALLOW, LIMIT_REACHED, LIMITED, RateLimiter, get_period_str
+from slurmmail.ratelimit import RateLimiter, RateLimitResult, get_period_str
+
+ALLOW = RateLimitResult.ALLOW
+LIMIT_REACHED = RateLimitResult.LIMIT_REACHED
+LIMITED = RateLimitResult.LIMITED
 
 
-def send(limiter: RateLimiter, recipient: str, now: float) -> str:
+def send(limiter: RateLimiter, recipient: str, now: float) -> RateLimitResult:
     result = limiter.check(recipient, now)
     if result == ALLOW:
         limiter.record(recipient, now)
@@ -139,15 +143,3 @@ class TestRateLimiter:
         limiter = RateLimiter(state_file, 1, 60)
         limiter.load()
         assert "Could not read rate limit state" in caplog.text
-
-    def test_lock(self, tmp_path):
-        state_file = tmp_path / "state.json"
-        first = RateLimiter(state_file, 1, 60)
-        second = RateLimiter(state_file, 1, 60)
-        assert first.acquire_lock()
-        assert not second.acquire_lock()
-        first.release_lock()
-        assert second.acquire_lock()
-        second.release_lock()
-        # releasing when not locked is harmless
-        second.release_lock()

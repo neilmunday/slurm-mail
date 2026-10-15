@@ -40,7 +40,8 @@ import sys
 import pytest  # type: ignore
 
 import slurmmail.cli
-from slurmmail.ratelimit import DEFAULT_RATE_LIMIT_MAX_EMAILS, DEFAULT_RATE_LIMIT_PERIOD, RateLimiter
+from slurmmail.common import acquire_lock
+from slurmmail.ratelimit import DEFAULT_RATE_LIMIT_PERIOD, RateLimiter
 
 DUMMY_PATH = pathlib.Path("/tmp")
 
@@ -108,9 +109,7 @@ def mock_raw_config_parser(tmp_path):
     with patch("configparser.RawConfigParser") as mock_config_parser:
         mock_config_parser.side_effect = MockRawConfigParser
         MockRawConfigParser.add_mock_value("slurm-send-mail", "logFile", None)
-        MockRawConfigParser.add_mock_value(
-            "slurm-send-mail", "rateLimitStateFile", str(tmp_path / "rate-limit.json")
-        )
+        MockRawConfigParser.add_mock_value("common", "spoolDir", str(tmp_path))
         yield mock_config_parser
         MockRawConfigParser.reset_mock()
 
@@ -2129,10 +2128,8 @@ class TestSendMailMain:
     def test_rate_limit_enabled(
         self, tmp_path, mock_path_glob, mock_raw_config_parser, mock_slurmmail_cli__process_spool_file
     ):
-        state_file = tmp_path / "rate-limit.json"
         mock_raw_config_parser.side_effect.add_mock_value("slurm-send-mail", "rateLimitMaxEmails", 50)
         mock_raw_config_parser.side_effect.add_mock_value("slurm-send-mail", "rateLimitPeriod", 600)
-        mock_raw_config_parser.side_effect.add_mock_value("slurm-send-mail", "rateLimitStateFile", str(state_file))
         mock_raw_config_parser.side_effect.add_mock_value("slurm-send-mail", "rateLimitNotify", False)
         mock_raw_config_parser.side_effect.add_mock_value("slurm-send-mail", "rateLimitEmailSubject", "Slow down")
         slurmmail.cli.send_mail_main()
@@ -2140,13 +2137,29 @@ class TestSendMailMain:
         options = mock_slurmmail_cli__process_spool_file.call_args[0][2]
         assert options.rate_limiter.max_emails == 50
         assert options.rate_limiter.period == 600
+        assert options.rate_limiter.state_file == tmp_path / "rate-limit.json"
         assert not options.rate_limit_notify
         assert options.rate_limit_email_subject == "Slow down"
-        assert state_file.exists()
+        assert (tmp_path / "rate-limit.json").exists()
+
+    @pytest.mark.usefixtures("mock_smtp", "mock_path_glob")
+    def test_rate_limit_default_period(self, mock_raw_config_parser, mock_slurmmail_cli__process_spool_file):
+        mock_raw_config_parser.side_effect.add_mock_value("slurm-send-mail", "rateLimitMaxEmails", 50)
+        mock_raw_config_parser.side_effect.add_mock_value("slurm-send-mail", "rateLimitPeriod", None)
+        slurmmail.cli.send_mail_main()
+        rate_limiter = mock_slurmmail_cli__process_spool_file.call_args[0][2].rate_limiter
+        assert rate_limiter.period == DEFAULT_RATE_LIMIT_PERIOD
 
     @pytest.mark.usefixtures("mock_smtp", "mock_path_glob")
     def test_rate_limit_disabled(self, mock_raw_config_parser, mock_slurmmail_cli__process_spool_file):
         mock_raw_config_parser.side_effect.add_mock_value("slurm-send-mail", "rateLimitMaxEmails", 0)
+        slurmmail.cli.send_mail_main()
+        assert mock_slurmmail_cli__process_spool_file.call_args[0][2].rate_limiter is None
+
+    @pytest.mark.usefixtures("mock_smtp", "mock_path_glob")
+    def test_rate_limit_disabled_by_default(self, mock_raw_config_parser, mock_slurmmail_cli__process_spool_file):
+        # simulate a slurm-mail.conf from before rate limiting existed
+        mock_raw_config_parser.side_effect.add_mock_value("slurm-send-mail", "rateLimitMaxEmails", None)
         slurmmail.cli.send_mail_main()
         assert mock_slurmmail_cli__process_spool_file.call_args[0][2].rate_limiter is None
 
@@ -2158,41 +2171,35 @@ class TestSendMailMain:
         assert check_message_logged(
             caplog,
             logging.ERROR,
-            "rateLimitMaxEmails must be greater than or equal to zero and rateLimitPeriod must be greater than zero, using defaults",  # noqa
+            "rateLimitMaxEmails must be greater than or equal to zero and rateLimitPeriod must be greater than zero, rate limiting disabled",  # noqa
         )
-        rate_limiter = mock_slurmmail_cli__process_spool_file.call_args[0][2].rate_limiter
-        assert rate_limiter.max_emails == DEFAULT_RATE_LIMIT_MAX_EMAILS
-        assert rate_limiter.period == DEFAULT_RATE_LIMIT_PERIOD
+        assert mock_slurmmail_cli__process_spool_file.call_args[0][2].rate_limiter is None
 
-    @pytest.mark.usefixtures("mock_smtp", "mock_path_glob")
-    def test_rate_limit_enabled_by_default(self, mock_raw_config_parser, mock_slurmmail_cli__process_spool_file):
-        # simulate a slurm-mail.conf from before rate limiting existed
-        mock_raw_config_parser.side_effect.add_mock_value("slurm-send-mail", "rateLimitMaxEmails", None)
-        mock_raw_config_parser.side_effect.add_mock_value("slurm-send-mail", "rateLimitPeriod", None)
-        slurmmail.cli.send_mail_main()
-        rate_limiter = mock_slurmmail_cli__process_spool_file.call_args[0][2].rate_limiter
-        assert rate_limiter.max_emails == DEFAULT_RATE_LIMIT_MAX_EMAILS
-        assert rate_limiter.period == DEFAULT_RATE_LIMIT_PERIOD
-
-    @pytest.mark.usefixtures("mock_smtp", "mock_path_glob")
-    def test_rate_limit_already_running(
-        self, tmp_path, mock_raw_config_parser, mock_slurmmail_cli__process_spool_file
-    ):
-        state_file = tmp_path / "rate-limit.json"
-        mock_raw_config_parser.side_effect.add_mock_value("slurm-send-mail", "rateLimitMaxEmails", 50)
-        mock_raw_config_parser.side_effect.add_mock_value("slurm-send-mail", "rateLimitStateFile", str(state_file))
-        other = RateLimiter(state_file, 50, 3600)
-        assert other.acquire_lock()
+    @pytest.mark.usefixtures("mock_smtp", "mock_path_glob", "mock_raw_config_parser")
+    def test_already_running(self, caplog, tmp_path, mock_slurmmail_cli__process_spool_file):
+        caplog.set_level(logging.INFO)
+        lock_file = acquire_lock(tmp_path / "slurm-send-mail.lock")
+        assert lock_file is not None
         try:
             slurmmail.cli.send_mail_main()
         finally:
-            other.release_lock()
+            lock_file.close()
         mock_slurmmail_cli__process_spool_file.assert_not_called()
+        assert check_message_logged(caplog, logging.INFO, "Another instance of slurm-send-mail is running, exiting")
+
+    @pytest.mark.usefixtures("mock_smtp", "mock_raw_config_parser")
+    def test_lock_released(self, tmp_path, mock_path_glob, mock_slurmmail_cli__process_spool_file):
+        slurmmail.cli.send_mail_main()
+        slurmmail.cli.send_mail_main()
+        assert mock_slurmmail_cli__process_spool_file.call_count == 2 * len(mock_path_glob.return_value)
+        lock_file = acquire_lock(tmp_path / "slurm-send-mail.lock")
+        assert lock_file is not None
+        lock_file.close()
 
     @pytest.mark.usefixtures("mock_raw_config_parser")
-    def test_bad_spool_dir_permissons(self, mock_os_access):
+    def test_bad_spool_dir_permissons(self, tmp_path, mock_os_access):
         def os_access_fn(path, mode: int) -> bool:
-            if path == "/var/spool/slurm-mail":
+            if path == str(tmp_path):
                 return False
             return access(path, mode)
 
