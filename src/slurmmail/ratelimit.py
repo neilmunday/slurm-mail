@@ -34,24 +34,27 @@ optional notification) rather than one e-mail per job.
 State is persisted to a JSON file between runs of `slurm-send-mail`.
 """
 
-import fcntl
 import json
 import logging
 import os
 import pathlib
 import time
 
-from typing import Any, Dict, Optional, TextIO
+from enum import Enum
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_RATE_LIMIT_MAX_EMAILS = 50
 DEFAULT_RATE_LIMIT_PERIOD = 3600
 
-# results of RateLimiter.check
-ALLOW = "allow"
-LIMIT_REACHED = "limit_reached"  # recipient has just been blocked
-LIMITED = "limited"  # recipient was already blocked
+
+class RateLimitResult(Enum):
+    """
+    Results of `RateLimiter.check`.
+    """
+    ALLOW = "allow"
+    LIMIT_REACHED = "limit_reached"  # recipient has just been blocked
+    LIMITED = "limited"  # recipient was already blocked
 
 
 def get_period_str(seconds: int) -> str:
@@ -79,38 +82,11 @@ class RateLimiter:
         self.state_file = state_file
         self.max_emails = max_emails
         self.period = period
-        self.__lock_file: Optional[TextIO] = None
         self.__recipients: Dict[str, Dict[str, Any]] = {}
 
     @staticmethod
     def __key(recipient: str) -> str:
         return recipient.strip().lower()
-
-    def acquire_lock(self) -> bool:
-        """
-        Take an exclusive lock so that only one copy of `slurm-send-mail`
-        updates the rate limit state at a time.
-
-        Returns False if another process already holds the lock.
-        """
-        lock_path = self.state_file.with_name(self.state_file.name + ".lock")
-        self.__lock_file = lock_path.open(mode="w", encoding="utf-8")
-        try:
-            fcntl.flock(self.__lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except OSError:
-            self.__lock_file.close()
-            self.__lock_file = None
-            return False
-        return True
-
-    def release_lock(self) -> None:
-        """
-        Release the lock taken by `acquire_lock`.
-        """
-        if self.__lock_file is not None:
-            fcntl.flock(self.__lock_file, fcntl.LOCK_UN)
-            self.__lock_file.close()
-            self.__lock_file = None
 
     def load(self) -> None:
         """
@@ -161,7 +137,7 @@ class RateLimiter:
             if not entry["sent"] and not entry.get("blocked"):
                 del self.__recipients[key]
 
-    def check(self, recipient: str, now: Optional[float] = None) -> str:
+    def check(self, recipient: str, now: Optional[float] = None) -> RateLimitResult:
         """
         Determine whether an e-mail may be sent to the given recipient.
 
@@ -179,15 +155,15 @@ class RateLimiter:
         if entry.get("blocked"):
             entry["last_suppressed"] = now
             entry["suppressed"] = entry.get("suppressed", 0) + 1
-            return LIMITED
+            return RateLimitResult.LIMITED
 
         if len(entry["sent"]) >= self.max_emails:
             entry["blocked"] = True
             entry["last_suppressed"] = now
             entry["suppressed"] = 1
-            return LIMIT_REACHED
+            return RateLimitResult.LIMIT_REACHED
 
-        return ALLOW
+        return RateLimitResult.ALLOW
 
     def record(self, recipient: str, now: Optional[float] = None) -> None:
         """

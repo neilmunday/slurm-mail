@@ -32,6 +32,7 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest  # type: ignore
 
 from slurmmail.common import (
+    acquire_lock,
     check_dir,
     check_file,
     delete_spool_file,
@@ -112,6 +113,16 @@ class TestCommon:
     """
     Test slurmmail.common functions.
     """
+
+    def test_acquire_lock(self, tmp_path):
+        lock_path = tmp_path / "test.lock"
+        first = acquire_lock(lock_path)
+        assert first is not None
+        assert acquire_lock(lock_path) is None
+        first.close()
+        second = acquire_lock(lock_path)
+        assert second is not None
+        second.close()
 
     def test_check_file(self, mock_path_is_file):
         mock_path_is_file.return_value = False

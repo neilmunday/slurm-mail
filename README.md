@@ -341,14 +341,14 @@ In either case, errors for failed e-mail delivery will always be logged in `/var
 
 You can add a time delay between retries by setting the `retryDelay` option in `slurm-mail.conf` to a value greater than equal to `0` and less than or equal to `20`. The value is specified in seconds and is disabled by default.
 
-**Note**: If e-mail delivery fails for several e-mails and `retryDelay` is a large value this could lead to more than one copy of `slurm-send-mail` being executed. You should consider decreasing the frequency that `slurm-send-mail` is executed by updating `/etc/cron.d/slurm-mail`
+**Note**: Only one copy of `slurm-send-mail` will process the spool directory at a time. If e-mail delivery fails for several e-mails and `retryDelay` is a large value, a run may take longer than the interval at which `slurm-send-mail` is executed by cron. Any copy that starts while another is still running exits straight away and the remaining e-mails are processed by a later run.
 
 ## E-mail rate limiting
 
-A user who submits a large number of jobs from a loop with e-mail notifications enabled can cause Slurm-Mail to send thousands of e-mails in a short time, which can overload your mail servers. To prevent this, Slurm-Mail limits the number of e-mails sent to the same address. By default at most 50 e-mails per hour are sent to each address. This can be changed with the following options in `slurm-mail.conf`:
+A user who submits a large number of jobs from a loop with e-mail notifications enabled can cause Slurm-Mail to send thousands of e-mails in a short time, which can overload your mail servers. To prevent this you can limit the number of e-mails sent to the same address by setting the following options in `slurm-mail.conf`, e.g. to allow at most 100 e-mails per hour:
 
 ```
-rateLimitMaxEmails = 50
+rateLimitMaxEmails = 100
 rateLimitPeriod = 3600
 ```
 
@@ -358,9 +358,9 @@ Rate limiting is applied to the resolved destination address (after `mailDomain`
 
 When an address first becomes rate limited, a single e-mail is sent to it using the `rate-limited.tpl` templates to explain why it will not receive further e-mails. To disable this e-mail set `rateLimitNotify = no`. The subject of this e-mail can be changed with the `rateLimitEmailSubject` option.
 
-Rate limit state is stored in `rate-limit.json` in the spool directory by default. Use the `rateLimitStateFile` option to choose a different location. While rate limiting is enabled only one copy of `slurm-send-mail` will run at a time; any copy started while another is still running exits straight away.
+Rate limit state is stored in `rate-limit.json` in the spool directory.
 
-Rate limiting is enabled by default, including for existing installations whose `slurm-mail.conf` does not contain the options above. To disable it set `rateLimitMaxEmails = 0`.
+Rate limiting is disabled by default (`rateLimitMaxEmails = 0`).
 
 ## E-mail headers
 

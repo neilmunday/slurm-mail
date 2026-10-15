@@ -27,6 +27,7 @@
 This module provides common functions required by Slurm-Mail.
 """
 
+import fcntl
 import logging
 import os
 import pathlib
@@ -35,9 +36,24 @@ import shlex
 import subprocess
 import sys
 
-from typing import NoReturn
+from typing import NoReturn, Optional, TextIO
 
 logger = logging.getLogger(__name__)
+
+
+def acquire_lock(path: pathlib.Path) -> Optional[TextIO]:
+    """
+    Take an exclusive lock on the given file without waiting.
+    Returns the open lock file, which must be kept open for as long as
+    the lock is required, or None if another process holds the lock.
+    """
+    lock_file = path.open(mode="w", encoding="utf-8")
+    try:
+        fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        lock_file.close()
+        return None
+    return lock_file
 
 
 def check_dir(path: pathlib.Path, check_writeable=True):

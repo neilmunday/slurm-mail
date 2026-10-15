@@ -59,6 +59,7 @@ from typing import Dict, List, Optional, Set
 
 from slurmmail import conf_dir, conf_file, html_tpl_dir, text_tpl_dir
 from slurmmail.common import (
+    acquire_lock,
     check_dir,
     check_file,
     delete_spool_file,
@@ -69,14 +70,7 @@ from slurmmail.common import (
     run_command,
     tail_file,
 )
-from slurmmail.ratelimit import (
-    ALLOW,
-    DEFAULT_RATE_LIMIT_MAX_EMAILS,
-    DEFAULT_RATE_LIMIT_PERIOD,
-    LIMIT_REACHED,
-    RateLimiter,
-    get_period_str,
-)
+from slurmmail.ratelimit import DEFAULT_RATE_LIMIT_PERIOD, RateLimiter, RateLimitResult, get_period_str
 from slurmmail.slurm import check_job_output_file_path, Job
 
 logger = logging.getLogger(__name__)
@@ -281,7 +275,7 @@ def __process_spool_file(
     if options.rate_limiter is not None:
         # check before calling sacct so that a flood of spool files is cheap to discard
         result = options.rate_limiter.check(user_email)
-        if result != ALLOW:
+        if result != RateLimitResult.ALLOW:
             logger.warning(
                 "Rate limit of %d e-mails per %d seconds reached for %s, suppressing e-mail for job %s (%s)",
                 options.rate_limiter.max_emails,
@@ -290,7 +284,7 @@ def __process_spool_file(
                 first_job_id,
                 state,
             )
-            if result == LIMIT_REACHED and options.rate_limit_notify:
+            if result == RateLimitResult.LIMIT_REACHED and options.rate_limit_notify:
                 __send_rate_limit_notification(smtp_conn, options, user_email, first_job_id)
             delete_spool_file(json_file)
             return
@@ -1258,25 +1252,20 @@ def send_mail_main():
             else:
                 options.retry_delay = retry_delay
 
-        # rate limiting is enabled by default, even if missing from an older config file
-        rate_limit_max_emails = DEFAULT_RATE_LIMIT_MAX_EMAILS
-        rate_limit_period = DEFAULT_RATE_LIMIT_PERIOD
         if config.has_option(section, "rateLimitMaxEmails"):
             rate_limit_max_emails = config.getint(section, "rateLimitMaxEmails")
-        if config.has_option(section, "rateLimitPeriod"):
-            rate_limit_period = config.getint(section, "rateLimitPeriod")
-        if rate_limit_max_emails < 0 or rate_limit_period < 1:
-            logger.error(
-                "rateLimitMaxEmails must be greater than or equal to zero "
-                "and rateLimitPeriod must be greater than zero, using defaults"
-            )
-            rate_limit_max_emails = DEFAULT_RATE_LIMIT_MAX_EMAILS
             rate_limit_period = DEFAULT_RATE_LIMIT_PERIOD
-        if rate_limit_max_emails > 0:
-            rate_limit_state_file = spool_dir / "rate-limit.json"
-            if config.has_option(section, "rateLimitStateFile"):
-                rate_limit_state_file = pathlib.Path(config.get(section, "rateLimitStateFile"))
-            options.rate_limiter = RateLimiter(rate_limit_state_file, rate_limit_max_emails, rate_limit_period)
+            if config.has_option(section, "rateLimitPeriod"):
+                rate_limit_period = config.getint(section, "rateLimitPeriod")
+            if rate_limit_max_emails < 0 or rate_limit_period < 1:
+                logger.error(
+                    "rateLimitMaxEmails must be greater than or equal to zero "
+                    "and rateLimitPeriod must be greater than zero, rate limiting disabled"
+                )
+            elif rate_limit_max_emails > 0:
+                options.rate_limiter = RateLimiter(
+                    spool_dir / "rate-limit.json", rate_limit_max_emails, rate_limit_period
+                )
         if config.has_option(section, "rateLimitNotify"):
             options.rate_limit_notify = config.getboolean(section, "rateLimitNotify")
         if config.has_option(section, "rateLimitEmailSubject"):
@@ -1310,11 +1299,13 @@ def send_mail_main():
             "and that the directory exists.".format(spool_dir)
         )
 
+    # only one copy of slurm-send-mail may process the spool directory at a time
+    lock_file = acquire_lock(spool_dir / "slurm-send-mail.lock")
+    if lock_file is None:
+        logger.info("Another instance of slurm-send-mail is running, exiting")
+        return
+
     if options.rate_limiter is not None:
-        # rate limit state must only be updated by one process at a time
-        if not options.rate_limiter.acquire_lock():
-            logger.info("Another instance of slurm-send-mail is running, exiting")
-            return
         options.rate_limiter.load()
 
     try:
@@ -1362,7 +1353,7 @@ def send_mail_main():
     finally:
         if options.rate_limiter is not None:
             options.rate_limiter.save()
-            options.rate_limiter.release_lock()
+        lock_file.close()
 
 
 def spool_mail_main():
