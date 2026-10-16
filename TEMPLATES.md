@@ -89,6 +89,16 @@ Note: some variables are only displayed in the e-mail if the job has ended.
 | $SIGNATURE  | E-mail signature                                             |
 | $USER       | The user's name.                                             |
 
+## rate-limited.tpl
+
+| Variable    | Purpose                                                      |
+| ----------- | ------------------------------------------------------------ |
+| $EMAIL      | The address that has been rate limited.                      |
+| $JOB_ID     | The ID of the job whose e-mail triggered the rate limit.     |
+| $MAX_EMAILS | The value of `rateLimitMaxEmails`.                           |
+| $PERIOD     | The value of `rateLimitPeriod` as a string, e.g. "1 hour".   |
+| $SIGNATURE  | E-mail signature                                             |
+
 ## signature.tpl
 
 | Variable    | Purpose                                                   |
