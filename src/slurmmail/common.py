@@ -46,13 +46,21 @@ def acquire_lock(path: pathlib.Path) -> Optional[TextIO]:
     Take an exclusive lock on the given file without waiting.
     Returns the open lock file, which must be kept open for as long as
     the lock is required, or None if another process holds the lock.
+    Exits if the lock file cannot be opened or locked for any other reason.
     """
-    lock_file = path.open(mode="w", encoding="utf-8")
+    try:
+        lock_file = path.open(mode="w", encoding="utf-8")
+    except OSError as e:
+        die("Failed to open lock file {0}: {1}".format(path, e))
     try:
         fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except OSError:
+    except BlockingIOError as e:
+        logger.debug("Lock on %s is held by another process: %s", path, e)
         lock_file.close()
         return None
+    except OSError as e:
+        lock_file.close()
+        die("Failed to lock {0}: {1}".format(path, e))
     return lock_file
 
 

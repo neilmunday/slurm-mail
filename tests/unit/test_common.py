@@ -124,6 +124,17 @@ class TestCommon:
         assert second is not None
         second.close()
 
+    def test_acquire_lock_open_failure(self, tmp_path):
+        with pytest.raises(SystemExit):
+            acquire_lock(tmp_path / "missing-dir" / "test.lock")
+
+    def test_acquire_lock_flock_failure(self, caplog, tmp_path):
+        with patch("fcntl.flock", side_effect=OSError(37, "No locks available")):
+            with pytest.raises(SystemExit):
+                acquire_lock(tmp_path / "test.lock")
+        assert "Failed to lock" in caplog.text
+        assert "No locks available" in caplog.text
+
     def test_check_file(self, mock_path_is_file):
         mock_path_is_file.return_value = False
         with pytest.raises(SystemExit):

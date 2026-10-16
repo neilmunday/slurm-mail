@@ -402,9 +402,8 @@ def __process_spool_file(
                         )
                     break
                 if (
-                    not array_summary
-                    and options.array_max_notifications > 0
-                    and len(jobs) >= options.array_max_notifications
+                    not array_summary and
+                    0 < options.array_max_notifications <= len(jobs)
                 ):
                     logger.info(
                         "Reached array notification processing limit of %d "
