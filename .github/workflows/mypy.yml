@@ -15,7 +15,7 @@ on:
 
 jobs:
   generate_python_matrix:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
@@ -27,7 +27,7 @@ jobs:
           echo "matrix=${matrix}" >> $GITHUB_OUTPUT
   mypy:
     needs: generate_python_matrix
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         python-version: ${{fromJson(needs.generate_python_matrix.outputs.matrix)}}
