@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 4.36
+------------
+
+Date: 2026-10-19
+
+* Added support for e-mail rate limiting (pull #208). Thanks to @KasperSkytte for adding this new feature.
+
 Version 4.35
 ------------
 
