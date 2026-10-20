@@ -178,7 +178,7 @@ apt-get install slurm-mail
 For other Debian variants you can create a package for your OS like so:
 
 ```bash
-sudo apt-get install -y fakeroot dh-python lintian lsb-release python3 python3-stdeb
+sudo apt-get install -y fakeroot git dh-python lintian lsb-release python3 python3-stdeb
 git clone https://github.com/neilmunday/slurm-mail
 slurm-mail/build-tools/build-deb.sh
 ```
