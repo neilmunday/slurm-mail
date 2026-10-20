@@ -553,6 +553,12 @@ Starting from version 4.10, HTML and plain text e-mail templates are provided. I
 
 3. If `/usr/bin/slurm-send-mail` is executing ok but you are not receiving e-mails, then check the mail logs on your server for any mail delivery errors.
 
+4. On Debian and Ubuntu, upgrading or reinstalling Slurm-Mail packages older than version 4.37 deletes `/etc/cron.d/slurm-mail`, `/etc/logrotate.d/slurm-mail` and the contents of `/var/spool/slurm-mail`. Because the deleted files are configuration files, later upgrades will not restore them. After upgrading to version 4.37 or newer, restore them by running (as root):
+
+```bash
+apt-get install --reinstall -o Dpkg::Options::="--force-confmiss" slurm-mail
+```
+
 ## Contributors
 
 Thank you to the following people who have contributed code improvements, features, found bugs and aided the development of Slurm-Mail:

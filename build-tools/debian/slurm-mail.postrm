@@ -1,3 +1,14 @@
 #!/usr/bin/env bash
 
-rm -rf /etc/cron.d/slurm-mail /etc/logrotate.d/slurm-mail /var/spool/slurm-mail
+set -e
+
+# postrm is also called during upgrades and reinstalls, so only delete data
+# when the package is purged. Conffiles such as /etc/cron.d/slurm-mail and
+# /etc/logrotate.d/slurm-mail are removed by dpkg itself when purging.
+case "$1" in
+  purge)
+    rm -rf /var/spool/slurm-mail
+    ;;
+esac
+
+exit 0
