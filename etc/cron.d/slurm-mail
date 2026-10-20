@@ -1,1 +1,1 @@
-*    *    *    *    *    root    /usr/bin/slurm-send-mail
+*    *    *    *    *    root    [ -x /usr/bin/slurm-send-mail ] && /usr/bin/slurm-send-mail
