@@ -354,7 +354,7 @@ rateLimitPeriod = 3600
 
 Once an address has been sent `rateLimitMaxEmails` e-mails within the last `rateLimitPeriod` seconds, all further e-mails to that address are suppressed. E-mails resume once no e-mails have been requested for that address for `rateLimitPeriod` seconds, so a user whose jobs keep requesting e-mails stays suppressed until the flood stops. Suppressed e-mails are logged and discarded; they are not sent later.
 
-Rate limiting is applied to the resolved destination address (after `mailDomain` is applied), and is checked before `sacct` is called, so suppressed e-mails put no extra load on the Slurm database.
+Rate limiting is applied to each resolved destination address (after `mailDomain` is applied) separately. If a job lists several addresses, e-mails are still sent to the addresses that have not been rate limited. Rate limits are checked before `sacct` is called, so suppressed e-mails put no extra load on the Slurm database.
 
 When an address first becomes rate limited, a single e-mail is sent to it using the `rate-limited.tpl` templates to explain why it will not receive further e-mails. To disable this e-mail set `rateLimitNotify = no`. The subject of this e-mail can be changed with the `rateLimitEmailSubject` option.
 

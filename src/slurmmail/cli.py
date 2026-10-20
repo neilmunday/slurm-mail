@@ -273,21 +273,27 @@ def __process_spool_file(
     user_email = resolved_email
 
     if options.rate_limiter is not None:
-        # check before calling sacct so that a flood of spool files is cheap to discard
-        result = options.rate_limiter.check(user_email)
-        if result != RateLimitResult.ALLOW:
+        # check each recipient before calling sacct so that a flood of spool files is cheap to discard
+        allowed_recipients = []
+        for recipient in user_email.split(","):
+            result = options.rate_limiter.check(recipient)
+            if result == RateLimitResult.ALLOW:
+                allowed_recipients.append(recipient)
+                continue
             logger.warning(
                 "Rate limit of %d e-mails per %d seconds reached for %s, suppressing e-mail for job %s (%s)",
                 options.rate_limiter.max_emails,
                 options.rate_limiter.period,
-                user_email,
+                recipient,
                 first_job_id,
                 state,
             )
             if result == RateLimitResult.LIMIT_REACHED and options.rate_limit_notify:
-                __send_rate_limit_notification(smtp_conn, options, user_email, first_job_id)
+                __send_rate_limit_notification(smtp_conn, options, recipient, first_job_id)
+        if not allowed_recipients:
             delete_spool_file(json_file)
             return
+        user_email = ",".join(allowed_recipients)
 
     jobs: List[Job] = []  # store job object for each job in this array
 
@@ -1011,7 +1017,8 @@ def __process_spool_file(
         )
         if __send_email(smtp_conn, options, user_email, subject, TemplateResult(body_html, body_text)):
             if options.rate_limiter is not None:
-                options.rate_limiter.record(user_email)
+                for recipient in user_email.split(","):
+                    options.rate_limiter.record(recipient)
 
     delete_spool_file(json_file)
 

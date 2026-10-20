@@ -1988,14 +1988,14 @@ class TestProcessSpoolFile:
                 ["invalid-dependency.tpl", "job-table.tpl", "signature.tpl"]
             )
 
-    def __process_began_spool_file(self, options, run_command_mock, run_scontrol_mock):
+    def __process_began_spool_file(self, options, run_command_mock, run_scontrol_mock, user_email="root"):
         with tempfile.NamedTemporaryFile(mode='w') as spool_file:
             spool_file.write("""{
                 "job_id": 1,
-                "email": "root",
+                "email": "%s",
                 "state": "Began",
                 "array_summary": false
-                }""")
+                }""" % user_email)
             spool_file.flush()
 
             run_scontrol_mock.return_value = None
@@ -2045,6 +2045,46 @@ class TestProcessSpoolFile:
         assert mock_smtp_sendmail.call_count == 3
         assert mock_slurmmail_cli_run_command.call_count == 2
         assert mock_slurmmail_cli_delete_spool_file.call_count == 4
+
+    def test_rate_limit_multiple_recipients(
+        self,
+        tmp_path,
+        mock_slurmmail_cli_delete_spool_file,
+        mock_slurmmail_cli_process_spool_file_options,
+        mock_slurmmail_cli_run_command,
+        mock_slurmmail_cli_run_scontrol,
+        mock_smtp_sendmail,
+    ):
+        options = mock_slurmmail_cli_process_spool_file_options
+        options.rate_limiter = RateLimiter(tmp_path / "rate-limit.json", 1, 3600)
+
+        def process(user_email):
+            self.__process_began_spool_file(
+                options, mock_slurmmail_cli_run_command, mock_slurmmail_cli_run_scontrol, user_email
+            )
+
+        def recipients(call):
+            return call[0][1]
+
+        process("a@example.com")
+        assert recipients(mock_smtp_sendmail.call_args_list[0]) == ["a@example.com"]
+
+        # a@example.com is rate limited, so it is notified and b@example.com still gets the job e-mail
+        process("a@example.com,b@example.com")
+        assert mock_smtp_sendmail.call_count == 3
+        assert recipients(mock_smtp_sendmail.call_args_list[1]) == ["a@example.com"]
+        assert "Subject: Job e-mail notifications suspended" in mock_smtp_sendmail.call_args_list[1][0][2]
+        assert recipients(mock_smtp_sendmail.call_args_list[2]) == ["b@example.com"]
+        assert "To: b@example.com\n" in mock_smtp_sendmail.call_args_list[2][0][2]
+        assert mock_slurmmail_cli_run_command.call_count == 2
+
+        # both addresses are now rate limited, the order of the addresses does not matter
+        process("b@example.com,a@example.com")
+        assert mock_smtp_sendmail.call_count == 4
+        assert recipients(mock_smtp_sendmail.call_args_list[3]) == ["b@example.com"]
+        assert "Subject: Job e-mail notifications suspended" in mock_smtp_sendmail.call_args_list[3][0][2]
+        assert mock_slurmmail_cli_run_command.call_count == 2
+        assert mock_slurmmail_cli_delete_spool_file.call_count == 3
 
     def test_rate_limit_no_notify(
         self,
