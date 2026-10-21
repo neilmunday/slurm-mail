@@ -1,13 +1,25 @@
 Change Log
 ==========
 
+Version 4.37
+------------
+
+Date: 2026-10-21
+
+* Bug fix for e-mail rate limiting feature (pull #210)
+* Debian packaging fix for purging files during upgrades (pull #211)
+
+Thanks to @KasperSkytte for these fixes.
+
 Version 4.36
 ------------
 
 Date: 2026-10-19
 
-* Added support for e-mail rate limiting (pull #208). Thanks to @KasperSkytte for adding this new feature.
-* Added file locking to ensure only one instance of `slurm-send-mail` runs (pull #208). Thanks to @KasperSkytte for adding this new feature.
+* Added support for e-mail rate limiting (pull #208)
+* Added file locking to ensure only one instance of `slurm-send-mail` runs (pull #208).
+
+Thanks to @KasperSkytte for adding these new features.
 
 Version 4.35
 ------------
