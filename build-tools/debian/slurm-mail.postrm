@@ -3,10 +3,14 @@
 set -e
 
 # postrm is also called during upgrades and reinstalls, so only delete data
-# when the package is purged. Conffiles such as /etc/cron.d/slurm-mail and
-# /etc/logrotate.d/slurm-mail are removed by dpkg itself when purging.
+# when the package is removed or purged.
+#
+# Conffiles such as /etc/cron.d/slurm-mail and /etc/logrotate.d/slurm-mail
+# must not be deleted here: dpkg treats a deleted conffile as removed by the
+# admin and will not restore it if the package is installed again. dpkg
+# removes conffiles itself when the package is purged.
 case "$1" in
-  purge)
+  remove|purge)
     rm -rf /var/spool/slurm-mail
     ;;
 esac
