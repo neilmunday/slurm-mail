@@ -76,14 +76,7 @@ You can also opt to include a number of lines from the end of the job's output f
 
 ### Amazon Linux, RedHat and SUSE Based Operating Systems
 
-For each release of Slurm-Mail, RPMs for Amazon Linux 2, RedHat 7/8/9 and SUSE 15 based operating systems are provided at [neilmunday.github.io/slurm-mail/repo](https://neilmunday.github.io/slurm-mail/repo/).
-
-#### Amazon Linux 2
-
-```bash
-sudo wget -O /etc/yum.repos.d/slurm-mail.repo https://neilmunday.github.io/slurm-mail/repo/slurm-mail.amnz2.repo
-sudo yum install slurm-mail
-```
+For each release of Slurm-Mail, RPMs for Amazon Linux 2023, RedHat 7/8/9 and SUSE 15 based operating systems are provided at [neilmunday.github.io/slurm-mail/repo](https://neilmunday.github.io/slurm-mail/repo/).
 
 #### Amazon Linux 2023
 

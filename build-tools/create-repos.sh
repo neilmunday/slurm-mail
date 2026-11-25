@@ -68,7 +68,6 @@ check_dir $OUTPUT_DIR
 echo "repos will be written to: $OUTPUT_DIR"
 
 RHEL_OSES="
-amzn2
 amzn2023
 el8
 el9
